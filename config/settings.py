@@ -78,6 +78,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
+# Auth
+# https://docs.djangoproject.com/en/6.1/topics/auth/default/
+
+LOGIN_URL = 'kanview:login'
+LOGIN_REDIRECT_URL = 'kanview:dashboard'
+LOGOUT_REDIRECT_URL = 'kanview:login'
+
+
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 

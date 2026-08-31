@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestión de Talento Humano - Kanview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e4e2e2",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#ffb692",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#006565",
+                        "on-primary-fixed": "#002020",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-error-container": "#93000a",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-error": "#ffffff",
+                        "on-background": "#1b1c1c",
+                        "inverse-primary": "#76d6d5",
+                        "primary-fixed": "#93f2f2",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-secondary-container": "#5f6161",
+                        "background": "#fbf9f8",
+                        "surface-tint": "#006a6a",
+                        "primary-fixed-dim": "#76d6d5",
+                        "on-tertiary-fixed-variant": "#733512",
+                        "inverse-surface": "#303030",
+                        "tertiary": "#8b4823",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#dcdddd",
+                        "tertiary-container": "#a96039",
+                        "on-surface": "#1b1c1c",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#fff9f7",
+                        "on-surface-variant": "#3e4949",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-container": "#efeded",
+                        "surface": "#fbf9f8",
+                        "outline-variant": "#bdc9c8",
+                        "on-secondary-fixed-variant": "#454747",
+                        "outline": "#6e7979",
+                        "surface-dim": "#dbdad9",
+                        "surface-container-high": "#eae8e7",
+                        "secondary": "#5d5f5f",
+                        "on-tertiary-fixed": "#341100",
+                        "surface-bright": "#fbf9f8",
+                        "surface-container-low": "#f5f3f3",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e4e2e2",
+                        "primary-container": "#008080",
+                        "tertiary-fixed": "#ffdbcb",
+                        "on-primary-container": "#e3fffe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-mobile": "20px",
+                        "section-margin": "64px",
+                        "gutter": "24px",
+                        "card-gap": "24px",
+                        "container-padding-desktop": "40px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .neomorphic-card {
+            background-color: #ffffff;
+            box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.03), -8px -8px 16px #FFFFFF;
+        }
+        .neomorphic-card-hover:hover {
+            box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.05), -12px -12px 24px #FFFFFF;
+            transform: translateY(-2px);
+        }
+        .wax-seal {
+            opacity: 0.1;
+            mix-blend-mode: multiply;
+        }
+    </style>
+<style>html,body{background-color:#F5F5F5 !important;}</style>
+</head>
+<body class="bg-[#F5F5F5] text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- SideNavBar (from JSON) -->
+{% include "kanview/_sidebar.html" %}
+<!-- TopNavBar (from JSON) -->
+<header class="hidden md:flex justify-between items-center px-container-padding-desktop w-[calc(100%-16rem)] h-16 z-40 fixed top-0 right-0 bg-background/80 backdrop-blur-md dark:bg-background/80 border-b border-outline-variant/30 ml-64">
+<div class="flex items-center bg-surface-container-low rounded-full px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full text-on-surface p-0" placeholder="Buscar empleados..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="md:ml-64 pt-16 min-h-screen px-container-padding-mobile md:px-container-padding-desktop pb-section-margin">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mt-8 mb-section-margin">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-4">Gestión de Talento Humano</h2>
+<div class="flex flex-wrap gap-3">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">6 Tapiceros</span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">4 Costureras</span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">2 Gerentes</span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">1 Secretario</span>
+</div>
+</div>
+<a class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-[16px] flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm" href="{% url 'kanview:empleado-crear' %}">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Nuevo empleado
+            </a>
+</div>
+<!-- Quick Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-section-margin">
+<div class="neomorphic-card rounded-[24px] p-6 flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Empleados Activos</span>
+<span class="font-display text-display text-primary">13</span>
+</div>
+<div class="neomorphic-card rounded-[24px] p-6 flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Tareas Completadas (Mes)</span>
+<span class="font-display text-display text-primary">142</span>
+</div>
+<div class="neomorphic-card rounded-[24px] p-6 flex flex-col justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Productividad Promedio</span>
+<div class="flex items-end gap-2">
+<span class="font-display text-display text-primary">94%</span>
+<span class="material-symbols-outlined text-green-600 mb-2" data-icon="trending_up">trending_up</span>
+</div>
+</div>
+</div>
+<!-- Employee Grid (Asymmetrical) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter auto-rows-[minmax(180px,auto)]">
+<!-- Card 1: Top Performer (Large) -->
+<div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-8 relative overflow-hidden transition-all duration-300">
+<img alt="" class="absolute -bottom-10 -right-10 w-48 h-48 wax-seal pointer-events-none" src="https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c"/>
+<div class="flex items-start justify-between mb-6">
+<div class="flex items-center gap-4">
+<img class="w-16 h-16 rounded-full object-cover shadow-inner" data-alt="A highly detailed professional portrait of a male upholstery craftsman in his 40s. He is wearing a clean, modern workshop apron over a light-colored shirt. The background is a brightly lit, premium furniture manufacturing studio with neomorphic architectural details. High key lighting, warm inviting mood, shallow depth of field focusing strictly on his face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAADtTbwdBYdBphCoM1KM06U0oLqw7JL6kym6oLCT9wI5tXPZ45Y3U0Lwfgz5hoIJRvLT_a5FPwf7Z3430RUy47kKyllEAjeI1wGrhpk9gL3Yh-FnqBS6g0gZlYAptQp1zBl6ublDIu-tGGg8OSB90Eh-cDBI0vT0_cm9X-aOZV11FqQikircTFP8Kk4XUDeQbxNgzQQf7zuKOx_aiwaqv8ujCzI3AAAblCmlf-QOiB9VUvPNy4Cq62Z_WiCHf7PdiGXtuPA9d-Fw"/>
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Carlos Arturo Montoya</h3>
+<span class="inline-block mt-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm uppercase">Tapicero</span>
+</div>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Documento</p>
+<p class="font-body-md text-body-md text-on-surface">CC 10234567</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Móvil</p>
+<p class="font-body-md text-body-md text-on-surface">310 555 1234</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Edad</p>
+<p class="font-body-md text-body-md text-on-surface">42 años</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Salario</p>
+<p class="font-body-md text-body-md text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="lock">lock</span>
+                            Confidencial
+                        </p>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-inner border border-surface-variant">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Tareas Realizadas (Mes)</span>
+<span class="font-mono font-bold text-primary text-lg">45</span>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 85%"></div>
+</div>
+</div>
+</div>
+<!-- Card 2: Manager (Tall) -->
+<div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-4 row-span-2 relative transition-all duration-300">
+<div class="flex flex-col items-center text-center mb-6 pt-4">
+<img class="w-24 h-24 rounded-full object-cover shadow-md mb-4 border-4 border-surface" data-alt="A highly detailed professional portrait of a modern female production manager in her late 30s. She is wearing a chic, minimalist business casual outfit in neutral tones. The background is a pristine, brightly lit premium manufacturing office environment with neomorphic soft shadows and teal accents. High key lighting, authoritative yet approachable mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMHp8eSSF6zL-o8_zQJnpX3cusQ4Meld_tGVO6qP2BQI1y3frFiAgKom0FTul27M_QhFSwSmpLVVIkig1OS1MpCXAOL4ZClNzQ9Gh48d2PfOFG_5f0lxzjcjH60Ro6djlORGPJZub_2GV-OLQlGxe7vmLcX9-Y8e-eXxQh-HBceVwRwZgeaHK_gs1ZQN4EVjKFQwM2PVUmNpxrLVDCagtJRNtozAhMr3CQ6hHqeTI1U1s72Hpk7vjzDpS2qzT_FUkafuVJQe4I66Q"/>
+<h3 class="font-headline-md text-headline-md text-on-surface">Luz Marina Restrepo</h3>
+<span class="inline-block mt-2 px-3 py-1 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase tracking-wide">Gerente</span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">CC</span>
+<span class="font-body-md text-body-md text-on-surface">43987654</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Móvil</span>
+<span class="font-body-md text-body-md text-on-surface">300 123 4567</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Edad</span>
+<span class="font-body-md text-body-md text-on-surface">38 años</span>
+</div>
+<div class="bg-surface-container rounded-xl p-4 mt-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase block mb-1">Salario</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">$4.500.000</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Standard -->
+<div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-4 transition-all duration-300">
+<div class="flex items-start gap-4 mb-4">
+<img class="w-12 h-12 rounded-full object-cover shadow-inner" data-alt="A highly detailed professional portrait of a male secretary/admin assistant in his 20s. He is wearing a neat, light-colored smart casual shirt. The background is a clean, bright minimalist office with soft lighting and subtle neomorphic surfaces. Warm, welcoming mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbZnJm8vRD-GQHRlORM5dlUGI55pkld6KcRBU-V2pcO-ViqMgbTso8PQzIOHpBSnGe8BNYhrT5pZD_QjPYblV4O58LMUCisCMqD7TFvSjBVEqStjPHTxHCHZ4Mng-02v2szhKxilREoBhb3PGGb2PTjmz0XRsqnra3KihuWfpKbSKxYN9bE3tEzKY7IBF7HKRAAsYP8aBApuokxDO-nuMLeTUiHSqPltwfmfZjg5hS_LLvRPBuDgaEtgQc3UyzxiVGJP4zfC73IiM"/>
+<div class="flex-1">
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Jairo Alberto Gómez</h3>
+<span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-label-sm text-[10px] uppercase">Secretario</span>
+</div>
+</div>
+<div class="space-y-2 mb-4">
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>CC:</span> <span class="text-on-surface">11543218</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Móvil:</span> <span class="text-on-surface">315 987 6543</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between">
+<span>Salario:</span>
+<span class="text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span> Confidencial
+                         </span>
+</p>
+</div>
+</div>
+<!-- Card 4: Standard -->
+<div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-4 transition-all duration-300">
+<div class="flex items-start gap-4 mb-4">
+<img class="w-12 h-12 rounded-full object-cover shadow-inner" data-alt="A highly detailed professional portrait of a female seamstress in her 50s. She is wearing a practical, high-quality dark apron. The background is a bright, organized premium tailoring workspace with soft, high key lighting. Neomorphic styling cues in the environment. Calm, focused mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzpKkLDQcWFSYuuXfn9h4O7b-_bjeN75jbWoFkD6goHfH0oUI_7kj19LUTbX9GpCqAYjYr1MG5oZm0inYDSUsJx2aNm0Hj7LU_lF75P0EHHFT8WJESwpV32j5rsTV-3SXSvbi1l9-fJAyM4XgsUv5Qj_zbIbfaZ2FPggMYAK0ltYb4E3jO0_11wpB6E0hCocnI-OSZUkWQJIpRh4hleRnUkovxWynyBuRHUW80uLEV_MM7LFf6kb4af8_xRqTrzhdcm4zXVla-3fs"/>
+<div class="flex-1">
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Sandra Milena Pineda</h3>
+<span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-label-sm text-[10px] uppercase">Costurera</span>
+</div>
+</div>
+<div class="space-y-2 mb-4">
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>CC:</span> <span class="text-on-surface">42876543</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Móvil:</span> <span class="text-on-surface">320 456 7890</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between">
+<span>Salario:</span>
+<span class="text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span> Confidencial
+                         </span>
+</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (from JSON) - Mobile only -->
+<nav class="md:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center">
+<div class="bg-primary dark:bg-primary-container shadow-[0_12px_24px_rgba(0,128,128,0.2)] fixed bottom-6 right-6 w-auto h-12 rounded-full hover:brightness-110 cursor-pointer active:scale-95 transition-transform duration-150 flex items-center gap-2 px-6">
+<span class="material-symbols-outlined text-on-primary dark:text-on-primary-container" data-icon="chat">chat</span>
+<span class="text-on-primary dark:text-on-primary-container font-label-md text-label-md">Support Chat</span>
+</div>
+</nav>
+</body></html>
