@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kanview - Clientes</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+        /* CSS resets for material symbols */
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Custom Inner Shadow for Recessed Inputs */
+        .shadow-inner-recessed {
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px rgba(255,255,255,0.8);
+        }
+
+        /* Custom Soft Shadow for Neomorphic Lift */
+        .shadow-neomorphic-lift {
+            box-shadow: 4px 4px 8px rgba(0,0,0,0.02), -4px -4px 8px #FFFFFF;
+        }
+
+        .shadow-neomorphic-hover:hover {
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
+            transform: translateY(-1px);
+        }
+        
+        .shadow-neomorphic-active {
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.02), inset -4px -4px 8px #FFFFFF;
+        }
+
+        body {
+            background-color: #F5F5F5;
+        }
+    </style>
+<!-- Tailwind Config injected from Design System -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#3e4949",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#76d6d5",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#5d5f5f",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-variant": "#e4e2e2",
+                        "primary-fixed": "#93f2f2",
+                        "on-tertiary-container": "#fff9f7",
+                        "on-surface": "#1b1c1c",
+                        "surface-tint": "#006a6a",
+                        "tertiary-fixed-dim": "#ffb692",
+                        "on-tertiary-fixed-variant": "#733512",
+                        "surface-container-low": "#f5f3f3",
+                        "tertiary": "#8b4823",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#dbdad9",
+                        "surface-container-high": "#eae8e7",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "outline": "#6e7979",
+                        "on-secondary-container": "#5f6161",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#002020",
+                        "on-background": "#1b1c1c",
+                        "surface": "#fbf9f8",
+                        "primary-container": "#008080",
+                        "on-tertiary-fixed": "#341100",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "primary": "#006565",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "surface-container": "#efeded",
+                        "tertiary-container": "#a96039",
+                        "surface-bright": "#fbf9f8",
+                        "secondary-container": "#dcdddd",
+                        "secondary-fixed": "#e2e2e2",
+                        "tertiary-fixed": "#ffdbcb",
+                        "inverse-primary": "#76d6d5",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e4e2e2",
+                        "on-primary": "#ffffff",
+                        "background": "#fbf9f8",
+                        "outline-variant": "#bdc9c8",
+                        "error": "#ba1a1a",
+                        "on-primary-container": "#e3fffe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "section-margin": "64px",
+                        "card-gap": "24px",
+                        "container-padding-mobile": "20px",
+                        "base": "8px",
+                        "container-padding-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "display": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>html,body{background-color:#F5F5F5 !important;}</style>
+</head>
+<body class="font-body-md text-on-surface antialiased overflow-x-hidden">
+<div class="flex min-h-screen">
+<!-- SIDE NAVIGATION SHELL -->
+<!-- Active intent is Clientes -> Mapping to 'Users' based on JSON array: Dashboard, Orders, Inventory, Catalog, Tasks, Activities, Calendar, Audit, Users, Finance, Settings -->
+{% include "kanview/_sidebar.html" %}
+<!-- TOP APP BAR -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md dark:bg-background/80 flex justify-between items-center px-container-padding-desktop ml-64 border-b border-outline-variant/30">
+<!-- Left side empty to let Canvas title shine below -->
+<div></div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-low transition-all focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-low transition-all focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chat_bubble</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-low transition-all focus-within:ring-2 focus-within:ring-primary/20 ml-2">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A small circular avatar placeholder image showing a generic profile silhouette in soft white and gray tones, clean minimalist design, solid background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw4isjzvRemtDsFm4XI4ISnIJcvzP__6kMgBg2632LfgDQDexHr-yY82EiSv-rU0TiVD6FdOSpQQWIn6bCAmB1JcFLfNXWT5xDF5KodPVU816OLrhRUJjGwdDPSfJAJ92OWMxNwsjyxS7Dfn_swnqa4RHLH7iMdsIzRAmiW51Ijz7yCYnwxLQ7oLXfzbSvu2j9-3BvA8TXGzut24_rFrYdGcStgoozYORjzTElGnTU5qgM4HMxfkD5BYpBknyEg6E0wVj4hoJ4Ibs"/>
+</button>
+</div>
+</header>
+<!-- MAIN CANVAS -->
+<main class="ml-64 mt-16 p-container-padding-desktop w-[calc(100%-16rem)] min-h-[calc(100vh-64px)] flex flex-col gap-section-margin">
+<!-- PAGE HEADER -->
+<div class="flex justify-between items-end w-full">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Clientes</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">48 clientes activos</p>
+</div>
+<a class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-surface-tint transition-colors shadow-neomorphic-lift hover:translate-y-[-2px] active:translate-y-[1px]" href="{% url 'kanview:cliente-crear' %}">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">add</span>
+                    Nuevo cliente
+                </a>
+</div>
+<!-- BENTO GRID ASYMMETRIC LAYOUT -->
+<div class="grid grid-cols-12 gap-gutter items-start">
+<!-- LEFT COLUMN: Data Table Area (Spans 8 cols) -->
+<div class="col-span-8 flex flex-col gap-card-gap">
+<!-- Search & Filter Bar -->
+<div class="bg-surface-bright rounded-2xl p-6 shadow-neomorphic-lift flex gap-4 items-center">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md py-3 pl-12 pr-4 rounded-xl border-none focus:ring-2 focus:ring-primary/50 shadow-inner-recessed placeholder:text-outline outline-none" placeholder="Buscar por nombre, documento o celular..." type="text"/>
+</div>
+<div class="relative min-w-[200px]">
+<select class="w-full bg-surface-container-low text-on-surface font-body-md py-3 px-4 pr-10 rounded-xl border-none focus:ring-2 focus:ring-primary/50 shadow-inner-recessed appearance-none cursor-pointer outline-none">
+<option disabled="" selected="" value="">Rango de edad</option>
+<option value="18-25">18 - 25 años</option>
+<option value="26-35">26 - 35 años</option>
+<option value="36-50">36 - 50 años</option>
+<option value="50+">Más de 50 años</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Modern Data Table -->
+<div class="bg-surface-bright rounded-2xl shadow-neomorphic-lift overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30 text-outline font-label-sm text-label-sm uppercase tracking-wider bg-surface-container-lowest">
+<th class="py-4 px-6 font-semibold">Nombre</th>
+<th class="py-4 px-4 font-semibold">Documento (CC)</th>
+<th class="py-4 px-4 font-semibold">Celular</th>
+<th class="py-4 px-4 font-semibold">Edad</th>
+<th class="py-4 px-6 font-semibold text-center">Pedidos</th>
+</tr>
+</thead>
+<tbody class="text-on-surface font-body-md text-body-md bg-surface-bright">
+<!-- Row 1 - Active -->
+<tr class="border-b border-outline-variant/20 hover:bg-surface-container-low transition-all cursor-pointer bg-surface-container-low/50 shadow-inner-recessed">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold overflow-hidden shadow-neomorphic-lift">
+<img class="w-full h-full object-cover" data-alt="A portrait photography shot of a young latin woman with dark hair smiling gently, soft natural lighting, light neutral background, high resolution, corporate clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgdY1mfpl0wTNQv2M_6Mh9qLzmPoeUv6pX1ni4Cp0191jeh9euC8nc6lqKL5tL0dfo6L-pPvnC8qgTW4MOMEaj5QpNPqUsWoOUO8ZlM2MfNjUuw--pAdDkzRo7Wi3t3-7jmsbgCV0-QGTV5RFUHK2tAss6oHEOQ9M1CSjPwB7JOUxDp4aMu9gH1h-SA6cMTJI9ltwe7wqlsjTo1nyGBcOojeqPViO5kwh7RHEl7EmpzUzRyoKfXdKYMOzOJa-bEG-8mB5joXtrJRw"/>
+</div>
+<div>
+<p class="font-label-md text-label-md font-semibold text-primary">Valentina Restrepo</p>
+<p class="text-[13px] text-on-surface-variant">Calle 10 #43-21, Medellín</p>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">1.037.452.891</td>
+<td class="py-4 px-4 text-on-surface-variant">312 456 7890</td>
+<td class="py-4 px-4 text-on-surface-variant">28</td>
+<td class="py-4 px-6 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-label-md font-bold shadow-sm">12</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-outline-variant/20 shadow-neomorphic-hover cursor-pointer bg-surface-bright transition-all">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold overflow-hidden shadow-sm">
+                                                AC
+                                            </div>
+<div>
+<p class="font-label-md text-label-md font-semibold">Andrés Felipe Castro</p>
+<p class="text-[13px] text-on-surface-variant">Cra 45 #8-12, Bogotá</p>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">80.123.456</td>
+<td class="py-4 px-4 text-on-surface-variant">300 987 6543</td>
+<td class="py-4 px-4 text-on-surface-variant">42</td>
+<td class="py-4 px-6 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">4</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-outline-variant/20 shadow-neomorphic-hover cursor-pointer bg-surface-bright transition-all">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold overflow-hidden shadow-sm">
+                                                MG
+                                            </div>
+<div>
+<p class="font-label-md text-label-md font-semibold">Mariana Gómez</p>
+<p class="text-[13px] text-on-surface-variant">Av El Poblado, Medellín</p>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">1.152.678.901</td>
+<td class="py-4 px-4 text-on-surface-variant">315 234 5678</td>
+<td class="py-4 px-4 text-on-surface-variant">31</td>
+<td class="py-4 px-6 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">7</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="shadow-neomorphic-hover cursor-pointer bg-surface-bright transition-all">
+<td class="py-4 px-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold overflow-hidden shadow-sm">
+                                                SJ
+                                            </div>
+<div>
+<p class="font-label-md text-label-md font-semibold">Santiago Jaramillo</p>
+<p class="text-[13px] text-on-surface-variant">Vía Las Palmas, Envigado</p>
+</div>
+</div>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">71.564.321</td>
+<td class="py-4 px-4 text-on-surface-variant">320 876 5432</td>
+<td class="py-4 px-4 text-on-surface-variant">55</td>
+<td class="py-4 px-6 text-center">
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">2</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- RIGHT COLUMN: Customer Detail Panel (Spans 4 cols) -->
+<div class="col-span-4 sticky top-24">
+<div class="bg-surface-bright rounded-2xl shadow-neomorphic-lift overflow-hidden relative flex flex-col h-full border border-outline-variant/10">
+<!-- Subtle Wax Seal Watermark Background -->
+<div class="absolute -bottom-10 -right-10 w-64 h-64 opacity-10 pointer-events-none z-0 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c'); background-size: cover; background-position: center;">
+</div>
+<!-- Top Colored Bar -->
+<div class="h-24 bg-surface-container-low w-full relative z-10">
+<!-- Action Buttons overlay -->
+<div class="absolute top-4 right-4 flex gap-2">
+<button class="p-2 bg-surface-bright rounded-full text-on-surface-variant shadow-sm hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">edit</span>
+</button>
+<button class="p-2 bg-surface-bright rounded-full text-on-surface-variant shadow-sm hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Profile Header -->
+<div class="px-6 pb-6 relative z-10 flex flex-col items-center -mt-12 border-b border-outline-variant/20">
+<div class="relative">
+<div class="w-24 h-24 rounded-full border-4 border-surface-bright shadow-neomorphic-lift overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A portrait photography shot of a young latin woman with dark hair smiling gently, soft natural lighting, light neutral background, high resolution, corporate clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEnv2kTwa8C1TjVIC3PaP2xBvZfPrvl3Pb1BSa9ZY_gAKmCERdtrh2jOyXorcrfeZB9OCkisf2fqw_iG0UxzPNsBBsiKv2MKvSQXcaY53zf1GrRwUs8eVi-nsHvqfUzmgrjS4oTpH9aMa6fXjlo6_a_zkmVDwpt1HVSZidWfp8UJTtdtXcNP7BtpdxaxwPSdGGL7mbw_lpbQS-6WosFCYXhqk7aWm4jR8-IVbhU5pn2oXvT4prSCsVuM7XNdD8zGSKfvHWX_O4kuk"/>
+</div>
+<!-- Wax Seal Verified Badge -->
+<div class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-surface-bright shadow-sm p-[2px]">
+<img alt="Verified Customer" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c"/>
+</div>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mt-4 text-center">Valentina Restrepo</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-center">CC: 1.037.452.891</p>
+<div class="mt-3 flex items-center gap-2 bg-primary-container/20 px-3 py-1 rounded-full border border-primary/20">
+<span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,128,128,0.5)]"></span>
+<span class="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">Activo</span>
+</div>
+</div>
+<!-- Details Section -->
+<div class="p-6 relative z-10 flex-1 flex flex-col gap-6 bg-surface-bright">
+<!-- Contact Info -->
+<div class="flex flex-col gap-4">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">Información de Contacto</h3>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">call</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">+57 312 456 7890</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Móvil Principal</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">mail</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">v.restrepo@email.com</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Trabajo</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">location_on</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Calle 10 #43-21, Apt 402</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Medellín, Antioquia</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">cake</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">15 de Mayo, 1995</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">28 años</p>
+</div>
+</div>
+</div>
+<!-- History Timeline -->
+<div class="flex flex-col gap-4 mt-2">
+<div class="flex justify-between items-center mb-1">
+<h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Últimos Pedidos</h3>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="#">Ver todos (12)</a>
+</div>
+<div class="relative pl-4 border-l-2 border-surface-variant flex flex-col gap-5">
+<!-- Timeline Item 1 -->
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-surface-variant border-2 border-surface-bright"></div>
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-md text-label-md font-semibold text-on-surface">ORD-2023-89</p>
+<p class="font-body-md text-[13px] text-on-surface-variant">Mesa Comedor Nogal</p>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant">Entregado</span>
+</div>
+<p class="font-label-sm text-[11px] text-outline mt-1">12 Oct 2023 • $1,250,000</p>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-surface-variant border-2 border-surface-bright"></div>
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-md text-label-md font-semibold text-on-surface">ORD-2023-45</p>
+<p class="font-body-md text-[13px] text-on-surface-variant">Sillas Clásicas (x4)</p>
+</div>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant">Entregado</span>
+</div>
+<p class="font-label-sm text-[11px] text-outline mt-1">05 Sep 2023 • $800,000</p>
+</div>
+</div>
+</div>
+<!-- Bottom Action -->
+<div class="mt-auto pt-4 border-t border-outline-variant/20">
+<button class="w-full py-3 bg-surface-bright border border-primary text-primary font-label-md text-label-md font-semibold rounded-xl hover:bg-primary/5 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 0;">add_shopping_cart</span>
+                                    Nuevo Pedido
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

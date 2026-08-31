@@ -1,0 +1,30 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - {{ title }}{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl">
+<h2 class="text-2xl font-bold mb-6">{{ title }}</h2>
+<form class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-5" method="post">
+{% csrf_token %}
+{% if form.non_field_errors %}
+<div class="px-4 py-3 rounded-xl bg-red-50 text-red-700 text-sm">{{ form.non_field_errors }}</div>
+{% endif %}
+{% for field in form %}
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+{{ field }}
+{% if field.errors %}
+<span class="text-xs text-red-600">{{ field.errors|join:", " }}</span>
+{% endif %}
+{% if field.help_text %}
+<span class="text-xs text-gray-400">{{ field.help_text }}</span>
+{% endif %}
+</div>
+{% endfor %}
+<div class="flex items-center gap-3 mt-4">
+<button class="bg-[#006565] hover:bg-[#004f4f] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Guardar</button>
+<a class="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors" href="{{ cancel_url }}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

@@ -1,0 +1,380 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Inventario - Kanview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "primary-fixed": "#93f2f2",
+                      "tertiary-fixed": "#ffdbcb",
+                      "surface-container-low": "#f5f3f3",
+                      "on-error": "#ffffff",
+                      "on-tertiary-container": "#fff9f7",
+                      "background": "#fbf9f8",
+                      "surface-container-highest": "#e4e2e2",
+                      "on-primary-container": "#e3fffe",
+                      "on-secondary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e4e2e2",
+                      "surface": "#fbf9f8",
+                      "on-tertiary-fixed-variant": "#733512",
+                      "surface-bright": "#fbf9f8",
+                      "on-tertiary-fixed": "#341100",
+                      "outline-variant": "#bdc9c8",
+                      "inverse-surface": "#303030",
+                      "surface-tint": "#006a6a",
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#8b4823",
+                      "primary-container": "#008080",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-container": "#a96039",
+                      "secondary-container": "#dcdddd",
+                      "surface-dim": "#dbdad9",
+                      "outline": "#6e7979",
+                      "inverse-primary": "#76d6d5",
+                      "secondary-fixed": "#e2e2e2",
+                      "on-primary-fixed-variant": "#004f4f",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb692",
+                      "on-secondary-container": "#5f6161",
+                      "primary-fixed-dim": "#76d6d5",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "on-primary-fixed": "#002020",
+                      "primary": "#006565",
+                      "inverse-on-surface": "#f2f0f0",
+                      "on-surface-variant": "#3e4949",
+                      "on-background": "#1b1c1c",
+                      "on-secondary-fixed-variant": "#454747",
+                      "on-surface": "#1b1c1c",
+                      "error": "#ba1a1a",
+                      "surface-container": "#efeded",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#eae8e7",
+                      "secondary": "#5d5f5f"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding-mobile": "20px",
+                      "card-gap": "24px",
+                      "base": "8px",
+                      "section-margin": "64px",
+                      "container-padding-desktop": "40px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        .neomorphic-card {
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
+        }
+        .neomorphic-inner {
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.05), inset -4px -4px 8px #FFFFFF;
+        }
+        .table-row-hover:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transform: translateY(-1px);
+        }
+        
+        /* Wax Seal Watermark */
+        .wax-seal {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            width: 48px;
+            height: 48px;
+            opacity: 0.1;
+            pointer-events: none;
+            color: #008080;
+        }
+    </style>
+<style>html,body{background-color:#F5F5F5 !important;}</style>
+</head>
+<body class="bg-[#F5F5F5] text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- Top Navigation (Desktop) -->
+<nav class="hidden md:flex fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-desktop ml-64">
+<!-- Brand Logo / Product Name (Anchored) -->
+<div class="font-headline-md text-headline-md text-primary font-bold">
+            Kanview
+        </div>
+<!-- Search Bar (on_left configuration via JSON intent) -->
+<div class="flex-1 max-w-md mx-8 relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-variation-settings: 'wght' 300;">search</span>
+<input class="w-full bg-surface-container-highest/50 neomorphic-inner rounded-full py-2 pl-10 pr-4 text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus-within:ring-2 focus-within:ring-primary/20 border-none transition-all" placeholder="Search inventory..." type="text">
+</div>
+<!-- Trailing Icons -->
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</nav>
+<!-- Side Navigation (Desktop) -->
+{% include "kanview/_sidebar.html" %}
+<!-- Main Content Area -->
+<main class="md:ml-64 pt-20 px-4 md:px-container-padding-desktop pb-24 min-h-screen flex flex-col">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-section-margin gap-4">
+<div>
+<h2 class="font-display text-headline-lg-mobile md:text-headline-lg text-on-surface">Inventory Management</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage your high-end physical goods and track stock levels.</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-[16px] flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_12px_24px_rgba(0,128,128,0.2)]">
+<span class="material-symbols-outlined">add</span>
+                Añadir Producto
+            </button>
+</div>
+<!-- Inventory Table Card (Neomorphic) -->
+<div class="bg-surface rounded-2xl neomorphic-card p-6 relative overflow-hidden flex-1 flex flex-col">
+<!-- Table Controls -->
+<div class="flex justify-between items-center mb-6 pb-4 border-b border-outline-variant/20">
+<div class="flex gap-4">
+<div class="relative">
+<select class="appearance-none bg-surface-container-low border border-outline-variant/30 text-on-surface font-label-md text-label-md py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+<option>All Categories</option>
+<option>Furniture</option>
+<option>Lighting</option>
+<option>Hardware</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none bg-surface-container-low border border-outline-variant/30 text-on-surface font-label-md text-label-md py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
+<option>Filter Status</option>
+<option>In Stock</option>
+<option>Low Stock</option>
+<option>Out of Stock</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30">
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Código</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Nombre</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Categoría</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Cantidad</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Precio</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Estado</th>
+<th class="py-4 px-4 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-center">Acciones</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<!-- Row 1 (Normal) -->
+<tr class="table-row-hover transition-all duration-200 border-b border-outline-variant/10 last:border-0 bg-surface">
+<td class="py-4 px-4 text-on-surface-variant font-medium">KV-F-001</td>
+<td class="py-4 px-4 text-on-surface font-semibold">Artisan Oak Dining Table</td>
+<td class="py-4 px-4 text-on-surface-variant">Furniture</td>
+<td class="py-4 px-4 text-right">12</td>
+<td class="py-4 px-4 text-right font-medium">$1,250.00</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                    En Stock
+                                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 (Zero Stock - Subtle Red) -->
+<tr class="table-row-hover transition-all duration-200 border-b border-outline-variant/10 last:border-0 bg-error-container/20">
+<td class="py-4 px-4 text-on-surface-variant font-medium">KV-L-042</td>
+<td class="py-4 px-4 text-error font-semibold flex items-center gap-2">
+                                Brass Pendant Lamp
+                                <span class="material-symbols-outlined text-error text-[16px]">warning</span>
+</td>
+<td class="py-4 px-4 text-on-surface-variant">Lighting</td>
+<td class="py-4 px-4 text-right text-error font-bold">0</td>
+<td class="py-4 px-4 text-right font-medium">$345.00</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-error/10 text-error">
+                                    Agotado
+                                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 (Normal) -->
+<tr class="table-row-hover transition-all duration-200 border-b border-outline-variant/10 last:border-0 bg-surface">
+<td class="py-4 px-4 text-on-surface-variant font-medium">KV-F-088</td>
+<td class="py-4 px-4 text-on-surface font-semibold">Walnut Credenza</td>
+<td class="py-4 px-4 text-on-surface-variant">Furniture</td>
+<td class="py-4 px-4 text-right">4</td>
+<td class="py-4 px-4 text-right font-medium">$2,100.00</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-tertiary-container/20 text-tertiary">
+                                    Stock Bajo
+                                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 (Normal) -->
+<tr class="table-row-hover transition-all duration-200 border-b border-outline-variant/10 last:border-0 bg-surface">
+<td class="py-4 px-4 text-on-surface-variant font-medium">KV-H-112</td>
+<td class="py-4 px-4 text-on-surface font-semibold">Brushed Nickel Drawer Pulls</td>
+<td class="py-4 px-4 text-on-surface-variant">Hardware</td>
+<td class="py-4 px-4 text-right">150</td>
+<td class="py-4 px-4 text-right font-medium">$24.00</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                    En Stock
+                                </span>
+</td>
+<td class="py-4 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-sm">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Wax Seal Watermark -->
+<svg class="wax-seal" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM11 19.93C7.06 19.43 4 16.05 4 12C4 7.95 7.06 4.57 11 4.07V19.93ZM13 4.07C16.94 4.57 20 7.95 20 12C20 16.05 16.94 19.43 13 19.93V4.07Z"></path>
+</svg>
+</div>
+</main>
+<!-- Bottom Navigation (Mobile Only) - Suppressed as per instructions for non-mobile specific requests unless explicitly needed, but included based on Shared Components JSON and "Responsive Pivot" rule -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-outline-variant/20 z-50 px-4 py-2 flex justify-around items-center pb-safe">
+<a class="flex flex-col items-center p-2 text-on-surface-variant" href="{% url 'kanview:pedidos-tablero' %}">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="text-[10px] mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center p-2 text-primary font-bold" href="{% url 'kanview:inventario' %}">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-[10px] mt-1">Inventory</span>
+</a>
+<a class="flex flex-col items-center p-2 text-on-surface-variant" href="{% url 'kanview:catalogo' %}">
+<span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
+<span class="text-[10px] mt-1">Catalog</span>
+</a>
+</nav>
+<!-- Floating Action Button (Mobile Only context fallback) -->
+<button class="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0_12px_24px_rgba(0,128,128,0.2)] flex items-center justify-center active:scale-95 transition-transform z-50">
+<span class="material-symbols-outlined">add</span>
+</button>
+
+
+</body></html>
