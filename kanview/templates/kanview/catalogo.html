@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kanview - Catálogo de Productos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#fbf9f8",
+                        "on-tertiary-fixed": "#341100",
+                        "on-secondary-container": "#5f6161",
+                        "secondary": "#5d5f5f",
+                        "outline-variant": "#bdc9c8",
+                        "on-primary-fixed": "#002020",
+                        "surface-container-high": "#eae8e7",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "inverse-primary": "#76d6d5",
+                        "primary-fixed-dim": "#76d6d5",
+                        "primary-fixed": "#93f2f2",
+                        "primary": "#006565",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb692",
+                        "on-background": "#1b1c1c",
+                        "on-surface": "#1b1c1c",
+                        "on-tertiary-fixed-variant": "#733512",
+                        "on-tertiary-container": "#fff9f7",
+                        "background": "#fbf9f8",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-low": "#f5f3f3",
+                        "secondary-fixed": "#e2e2e2",
+                        "on-primary-container": "#e3fffe",
+                        "surface-dim": "#dbdad9",
+                        "outline": "#6e7979",
+                        "on-surface-variant": "#3e4949",
+                        "error-container": "#ffdad6",
+                        "tertiary-fixed": "#ffdbcb",
+                        "inverse-on-surface": "#f2f0f0",
+                        "surface-variant": "#e4e2e2",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#303030",
+                        "surface": "#fbf9f8",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e4e2e2",
+                        "primary-container": "#008080",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "tertiary-container": "#a96039",
+                        "surface-tint": "#006a6a",
+                        "secondary-container": "#dcdddd",
+                        "on-secondary-fixed-variant": "#454747",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "tertiary": "#8b4823",
+                        "surface-container": "#efeded"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "card-gap": "24px",
+                        "section-margin": "64px",
+                        "gutter": "24px",
+                        "container-padding-mobile": "20px",
+                        "container-padding-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .neomorphic-card {
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
+        }
+        .neomorphic-inner {
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05), inset -3px -3px 7px #FFFFFF;
+        }
+        .text-truncate-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        /* Custom scrollbar for side panel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dbdad9; border-radius: 10px; }
+    </style>
+<style>html,body{background-color:#F5F5F5 !important;}</style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- SideNavBar -->
+{% include "kanview/_sidebar.html" %}
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-desktop">
+<!-- Search Bar -->
+<div class="relative w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-body-md focus:ring-2 focus:ring-primary/20 neomorphic-inner transition-shadow placeholder:text-outline/70" placeholder="Buscar en catálogo..." type="text"/>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center w-10 h-10">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center w-10 h-10">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-primary-fixed ml-2 overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a well-dressed manager in a warmly lit office setting, light mode aesthetic, realistic and high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4KeefgzIIk-V3a3Pmq3vhrjP6Fc1BrXW55Jg-mg3OWr55vlRjkmjuuYPuZ-QFlyW4EPX16y3gHEOiFCt_yNCH1lc1ncsABygkNN2NjQI_9bDdSHrzKTs_IdyYIdtlv_TcsNa7xhpegYkTGh78Di_dgjrG-xFTO0KvY3Qmyu0sEHRcPZMM1m2jtSc4_DpCUc8BV_ZWXZgvuV4CqA-qipbfd59I75xOGLCIxNVPnTZBMXssN1GmxTgQS9dBAWIg-KLavbnmOM29wu0"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 mt-16 p-container-padding-desktop min-h-screen">
+<!-- Main Header & Controls -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">Catálogo de Productos</h2>
+<!-- Category Filter Chips -->
+<div class="flex flex-wrap items-center gap-3">
+<button class="bg-primary text-on-primary px-5 py-2 rounded-full font-label-md text-label-md shadow-sm transition-transform active:scale-95">Todos</button>
+<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Sofás</button>
+<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Sillas</button>
+<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Poltronas</button>
+<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Accesorios</button>
+</div>
+</div>
+<a class="bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 hover:bg-primary/90 shadow-[0_4px_12px_rgba(0,128,128,0.2)] transition-all active:scale-95 group" href="{% url 'kanview:producto-crear' %}">
+<span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
+                Nuevo producto
+            </a>
+</div>
+<!-- Catalog Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-card-gap">
+<!-- Featured Card (Best-seller) - Spans 2 columns -->
+<article class="col-span-1 lg:col-span-2 bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group relative flex flex-col md:flex-row">
+<!-- Wax Seal Watermark -->
+<svg class="absolute bottom-4 right-4 w-24 h-24 text-primary opacity-5 pointer-events-none" fill="currentColor" viewbox="0 0 100 100">
+<path d="M50,0 C77.6142375,0 100,22.3857625 100,50 C100,77.6142375 77.6142375,100 50,100 C22.3857625,100 0,77.6142375 0,50 C0,22.3857625 22.3857625,0 50,0 Z M50,10 C27.90861,10 10,27.90861 10,50 C10,72.09139 27.90861,90 50,90 C72.09139,90 90,72.09139 90,50 C90,27.90861 72.09139,10 50,10 Z M50,25 C63.8071187,25 75,36.1928813 75,50 C75,63.8071187 63.8071187,75 50,75 C36.1928813,75 25,63.8071187 25,50 C25,36.1928813 36.1928813,25 50,25 Z M50,35 C41.7157288,35 35,41.7157288 35,50 C35,58.2842712 41.7157288,65 50,65 C58.2842712,65 65,58.2842712 65,50 C65,41.7157288 58.2842712,35 50,35 Z"></path>
+</svg>
+<div class="w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A luxurious, high-end Chesterfield sofa upholstered in deep, rich brown leather, situated in a brightly lit, modern showroom with white walls and a polished concrete floor. The lighting is soft and diffused, creating a premium light-mode aesthetic that highlights the tufted leather texture and artisanal craftsmanship. The mood is elegant, sophisticated, and impeccably organized." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCDd_JsEmIGP3g-SmWiAHHD3F8JsHJY7jK3jvddm4mXHUazWVLp5Qz4EBhmiNCIo010Ib5UAZ9cuepH9xBOfAsByd_lh5XAKxyfV9CyANvVXlHsFEuuTbFl5ojDxOAa8mBjuloDk2PoSdYO4M0Ne3Dbj7G2p1fCw0yKJo71xRawKNJIyKO-v9D0Oam-9m5B1vksx0HW-K9sI5Mb3Prlk-yprNFOv9eN6gfGkI8GkIGAq8a5LG5hRfEceISl_a6fG5zWkz7fajvFXGU')"></div>
+<div class="absolute top-4 left-4 bg-surface-container-lowest/90 backdrop-blur px-3 py-1 rounded-full border border-outline-variant/20 flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">star</span>
+<span class="font-label-sm text-label-sm text-on-surface">Más vendido</span>
+</div>
+</div>
+<div class="p-8 flex flex-col justify-between w-full md:w-1/2 relative z-10">
+<div>
+<div class="flex justify-between items-start mb-2">
+<span class="font-mono text-sm text-outline tracking-wider">SF-4821</span>
+<div class="flex items-center gap-2 px-2 py-1 bg-surface-container-low rounded-full">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">En stock (12)</span>
+</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Sofá Chesterfield Imperial</h3>
+<p class="font-label-md text-label-md text-primary mb-4 uppercase tracking-widest">Sofás Premium</p>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 text-truncate-2">
+                            Pieza maestra de tapicería tradicional. Cuero de grano completo curtido vegetal, capitoné hecho a mano y estructura en madera de roble macizo. Diseñado para perdurar generaciones en espacios ejecutivos.
+                        </p>
+</div>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-6 mt-4">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">Precio Base (COP)</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">$4.500.000</span>
+</div>
+<button class="text-primary hover:text-primary-fixed-dim font-label-md text-label-md font-semibold flex items-center gap-1 transition-colors" onclick="openProductDetail()">
+                            Ver detalles
+                            <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Standard Card 1 -->
+<article class="bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group flex flex-col cursor-pointer transition-transform hover:-translate-y-1">
+<div class="w-full h-56 relative overflow-hidden bg-surface-container-low">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A sleek, contemporary leather armchair with a minimalist wooden frame, positioned in a spacious, sunlit gallery setting. The scene features a pristine white background with subtle architectural shadows, emphasizing the chair's smooth texture and high-quality build. The overall aesthetic is calm, authoritative, and clean, perfectly suited for a premium manufacturing catalog." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCx9r_IyYK5LsFU9z3uwBTu2K_UR3jMOoa_gm0lm5JwyjqV6XO0_9owSa91Mapuecrm3jgA_4CvHY9NzDlZGq-LblRP8lZNXhCmU3xnZQv9QzJWRCzMyUxqzNyuWHuEQ_1LwV0u9IOTSIvn4VMknTrwUziFIoqzFH8rdxj1dRBJRemxTif7DJA6IUwbtiZGOJMbgDPVtqPf1H0DU9o1rfmPTxUFidimHyzwOLmJ4pDG4xVChfcdthEEptADyIxDiqhA9o4vAjlFq3o')"></div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="flex justify-between items-center mb-3">
+<span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">PL-1092</span>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(169,96,57,0.6)]"></div>
+<span class="font-label-sm text-[11px] text-outline uppercase">Bajo stock (2)</span>
+</div>
+</div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">Poltrona Nórdica Ostra</h3>
+<p class="font-label-sm text-label-sm text-outline mb-3">Poltronas</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-1 text-truncate-2">
+                        Líneas puras y ergonomía perfecta. Tapizado en cuero napa suave sobre estructura de nogal curvo.
+                    </p>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-4">
+<span class="font-body-lg text-body-lg text-on-surface font-semibold">$1.850.000</span>
+<span class="text-primary font-label-md text-label-md hover:underline cursor-pointer" onclick="openProductDetail()">Ver más</span>
+</div>
+</div>
+</article>
+<!-- Standard Card 2 -->
+<article class="bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group flex flex-col cursor-pointer transition-transform hover:-translate-y-1">
+<div class="w-full h-56 relative overflow-hidden bg-surface-container-low">
+<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A set of four premium leather dining chairs arranged elegantly around a subtle modern table edge in a bright, white showroom. The chairs feature rich tan leather and slender matte black metal legs. Soft neomorphic lighting casts gentle shadows, highlighting the precision stitching and high-end industrial design aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBUh3EIKUJTjIU0F73T_-ausXZmb0dCVKNWaHUKu3lH5KZVTkxm30JlJwqtgnJCpeGJV5TQXuQxJjHjwyEt1FxrQuSrWH18Pxn1raMpEtGRCOrYFfTnwkOsqqwUMPxxNiCqH9BexDzxhP9utd-OSU89KxsZFlajqsKLjciwGkV-fmx_iLEy4gljPZBLlwpC8hFOxZHHupsAtQ2ene7po_ChqYARKExzmU03a6mSzLBdrhQDO2K6hPrMcDOTDwM7wzBS7WKwALAWrh8')"></div>
+</div>
+<div class="p-6 flex flex-col flex-1">
+<div class="flex justify-between items-center mb-3">
+<span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">SL-2044</span>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,101,101,0.6)]"></div>
+<span class="font-label-sm text-[11px] text-outline uppercase">En stock (45)</span>
+</div>
+</div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">Silla Comedor Viena (Set 4)</h3>
+<p class="font-label-sm text-label-sm text-outline mb-3">Sillas</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-1 text-truncate-2">
+                        Respaldo continuo y asiento de espuma de alta densidad, revestido en cuero ecológico premium resistente a líquidos.
+                    </p>
+<div class="flex items-center justify-between border-t border-outline-variant/30 pt-4">
+<span class="font-body-lg text-body-lg text-on-surface font-semibold">$2.200.000</span>
+<span class="text-primary font-label-md text-label-md hover:underline cursor-pointer" onclick="openProductDetail()">Ver más</span>
+</div>
+</div>
+</article>
+</div>
+</main>
+<!-- Side Panel / Modal for Product Detail -->
+<div class="fixed inset-0 z-50 hidden justify-end" id="product-detail-modal">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-on-background/10 backdrop-blur-[2px] transition-opacity" onclick="closeProductDetail()"></div>
+<!-- Panel -->
+<aside class="relative w-full max-w-[550px] bg-surface h-full shadow-[-12px_0_24px_rgba(0,0,0,0.05)] flex flex-col transform transition-transform border-l border-outline-variant/20 overflow-y-auto">
+<!-- Panel Header -->
+<div class="sticky top-0 bg-surface/90 backdrop-blur-md z-10 p-6 border-b border-outline-variant/30 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="font-mono text-sm text-outline bg-surface-container-high px-2 py-1 rounded">SF-4821</span>
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label-sm text-[11px] text-primary uppercase font-bold">Activo</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container-lowest border border-outline-variant/50 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">edit</span>
+                        Editar
+                    </button>
+<button class="p-2 text-outline hover:text-on-surface transition-colors rounded-full hover:bg-surface-container-high" onclick="closeProductDetail()">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Panel Content -->
+<div class="p-6 flex-1 flex flex-col gap-8">
+<!-- Hero Image -->
+<div class="w-full h-72 rounded-xl overflow-hidden neomorphic-inner relative">
+<div class="w-full h-full bg-cover bg-center" data-alt="Close-up macro shot of premium tufted brown leather on a luxury sofa, showcasing the intricate stitching, deep buttons, and the rich, natural grain of the material under soft, studio-quality light-mode illumination. Artisanal quality vibe." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD2kr9xIiJmz4FkLexH1-leWxZ3DcFKzN1qmeVGn1tJwhGBvP6614pit_k5Jy_KhppoWhVgyapM3iVyq1kQ8QQuthUsXE9MxSYrqpz7vX_jYmqRkl2pmdBnMxEoSPNpLhqqw6lscbcANgNtDkRUscENLfGpP6-A2HPsqZP-IR19R0yEFDtRj2YeS7R7Hl9Fm4v3Mki3hUyxXSmyiTMg3AqaMtEN3BoLjjgSwmBxUYBLhwz9-SkIjesWDbmA56ZnNL4ANxtVLoF33So')"></div>
+<button class="absolute bottom-4 right-4 bg-surface/80 backdrop-blur p-2 rounded-full text-on-surface shadow-sm hover:bg-surface transition-colors">
+<span class="material-symbols-outlined">fullscreen</span>
+</button>
+</div>
+<!-- Title & Core Info -->
+<div>
+<h2 class="font-display text-display text-on-surface mb-2 leading-tight">Sofá Chesterfield Imperial</h2>
+<p class="font-headline-md text-headline-md text-primary font-bold mb-4">$4.500.000 <span class="text-sm font-normal text-outline">COP</span></p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                        El Sofá Chesterfield Imperial representa la cumbre de la artesanía en Kanview. Cada pieza es ensamblada a mano utilizando técnicas tradicionales de tapicería sobre una robusta estructura de madera de roble secada al horno. El capitoné profundo asegura que el relleno mantenga su forma durante décadas, mientras que el cuero de grano completo desarrolla una pátina única con el paso del tiempo.
+                    </p>
+</div>
+<!-- Tech Specs (Bento style mini-grid) -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
+<span class="material-symbols-outlined text-outline text-[20px]">straighten</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Dimensiones</span>
+<span class="font-body-md text-body-md text-on-surface">220cm x 95cm x 78cm</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
+<span class="material-symbols-outlined text-outline text-[20px]">texture</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Material</span>
+<span class="font-body-md text-body-md text-on-surface">Cuero Vacuno (Anilina)</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
+<span class="material-symbols-outlined text-outline text-[20px]">weight</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Peso Neto</span>
+<span class="font-body-md text-body-md text-on-surface">65 kg</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
+<span class="material-symbols-outlined text-outline text-[20px]">inventory</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Inventario Actual</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold text-primary">12 Unidades</span>
+</div>
+</div>
+<!-- Sales History Mini Chart -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+<div class="flex justify-between items-end mb-6">
+<div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">Historial de Ventas</h4>
+<p class="font-label-sm text-label-sm text-outline">Últimos 6 meses</p>
+</div>
+<span class="font-headline-md text-headline-md text-primary font-bold">48 <span class="text-sm font-normal text-outline">uds</span></span>
+</div>
+<!-- CSS Bar Chart -->
+<div class="h-32 flex items-end justify-between gap-2 pt-4">
+<div class="w-full flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm h-[40%] relative transition-all group-hover:bg-primary">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">6</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline uppercase">Ene</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm h-[60%] relative transition-all group-hover:bg-primary">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">9</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline uppercase">Feb</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm h-[30%] relative transition-all group-hover:bg-primary">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">4</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline uppercase">Mar</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/20 rounded-t-sm h-[80%] relative transition-all group-hover:bg-primary">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">12</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline uppercase">Abr</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary/40 rounded-t-sm h-[50%] relative transition-all group-hover:bg-primary">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">7</span>
+</div>
+<span class="font-label-sm text-[10px] text-outline uppercase">May</span>
+</div>
+<div class="w-full flex flex-col items-center gap-2 group">
+<div class="w-full bg-primary rounded-t-sm h-[100%] shadow-[0_-4px_12px_rgba(0,128,128,0.2)] relative">
+<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-primary font-bold">15</span>
+</div>
+<span class="font-label-sm text-[10px] text-primary font-bold uppercase">Jun</span>
+</div>
+</div>
+</div>
+<div class="pb-10"></div>
+</div>
+</aside>
+</div>
+<script>
+    function openProductDetail() {
+        var modal = document.getElementById('product-detail-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function closeProductDetail() {
+        var modal = document.getElementById('product-detail-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+</script>
+</body></html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>{% block title %}Kanview{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    html,body{background-color:#F5F5F5 !important;}
+    body{font-family:'Inter',sans-serif;}
+    .material-symbols-outlined{font-variation-settings:'FILL' 0;font-size:20px;vertical-align:middle;}
+    .shadow-neomorphic-lift{box-shadow:4px 4px 8px rgba(0,0,0,0.02), -4px -4px 8px #FFFFFF;}
+</style>
+</head>
+<body class="text-[#1b1c1c] antialiased overflow-x-hidden">
+{% include "kanview/_sidebar.html" %}
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 flex justify-between items-center px-10">
+<h1 class="font-semibold text-lg">{% block header_title %}{% endblock %}</h1>
+<div class="flex items-center gap-2 text-sm text-gray-500">
+<span class="material-symbols-outlined">account_circle</span>
+<span>{{ request.user.username }}</span>
+</div>
+</header>
+<main class="ml-64 mt-16 p-10 min-h-[calc(100vh-64px)]">
+{% if messages %}
+<div class="mb-6 flex flex-col gap-2">
+{% for message in messages %}
+<div class="px-4 py-3 rounded-xl bg-[#e3fffe] text-[#004f4f] text-sm font-medium">{{ message }}</div>
+{% endfor %}
+</div>
+{% endif %}
+{% block content %}{% endblock %}
+</main>
+</body></html>

@@ -1,0 +1,263 @@
+<!DOCTYPE html><html class="light" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Detalles del Pedido - Kanview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#002020",
+                        "background": "#fbf9f8",
+                        "tertiary-fixed-dim": "#ffb692",
+                        "on-tertiary-fixed": "#341100",
+                        "secondary-container": "#dcdddd",
+                        "on-surface": "#1b1c1c",
+                        "surface-variant": "#e4e2e2",
+                        "inverse-on-surface": "#f2f0f0",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#004f4f",
+                        "surface-container": "#efeded",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#bdc9c8",
+                        "on-primary-container": "#e3fffe",
+                        "tertiary-container": "#a96039",
+                        "on-error": "#ffffff",
+                        "surface": "#fbf9f8",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#c6c6c7",
+                        "on-secondary-fixed-variant": "#454747",
+                        "surface-dim": "#dbdad9",
+                        "on-secondary-fixed": "#1a1c1c",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#e2e2e2",
+                        "surface-tint": "#006a6a",
+                        "primary-fixed": "#93f2f2",
+                        "surface-bright": "#fbf9f8",
+                        "outline": "#6e7979",
+                        "on-background": "#1b1c1c",
+                        "tertiary-fixed": "#ffdbcb",
+                        "surface-container-high": "#eae8e7",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#3e4949",
+                        "secondary": "#5d5f5f",
+                        "on-tertiary-fixed-variant": "#733512",
+                        "primary-fixed-dim": "#76d6d5",
+                        "inverse-surface": "#303030",
+                        "on-secondary-container": "#5f6161",
+                        "on-tertiary-container": "#fff9f7",
+                        "primary": "#006565",
+                        "surface-container-highest": "#e4e2e2",
+                        "tertiary": "#8b4823",
+                        "surface-container-low": "#f5f3f3",
+                        "inverse-primary": "#76d6d5",
+                        "primary-container": "#008080"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-padding-desktop": "40px",
+                        "card-gap": "24px",
+                        "container-padding-mobile": "20px",
+                        "gutter": "24px",
+                        "base": "8px",
+                        "section-margin": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .neomorphic-card {
+            background-color: #ffffff;
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
+        }
+        .neomorphic-fab {
+            box-shadow: 0 12px 24px rgba(0, 128, 128, 0.2);
+        }
+        .wax-seal {
+            opacity: 0.1;
+            fill: #008080;
+        }
+    </style>
+<style>html,body{background-color:#F5F5F5 !important;}</style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex antialiased">
+<!-- SideNavBar -->
+{% include "kanview/_sidebar.html" %}
+<!-- TopNavBar -->
+<header class="hidden md:flex justify-between items-center px-container-padding-desktop w-[calc(100%-16rem)] ml-64 fixed top-0 right-0 h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30">
+<div class="flex-1 flex items-center">
+<div class="relative w-64 focus-within:ring-2 focus-within:ring-primary/20 rounded-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-variation-settings: 'wght' 300">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full font-label-md text-label-md text-on-surface focus:outline-none focus:ring-0 shadow-inner" placeholder="Search orders..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">chat_bubble</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 md:ml-64 pt-16 min-h-screen">
+<!-- Status Banner -->
+<div class="bg-primary/10 border-b border-primary/20 px-container-padding-mobile md:px-container-padding-desktop py-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">check_circle</span>
+<span class="font-label-md text-label-md text-primary font-semibold">Producto aprobado por el cliente</span>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-2">
+                Mover a Historial
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<div class="p-container-padding-mobile md:p-container-padding-desktop">
+<div class="flex flex-col lg:flex-row gap-card-gap">
+<!-- Left Panel: Details -->
+<section class="lg:w-1/3 flex flex-col gap-card-gap">
+<div class="neomorphic-card rounded-2xl p-6 relative overflow-hidden">
+<!-- Wax Seal Watermark -->
+<svg class="wax-seal absolute -bottom-4 -right-4 w-32 h-32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<circle cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="2"></circle>
+<circle cx="50" cy="50" fill="none" r="38" stroke="currentColor" stroke-width="1"></circle>
+<path d="M40 30 L40 70 M40 50 L65 30 M40 50 L65 70" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path>
+</svg>
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">#OR-5542</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Order ID</p>
+</div>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full font-label-sm text-label-sm">En proceso</span>
+</div>
+<div class="space-y-6">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Cliente</p>
+<p class="font-body-md text-body-md font-medium">Familia Mendoza</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Descripción</p>
+<p class="font-body-md text-body-md">Sofá Modular de Cuero Cognac. Costuras contrastantes. Patas de nogal macizo.</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Fechas</p>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Inicio</p>
+<p class="font-body-md text-body-md">12 Oct 2023</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Entrega Est.</p>
+<p class="font-body-md text-body-md">05 Nov 2023</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel: Multimedia -->
+<section class="lg:w-2/3 flex flex-col gap-card-gap">
+<div class="neomorphic-card rounded-2xl p-6 h-full">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-on-surface">Galería de Progreso</h3>
+<button class="bg-surface-container border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+                                Añadir archivos
+                            </button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+<!-- Image 1 -->
+<div class="aspect-square rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A high-quality, close-up photograph of a bespoke cognac leather modular sofa frame being assembled in a bright, modern artisan workshop. Light mode aesthetic with soft shadows, highlighting the rich texture of the wood and early upholstery stages. Clean, industrial-chic background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMftnPw9z7tQNH-ahQt12_-TwPB_HzIvlr9moZTBbTfaxgh28h_TgQpE0-UXs_0aGNqoi6Bq1gO70-3Ab2a3eqAZP72zHeDC6dv4pjokgBEHbroMnZfPQ_KHXwxLqaMsKuXRtFjuxw79e_nUYE_-eCScNpuPSZqdTMCxuIHVA2eiECi-aabp900Nqb0z3QGyjsgqt9GPUsnjyM8PQS2FyWACqnhXLVYs3Zs-ixvcqJRlk3_nr8kn-HIA">
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
+</div>
+</div>
+<!-- Image 2 -->
+<div class="aspect-square rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A detailed, premium photograph showing a skilled artisan hand-stitching the cognac leather of a modular sofa. The setting is a well-lit, contemporary workshop with a light mode aesthetic. Focus on the craftsmanship, the rich brown color of the leather, and the precision of the tools." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACobFM--BvVMkzaKPqLwDEPpjqD4cUQU9Npvv-bqjOv041isZ0t_C4rFblsTGK9qmCsn8Ywuq9ZBq_-UwzeK41DTaQX1se5p9FsqEK05A2lVHoxScklXHtFkNgkI9vIGGb2xjXN5tI71Owkfcfyp6xvyZQB5Qpg09D3hAB_alG0MEtPUyNCWjH73BJJY3EbqhANtw4fooDF2-YklnfbmfelaW4ApL-ijQBDOPCjQqZQNYmA2LhwF7hwQ">
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
+</div>
+</div>
+<!-- Image 3 -->
+<div class="aspect-square rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A beautifully lit, high-resolution photo of the nearly completed cognac leather modular sofa section resting on a clean, light-grey workshop floor. The aesthetic is modern, spacious, and bright, emphasizing the premium quality of the materials and the meticulous attention to detail in the upholstery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTAyy5N3uTv7A4mqrp1lea41L-ESjOphi9rYy_JBXd9yQo1q1BRRPi-16efq4mwgoJ5tyk-rt9nFbY8vIXZJWAPHC8CF41Jl9nNVM6rf5NBBaNw8EzBKGv0y2VfrdO_-wwm-cwo50ZOyfGR-lmuWHVqSI7CFkSG2sG-4rhkKalvqvEzkjkmVGo7E3vnd-OJ-oWZwN4EozvseUfNjJt1aLR2OGlcYXQt-IdNuBAVyZQYF3eRHjIbK0J1Q">
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
+</div>
+</div>
+<!-- Image 4 -->
+<div class="aspect-square rounded-xl overflow-hidden relative group">
+<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A close-up macro shot of the solid walnut legs being attached to the base of the cognac leather sofa. The lighting is soft and bright, typical of a modern, clean light-mode UI aesthetic. The wood grain is clearly visible, contrasting elegantly with the metal hardware." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOODLtEOZ3CBvgbTbUfvPjNykht-aXWfJb_v9Ms3rCJunEn2KZ6IEcFVydftT94BJtboKEDWy6obEhLHAc6_eSG_tgPk-k5mxblFzt-JbY1VgmNljzLmM5Arp09bxRrlI98ORPwLtiBj_KzLA8o43pwdR5DflqgqlLK6nG1aLEAsoPF8qYD8wHd9yFciIz3WhAJNjX2ckuOA5PJWYuTjlQtZmVGfe6KFzH67JHL6M5NjM-eBJp8L3SjQ">
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile only) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-outline-variant/30 py-3 px-6 flex justify-around items-center z-50">
+<a class="flex flex-col items-center gap-1 text-primary" href="{% url 'kanview:pedidos-tablero' %}">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">shopping_cart</span>
+<span class="font-label-sm text-label-sm">Orders</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="{% url 'kanview:pedidos-tablero' %}">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="{% url 'kanview:inventario' %}">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">inventory_2</span>
+<span class="font-label-sm text-label-sm">Inventory</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 300">menu</span>
+<span class="font-label-sm text-label-sm">More</span>
+</a>
+</div>
+
+
+</body></html>
