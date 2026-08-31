@@ -1,0 +1,572 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kanview - Finance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "secondary-fixed-dim": "#c6c6c7",
+                      "primary-fixed": "#93f2f2",
+                      "tertiary-fixed": "#ffdbcb",
+                      "surface-container-low": "#f5f3f3",
+                      "on-error": "#ffffff",
+                      "on-tertiary-container": "#fff9f7",
+                      "background": "#fbf9f8",
+                      "surface-container-highest": "#e4e2e2",
+                      "on-primary-container": "#e3fffe",
+                      "on-secondary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e4e2e2",
+                      "surface": "#fbf9f8",
+                      "on-tertiary-fixed-variant": "#733512",
+                      "surface-bright": "#fbf9f8",
+                      "on-tertiary-fixed": "#341100",
+                      "outline-variant": "#bdc9c8",
+                      "inverse-surface": "#303030",
+                      "surface-tint": "#006a6a",
+                      "on-tertiary": "#ffffff",
+                      "tertiary": "#8b4823",
+                      "primary-container": "#008080",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-container": "#a96039",
+                      "secondary-container": "#dcdddd",
+                      "surface-dim": "#dbdad9",
+                      "outline": "#6e7979",
+                      "inverse-primary": "#76d6d5",
+                      "secondary-fixed": "#e2e2e2",
+                      "on-primary-fixed-variant": "#004f4f",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb692",
+                      "on-secondary-container": "#5f6161",
+                      "primary-fixed-dim": "#76d6d5",
+                      "on-secondary-fixed": "#1a1c1c",
+                      "on-primary-fixed": "#002020",
+                      "primary": "#006565",
+                      "inverse-on-surface": "#f2f0f0",
+                      "on-surface-variant": "#3e4949",
+                      "on-background": "#1b1c1c",
+                      "on-secondary-fixed-variant": "#454747",
+                      "on-surface": "#1b1c1c",
+                      "error": "#ba1a1a",
+                      "surface-container": "#efeded",
+                      "error-container": "#ffdad6",
+                      "surface-container-high": "#eae8e7",
+                      "secondary": "#5d5f5f"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding-mobile": "20px",
+                      "card-gap": "24px",
+                      "base": "8px",
+                      "section-margin": "64px",
+                      "container-padding-desktop": "40px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #fbf9f8;
+            color: #1b1c1c;
+        }
+        .neomorphic-card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
+        }
+        .neomorphic-inner {
+            background: #ffffff;
+            box-shadow: inset 4px 4px 8px rgba(0,0,0,0.03), inset -4px -4px 8px #FFFFFF;
+        }
+        .seal-watermark {
+            opacity: 0.05;
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            pointer-events: none;
+        }
+        /* Chart.js overrides */
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>html,body{background-color:#F5F5F5 !important;}</style>
+</head>
+<body class="flex flex-col md:flex-row min-h-screen">
+<!-- Desktop SideNav -->
+{% include "kanview/_sidebar.html" %}
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 relative min-h-screen pb-24 md:pb-8">
+<!-- Top App Bar -->
+<header class="fixed top-0 right-0 w-full md:w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-mobile md:px-container-padding-desktop">
+<div class="flex items-center gap-4 w-full max-w-md">
+<!-- Mobile Menu Trigger (Optional visual, non-functional for layout) -->
+<button class="md:hidden p-2 rounded-full hover:bg-surface-container-low transition-all focus-within:ring-2 focus-within:ring-primary/20 text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="md:hidden font-headline-md text-headline-md font-bold text-primary">Kanview</h1>
+<div class="hidden md:flex relative w-full h-10 items-center neomorphic-inner rounded-full px-4 border border-surface-container-highest">
+<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md font-body-md w-full placeholder:text-outline-variant outline-none" placeholder="Search transactions..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-all text-on-surface-variant relative focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-all text-on-surface-variant focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined">chat_bubble</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-low transition-all text-on-surface-variant md:hidden focus-within:ring-2 focus-within:ring-primary/20">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<div class="pt-24 px-container-padding-mobile md:px-container-padding-desktop w-full max-w-7xl mx-auto">
+<div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Financial Overview</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Q3 2024 Performance Metrics</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-primary font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export Report
+                    </button>
+<button class="px-6 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:brightness-110 transition-colors shadow-sm">
+                        New Entry
+                    </button>
+</div>
+</div>
+<!-- KPIs Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-card-gap mb-8">
+<!-- KPI 1: Total Revenue -->
+<div class="neomorphic-card p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container opacity-10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 duration-500"></div>
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Total Revenue</h3>
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest neomorphic-inner flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display text-on-surface">$1.24M</span>
+</div>
+<div class="mt-4 flex items-center gap-1 text-primary text-sm font-medium">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="">+12.5% from last quarter</span>
+</div>
+<!-- Decorative Wax Seal SVG -->
+<svg class="seal-watermark w-12 h-12 text-primary" fill="currentColor" viewBox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-dasharray="10 5" stroke-width="4"></circle>
+<circle cx="50" cy="50" fill="none" r="35" stroke="currentColor" stroke-width="2"></circle>
+<path d="M50 25 L50 75 M25 50 L75 50 M32 32 L68 68 M32 68 L68 32" opacity="0.5" stroke="currentColor" stroke-width="1.5"></path>
+</svg>
+</div>
+<!-- KPI 2: Completed Orders (Value) -->
+<div class="neomorphic-card p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 duration-500"></div>
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Orders Settled</h3>
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest neomorphic-inner flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display text-on-surface">$892k</span>
+</div>
+<div class="mt-4 flex items-center gap-1 text-primary text-sm font-medium">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="">+4.2% from last quarter</span>
+</div>
+</div>
+<!-- KPI 3: Expenses -->
+<div class="neomorphic-card p-6 relative overflow-hidden group">
+<div class="absolute top-0 right-0 w-32 h-32 bg-error opacity-10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 duration-500"></div>
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Operating Expenses</h3>
+<div class="w-10 h-10 rounded-full bg-surface-container-lowest neomorphic-inner flex items-center justify-center text-error">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display text-on-surface">$348k</span>
+</div>
+<div class="mt-4 flex items-center gap-1 text-error text-sm font-medium">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="">+2.1% from last quarter</span>
+</div>
+</div>
+</div>
+<!-- Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-card-gap">
+<!-- Line Chart: Income vs Expenses -->
+<div class="neomorphic-card p-6 lg:col-span-2 flex flex-col">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Cash Flow Analysis</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Monthly Revenue vs Expenses</p>
+</div>
+<select class="bg-surface-container-lowest border border-outline-variant text-on-surface rounded-md font-label-md px-3 py-1.5 focus:ring-primary focus:border-primary">
+<option>Year to Date</option>
+<option>Last 12 Months</option>
+<option>Q3 2024</option>
+</select>
+</div>
+<div class="flex-1 relative w-full h-[300px]">
+<canvas id="cashFlowChart" width="685" height="487" style="display: block; box-sizing: border-box; height: 408px; width: 573.3px;"></canvas>
+</div>
+</div>
+<!-- Doughnut Chart: Revenue Streams -->
+<div class="neomorphic-card p-6 flex flex-col">
+<div class="mb-6">
+<h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Revenue Sources</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Distribution by Channel</p>
+</div>
+<div class="flex-1 relative w-full h-[250px] flex justify-center items-center">
+<canvas id="revenueSourceChart" width="299" height="358" style="display: block; box-sizing: border-box; height: 300px; width: 250.7px;"></canvas>
+</div>
+<!-- Custom Legend -->
+<div class="mt-6 space-y-3">
+<div class="flex items-center justify-between font-label-md text-label-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-[#006565]"></span>
+<span class="text-on-surface">Direct Sales</span>
+</div>
+<span class="font-bold text-on-surface">45%</span>
+</div>
+<div class="flex items-center justify-between font-label-md text-label-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-[#76d6d5]"></span>
+<span class="text-on-surface">B2B Wholesale</span>
+</div>
+<span class="font-bold text-on-surface">35%</span>
+</div>
+<div class="flex items-center justify-between font-label-md text-label-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-[#e4e2e2]"></span>
+<span class="text-on-surface">Custom Projects</span>
+</div>
+<span class="font-bold text-on-surface">20%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Transactions Table -->
+<div class="mt-8 neomorphic-card p-6 overflow-x-auto">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Recent Transactions</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Latest ledger entries</p>
+</div>
+<button class="text-primary font-label-md text-label-md hover:underline">View All</button>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-container-highest text-on-surface-variant">
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Date</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Description</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Category</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Status</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold text-right">Amount</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-surface-container-highest/50 hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
+<td class="py-4 px-4 text-on-surface-variant">Oct 12, 2024</td>
+<td class="py-4 px-4 font-medium text-on-surface">Acme Corp - Wholesale Order</td>
+<td class="py-4 px-4 text-on-surface-variant">Income</td>
+<td class="py-4 px-4">
+<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#e3fffe] text-[#006565]">Completed</span>
+</td>
+<td class="py-4 px-4 text-right font-medium text-[#006565]">+$24,500.00</td>
+</tr>
+<tr class="border-b border-surface-container-highest/50 hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
+<td class="py-4 px-4 text-on-surface-variant">Oct 10, 2024</td>
+<td class="py-4 px-4 font-medium text-on-surface">Global Logistics Freight</td>
+<td class="py-4 px-4 text-on-surface-variant">Expense</td>
+<td class="py-4 px-4">
+<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#e3fffe] text-[#006565]">Completed</span>
+</td>
+<td class="py-4 px-4 text-right font-medium text-on-surface">-$3,200.50</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
+<td class="py-4 px-4 text-on-surface-variant">Oct 08, 2024</td>
+<td class="py-4 px-4 font-medium text-on-surface">Custom Fabrication Ltd</td>
+<td class="py-4 px-4 text-on-surface-variant">Income</td>
+<td class="py-4 px-4">
+<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#f5f3f3] text-[#5d5f5f]">Pending</span>
+</td>
+<td class="py-4 px-4 text-right font-medium text-[#006565]">+$12,800.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) - Suppressed as this is a Dashboard/Destination screen, but keeping per JSON instructions for structure, hidden on md -->
+<nav class="md:hidden fixed bottom-6 right-6 w-auto h-12 rounded-full bg-primary dark:bg-primary-container shadow-[0_12px_24px_rgba(0,128,128,0.2)] z-50 flex items-center justify-center hover:brightness-110 cursor-pointer active:scale-95 transition-transform duration-150">
+<div class="text-on-primary dark:text-on-primary-container flex items-center gap-2 px-6 font-label-md text-label-md">
+<span class="material-symbols-outlined">chat</span>
+<span class="">Support Chat</span>
+</div>
+</nav>
+<script>
+        // Chart.js Configuration
+        const brandColors = {
+            primary: '#006565',
+            primaryLight: '#76d6d5',
+            secondary: '#5d5f5f',
+            surfaceVariant: '#e4e2e2',
+            text: '#1b1c1c',
+            grid: '#e4e2e2'
+        };
+
+        // Cash Flow Line Chart
+        const ctxCashFlow = document.getElementById('cashFlowChart').getContext('2d');
+        
+        // Create gradient for income line
+        const gradientIncome = ctxCashFlow.createLinearGradient(0, 0, 0, 300);
+        gradientIncome.addColorStop(0, 'rgba(0, 101, 101, 0.2)');
+        gradientIncome.addColorStop(1, 'rgba(0, 101, 101, 0)');
+
+        new Chart(ctxCashFlow, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: [65000, 78000, 72000, 95000, 85000, 110000, 105000, 125000, 140000],
+                        borderColor: brandColors.primary,
+                        backgroundColor: gradientIncome,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: brandColors.primary,
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Expenses',
+                        data: [45000, 48000, 40000, 55000, 52000, 60000, 58000, 65000, 62000],
+                        borderColor: brandColors.secondary,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: brandColors.secondary,
+                        pointBorderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        fill: false,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            usePointStyle: true,
+                            boxWidth: 8,
+                            font: { family: 'Inter', size: 12, weight: '500' },
+                            color: brandColors.text
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#303030',
+                        titleFont: { family: 'Inter', size: 13 },
+                        bodyFont: { family: 'Inter', size: 13 },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false, drawBorder: false },
+                        ticks: { font: { family: 'Inter', size: 12 }, color: '#6e7979' }
+                    },
+                    y: {
+                        grid: { color: brandColors.grid, drawBorder: false, borderDash: [4, 4] },
+                        ticks: { 
+                            font: { family: 'Inter', size: 12 }, 
+                            color: '#6e7979',
+                            callback: function(value) { return '$' + value / 1000 + 'k'; }
+                        },
+                        beginAtZero: true
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+            }
+        });
+
+        // Revenue Source Doughnut Chart
+        const ctxRevenue = document.getElementById('revenueSourceChart').getContext('2d');
+        new Chart(ctxRevenue, {
+            type: 'doughnut',
+            data: {
+                labels: ['Direct Sales', 'B2B Wholesale', 'Custom Projects'],
+                datasets: [{
+                    data: [45, 35, 20],
+                    backgroundColor: [
+                        brandColors.primary,
+                        brandColors.primaryLight,
+                        brandColors.surfaceVariant
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#303030',
+                        bodyFont: { family: 'Inter', size: 13 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+
+</body></html>

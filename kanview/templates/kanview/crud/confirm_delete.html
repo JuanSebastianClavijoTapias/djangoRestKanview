@@ -1,0 +1,19 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - {{ title }}{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="max-w-md">
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-4">
+<div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-600">warning</span>
+</div>
+<h2 class="text-xl font-bold">¿Eliminar "{{ object }}"?</h2>
+<p class="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+<form class="flex items-center gap-3 mt-2" method="post">
+{% csrf_token %}
+<button class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Eliminar</button>
+<a class="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors" href="{{ cancel_url }}">Cancelar</a>
+</form>
+</div>
+</div>
+{% endblock %}

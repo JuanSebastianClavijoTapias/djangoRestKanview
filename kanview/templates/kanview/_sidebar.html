@@ -1,0 +1,42 @@
+<!-- Shared sidebar. Requires "nav_items" (list of (icon,label,url_name)) and "active" (label string) in context. -->
+<aside class="w-64 h-screen fixed left-0 top-0 bg-surface shadow-[8px_8px_16px_rgba(0,0,0,0.03),-8px_-8px_16px_#FFFFFF] z-50 flex flex-col py-base px-4">
+<div class="flex items-center gap-3 px-4 py-6 mb-4 border-b border-outline-variant/30">
+<img alt="Kanview Wax Seal" class="w-10 h-10 rounded-full bg-primary-container p-1 shadow-neomorphic-lift object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c"/>
+<div class="flex flex-col">
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Kanview</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Manufacturing Pro</span>
+</div>
+</div>
+<ul class="flex flex-col gap-1 overflow-y-auto flex-1 pb-6 no-scrollbar">
+{% for icon, label, url_name in nav_items %}
+<li>
+{% if active == label %}
+<a class="flex items-center gap-3 px-4 py-3 rounded-r-xl border-l-4 border-primary bg-primary-container text-on-primary-container font-bold font-label-md text-label-md scale-95 transition-transform shadow-neomorphic-active" href="{% url url_name %}">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">{{ icon }}</span>
+<span>{{ label }}</span>
+</a>
+{% else %}
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-90 transition-transform" href="{% url url_name %}">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">{{ icon }}</span>
+<span class="font-label-md text-label-md">{{ label }}</span>
+</a>
+{% endif %}
+</li>
+{% endfor %}
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-90 transition-transform" href="/admin/">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</li>
+<li>
+<form action="{% url 'kanview:logout' %}" method="post">
+{% csrf_token %}
+<button class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-error hover:bg-error-container/40 transition-colors duration-200 scale-95 active:scale-90 transition-transform text-left" type="submit">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">logout</span>
+<span class="font-label-md text-label-md">Cerrar sesión</span>
+</button>
+</form>
+</li>
+</ul>
+</aside>
