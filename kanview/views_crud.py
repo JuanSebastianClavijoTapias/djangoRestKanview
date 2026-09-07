@@ -3,8 +3,32 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
-from .forms import AdministradorForm, ClienteForm, EmpleadoForm, PedidoForm, ProductoForm
-from .models import Administrador, Cliente, Empleado, Pedido, Producto
+from .forms import (
+    ActividadesForm,
+    AdministradorForm,
+    CalendarioForm,
+    CatalogoForm,
+    ClienteForm,
+    EmpleadoForm,
+    HistorialForm,
+    InventarioForm,
+    PedidoForm,
+    ProductoForm,
+    TareasPedidoForm,
+)
+from .models import (
+    Actividades,
+    Administrador,
+    Calendario,
+    Catalogo,
+    Cliente,
+    Empleado,
+    Historial,
+    Inventario,
+    Pedido,
+    Producto,
+    TareasPedido,
+)
 from .views_site import SidebarMixin
 
 NavContextMixin = SidebarMixin  # shared sidebar context (see views_site.NAV_ITEMS)
@@ -272,3 +296,231 @@ class PedidoDeleteView(BaseDeleteView):
     object_label = "Pedido"
     list_url_name = "kanview:pedido-lista"
     success_url = reverse_lazy("kanview:pedido-lista")
+
+
+# ---- Inventario -----------------------------------------------------------
+
+class InventarioListView(BaseListView):
+    model = Inventario
+    active_label = "Inventory"
+    title = "Inventario"
+    columns = ["cantidad", "id_producto"]
+    create_url_name = "kanview:inventario-crear"
+    update_url_name = "kanview:inventario-editar"
+    delete_url_name = "kanview:inventario-eliminar"
+
+
+class InventarioCreateView(BaseCreateView):
+    model = Inventario
+    form_class = InventarioForm
+    active_label = "Inventory"
+    object_label = "Inventario"
+    list_url_name = "kanview:inventario-lista"
+    success_url = reverse_lazy("kanview:inventario-lista")
+
+
+class InventarioUpdateView(BaseUpdateView):
+    model = Inventario
+    form_class = InventarioForm
+    active_label = "Inventory"
+    object_label = "Inventario"
+    list_url_name = "kanview:inventario-lista"
+    success_url = reverse_lazy("kanview:inventario-lista")
+
+
+class InventarioDeleteView(BaseDeleteView):
+    model = Inventario
+    active_label = "Inventory"
+    object_label = "Inventario"
+    list_url_name = "kanview:inventario-lista"
+    success_url = reverse_lazy("kanview:inventario-lista")
+
+
+# ---- Calendario -----------------------------------------------------------
+
+class CalendarioListView(BaseListView):
+    model = Calendario
+    active_label = "Calendar"
+    title = "Calendario"
+    columns = ["fecha", "nombre_mes", "nombre_dia", "id_pedido"]
+    create_url_name = "kanview:calendario-crear"
+    update_url_name = "kanview:calendario-editar"
+    delete_url_name = "kanview:calendario-eliminar"
+
+
+class CalendarioCreateView(BaseCreateView):
+    model = Calendario
+    form_class = CalendarioForm
+    active_label = "Calendar"
+    object_label = "Calendario"
+    list_url_name = "kanview:calendario-lista"
+    success_url = reverse_lazy("kanview:calendario-lista")
+
+
+class CalendarioUpdateView(BaseUpdateView):
+    model = Calendario
+    form_class = CalendarioForm
+    active_label = "Calendar"
+    object_label = "Calendario"
+    list_url_name = "kanview:calendario-lista"
+    success_url = reverse_lazy("kanview:calendario-lista")
+
+
+class CalendarioDeleteView(BaseDeleteView):
+    model = Calendario
+    active_label = "Calendar"
+    object_label = "Calendario"
+    list_url_name = "kanview:calendario-lista"
+    success_url = reverse_lazy("kanview:calendario-lista")
+
+
+# ---- TareasPedido ---------------------------------------------------------
+
+class TareasPedidoListView(BaseListView):
+    model = TareasPedido
+    active_label = "Tasks"
+    title = "Tareas"
+    columns = ["nombre", "estado", "fecha_inicio", "fecha_fin", "id_pedido"]
+    create_url_name = "kanview:tarea-crear"
+    update_url_name = "kanview:tarea-editar"
+    delete_url_name = "kanview:tarea-eliminar"
+
+
+class TareasPedidoCreateView(BaseCreateView):
+    model = TareasPedido
+    form_class = TareasPedidoForm
+    active_label = "Tasks"
+    object_label = "Tarea"
+    list_url_name = "kanview:tarea-lista"
+    success_url = reverse_lazy("kanview:tarea-lista")
+
+
+class TareasPedidoUpdateView(BaseUpdateView):
+    model = TareasPedido
+    form_class = TareasPedidoForm
+    active_label = "Tasks"
+    object_label = "Tarea"
+    list_url_name = "kanview:tarea-lista"
+    success_url = reverse_lazy("kanview:tarea-lista")
+
+
+class TareasPedidoDeleteView(BaseDeleteView):
+    model = TareasPedido
+    active_label = "Tasks"
+    object_label = "Tarea"
+    list_url_name = "kanview:tarea-lista"
+    success_url = reverse_lazy("kanview:tarea-lista")
+
+
+# ---- Actividades (Auditoría) ----------------------------------------------
+
+class ActividadesListView(BaseListView):
+    model = Actividades
+    active_label = "Audit"
+    title = "Actividades"
+    columns = ["nombre", "estado", "fecha_inicio", "fecha_fin", "id_tarea"]
+    create_url_name = "kanview:actividad-crear"
+    update_url_name = "kanview:actividad-editar"
+    delete_url_name = "kanview:actividad-eliminar"
+
+
+class ActividadesCreateView(BaseCreateView):
+    model = Actividades
+    form_class = ActividadesForm
+    active_label = "Audit"
+    object_label = "Actividad"
+    list_url_name = "kanview:actividad-lista"
+    success_url = reverse_lazy("kanview:actividad-lista")
+
+
+class ActividadesUpdateView(BaseUpdateView):
+    model = Actividades
+    form_class = ActividadesForm
+    active_label = "Audit"
+    object_label = "Actividad"
+    list_url_name = "kanview:actividad-lista"
+    success_url = reverse_lazy("kanview:actividad-lista")
+
+
+class ActividadesDeleteView(BaseDeleteView):
+    model = Actividades
+    active_label = "Audit"
+    object_label = "Actividad"
+    list_url_name = "kanview:actividad-lista"
+    success_url = reverse_lazy("kanview:actividad-lista")
+
+
+# ---- Catalogo -------------------------------------------------------------
+
+class CatalogoListView(BaseListView):
+    model = Catalogo
+    active_label = "Catalog"
+    title = "Catálogo"
+    columns = ["categorias", "id_inventario", "id_producto"]
+    create_url_name = "kanview:catalogo-crear"
+    update_url_name = "kanview:catalogo-editar"
+    delete_url_name = "kanview:catalogo-eliminar"
+
+
+class CatalogoCreateView(BaseCreateView):
+    model = Catalogo
+    form_class = CatalogoForm
+    active_label = "Catalog"
+    object_label = "Catálogo"
+    list_url_name = "kanview:catalogo-lista"
+    success_url = reverse_lazy("kanview:catalogo-lista")
+
+
+class CatalogoUpdateView(BaseUpdateView):
+    model = Catalogo
+    form_class = CatalogoForm
+    active_label = "Catalog"
+    object_label = "Catálogo"
+    list_url_name = "kanview:catalogo-lista"
+    success_url = reverse_lazy("kanview:catalogo-lista")
+
+
+class CatalogoDeleteView(BaseDeleteView):
+    model = Catalogo
+    active_label = "Catalog"
+    object_label = "Catálogo"
+    list_url_name = "kanview:catalogo-lista"
+    success_url = reverse_lazy("kanview:catalogo-lista")
+
+
+# ---- Historial ------------------------------------------------------------
+
+class HistorialListView(BaseListView):
+    model = Historial
+    active_label = "Audit"
+    title = "Historial"
+    columns = ["hora_creacion", "fecha_creacion", "id_cliente", "id_empleado", "id_producto"]
+    create_url_name = "kanview:historial-crear"
+    update_url_name = "kanview:historial-editar"
+    delete_url_name = "kanview:historial-eliminar"
+
+
+class HistorialCreateView(BaseCreateView):
+    model = Historial
+    form_class = HistorialForm
+    active_label = "Audit"
+    object_label = "Historial"
+    list_url_name = "kanview:historial-lista"
+    success_url = reverse_lazy("kanview:historial-lista")
+
+
+class HistorialUpdateView(BaseUpdateView):
+    model = Historial
+    form_class = HistorialForm
+    active_label = "Audit"
+    object_label = "Historial"
+    list_url_name = "kanview:historial-lista"
+    success_url = reverse_lazy("kanview:historial-lista")
+
+
+class HistorialDeleteView(BaseDeleteView):
+    model = Historial
+    active_label = "Audit"
+    object_label = "Historial"
+    list_url_name = "kanview:historial-lista"
+    success_url = reverse_lazy("kanview:historial-lista")

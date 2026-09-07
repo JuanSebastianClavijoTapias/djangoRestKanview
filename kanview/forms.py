@@ -1,6 +1,18 @@
 from django import forms
 
-from .models import Administrador, Cliente, Empleado, Pedido, Producto
+from .models import (
+    Actividades,
+    Administrador,
+    Calendario,
+    Catalogo,
+    Cliente,
+    Empleado,
+    Historial,
+    Inventario,
+    Pedido,
+    Producto,
+    TareasPedido,
+)
 
 WIDGET_ATTRS = {
     "class": (
@@ -61,4 +73,53 @@ class PedidoForm(StyledModelForm):
         widgets = {
             "fecha_creacion": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "hora_creacion": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+        }
+
+
+class InventarioForm(StyledModelForm):
+    class Meta:
+        model = Inventario
+        fields = ["cantidad", "id_producto"]
+
+
+class CalendarioForm(StyledModelForm):
+    class Meta:
+        model = Calendario
+        fields = ["fecha", "anio", "mes", "nombre_mes", "dia", "nombre_dia", "id_pedido"]
+        widgets = {"fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
+
+
+class TareasPedidoForm(StyledModelForm):
+    class Meta:
+        model = TareasPedido
+        fields = ["nombre", "descripcion", "fecha_inicio", "fecha_fin", "estado", "id_pedido"]
+        widgets = {
+            "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "fecha_fin": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        }
+
+
+class ActividadesForm(StyledModelForm):
+    class Meta:
+        model = Actividades
+        fields = ["nombre", "descripcion", "fecha_inicio", "fecha_fin", "estado", "id_tarea"]
+        widgets = {
+            "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "fecha_fin": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        }
+
+
+class CatalogoForm(StyledModelForm):
+    class Meta:
+        model = Catalogo
+        fields = ["categorias", "id_inventario", "id_producto"]
+
+
+class HistorialForm(StyledModelForm):
+    class Meta:
+        model = Historial
+        fields = ["hora_creacion", "fecha_creacion", "id_cliente", "id_empleado", "id_producto"]
+        widgets = {
+            "hora_creacion": forms.TimeInput(attrs={"type": "time"}),
+            "fecha_creacion": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         }

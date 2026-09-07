@@ -227,10 +227,10 @@
 <h2 class="font-display text-headline-lg-mobile md:text-headline-lg text-on-surface">Inventory Management</h2>
 <p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage your high-end physical goods and track stock levels.</p>
 </div>
-<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-[16px] flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_12px_24px_rgba(0,128,128,0.2)]">
+<a class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-[16px] flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_12px_24px_rgba(0,128,128,0.2)]" href="{% url 'kanview:inventario-crear' %}">
 <span class="material-symbols-outlined">add</span>
-                Añadir Producto
-            </button>
+                Añadir Inventario
+            </a>
 </div>
 <!-- Inventory Table Card (Neomorphic) -->
 <div class="bg-surface rounded-2xl neomorphic-card p-6 relative overflow-hidden flex-1 flex flex-col">
@@ -372,9 +372,9 @@
 </a>
 </nav>
 <!-- Floating Action Button (Mobile Only context fallback) -->
-<button class="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0_12px_24px_rgba(0,128,128,0.2)] flex items-center justify-center active:scale-95 transition-transform z-50">
+<a class="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-[0_12px_24px_rgba(0,128,128,0.2)] flex items-center justify-center active:scale-95 transition-transform z-50" href="{% url 'kanview:inventario-crear' %}">
 <span class="material-symbols-outlined">add</span>
-</button>
+</a>
 
 
 </body></html>
