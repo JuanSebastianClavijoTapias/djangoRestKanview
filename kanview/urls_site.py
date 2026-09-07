@@ -1,10 +1,22 @@
 from django.urls import path
 
 from .views_crud import (
+    ActividadesCreateView,
+    ActividadesDeleteView,
+    ActividadesListView,
+    ActividadesUpdateView,
     AdministradorCreateView,
     AdministradorDeleteView,
     AdministradorListView,
     AdministradorUpdateView,
+    CalendarioCreateView,
+    CalendarioDeleteView,
+    CalendarioListView,
+    CalendarioUpdateView,
+    CatalogoCreateView,
+    CatalogoDeleteView,
+    CatalogoListView,
+    CatalogoUpdateView,
     ClienteCreateView,
     ClienteDeleteView,
     ClienteListView,
@@ -14,6 +26,14 @@ from .views_crud import (
     EmpleadoDeleteView,
     EmpleadoListView,
     EmpleadoUpdateView,
+    HistorialCreateView,
+    HistorialDeleteView,
+    HistorialListView,
+    HistorialUpdateView,
+    InventarioCreateView,
+    InventarioDeleteView,
+    InventarioListView,
+    InventarioUpdateView,
     PedidoCreateView,
     PedidoDeleteView,
     PedidoListView,
@@ -22,6 +42,10 @@ from .views_crud import (
     ProductoDeleteView,
     ProductoListView,
     ProductoUpdateView,
+    TareasPedidoCreateView,
+    TareasPedidoDeleteView,
+    TareasPedidoListView,
+    TareasPedidoUpdateView,
 )
 from .views_site import (
     AuditoriaView,
@@ -88,4 +112,40 @@ urlpatterns = [
     path("crud/pedidos/nuevo/", PedidoCreateView.as_view(), name="pedido-crear"),
     path("crud/pedidos/<int:pk>/editar/", PedidoUpdateView.as_view(), name="pedido-editar"),
     path("crud/pedidos/<int:pk>/eliminar/", PedidoDeleteView.as_view(), name="pedido-eliminar"),
+
+    # CRUD: Inventario
+    path("crud/inventario/", InventarioListView.as_view(), name="inventario-lista"),
+    path("crud/inventario/nuevo/", InventarioCreateView.as_view(), name="inventario-crear"),
+    path("crud/inventario/<int:pk>/editar/", InventarioUpdateView.as_view(), name="inventario-editar"),
+    path("crud/inventario/<int:pk>/eliminar/", InventarioDeleteView.as_view(), name="inventario-eliminar"),
+
+    # CRUD: Calendario
+    path("crud/calendario/", CalendarioListView.as_view(), name="calendario-lista"),
+    path("crud/calendario/nuevo/", CalendarioCreateView.as_view(), name="calendario-crear"),
+    path("crud/calendario/<int:pk>/editar/", CalendarioUpdateView.as_view(), name="calendario-editar"),
+    path("crud/calendario/<int:pk>/eliminar/", CalendarioDeleteView.as_view(), name="calendario-eliminar"),
+
+    # CRUD: Tareas
+    path("crud/tareas/", TareasPedidoListView.as_view(), name="tarea-lista"),
+    path("crud/tareas/nuevo/", TareasPedidoCreateView.as_view(), name="tarea-crear"),
+    path("crud/tareas/<int:pk>/editar/", TareasPedidoUpdateView.as_view(), name="tarea-editar"),
+    path("crud/tareas/<int:pk>/eliminar/", TareasPedidoDeleteView.as_view(), name="tarea-eliminar"),
+
+    # CRUD: Actividades (Auditoría)
+    path("crud/actividades/", ActividadesListView.as_view(), name="actividad-lista"),
+    path("crud/actividades/nuevo/", ActividadesCreateView.as_view(), name="actividad-crear"),
+    path("crud/actividades/<int:pk>/editar/", ActividadesUpdateView.as_view(), name="actividad-editar"),
+    path("crud/actividades/<int:pk>/eliminar/", ActividadesDeleteView.as_view(), name="actividad-eliminar"),
+
+    # CRUD: Catálogo
+    path("crud/catalogo/", CatalogoListView.as_view(), name="catalogo-lista"),
+    path("crud/catalogo/nuevo/", CatalogoCreateView.as_view(), name="catalogo-crear"),
+    path("crud/catalogo/<int:pk>/editar/", CatalogoUpdateView.as_view(), name="catalogo-editar"),
+    path("crud/catalogo/<int:pk>/eliminar/", CatalogoDeleteView.as_view(), name="catalogo-eliminar"),
+
+    # CRUD: Historial
+    path("crud/historial/", HistorialListView.as_view(), name="historial-lista"),
+    path("crud/historial/nuevo/", HistorialCreateView.as_view(), name="historial-crear"),
+    path("crud/historial/<int:pk>/editar/", HistorialUpdateView.as_view(), name="historial-editar"),
+    path("crud/historial/<int:pk>/eliminar/", HistorialDeleteView.as_view(), name="historial-eliminar"),
 ]
