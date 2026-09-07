@@ -224,7 +224,7 @@
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-section-margin gap-4">
 <div>
-<h2 class="font-display text-headline-lg-mobile md:text-headline-lg text-on-surface">Inventory Management</h2>
+<h2 class="font-display text-headline-lg-mobile md:text-headline-lg text-on-surface">Gestión de Inventario</h2>
 <p class="font-body-md text-body-md text-on-surface-variant mt-2">Manage your high-end physical goods and track stock levels.</p>
 </div>
 <a class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-[16px] flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-[0_12px_24px_rgba(0,128,128,0.2)]" href="{% url 'kanview:inventario-crear' %}">
@@ -232,7 +232,7 @@
                 Añadir Inventario
             </a>
 </div>
-<!-- Inventory Table Card (Neomorphic) -->
+<!-- Tabla de Inventario (Neomórfica) -->
 <div class="bg-surface rounded-2xl neomorphic-card p-6 relative overflow-hidden flex-1 flex flex-col">
 <!-- Table Controls -->
 <div class="flex justify-between items-center mb-6 pb-4 border-b border-outline-variant/20">
@@ -240,7 +240,7 @@
 <div class="relative">
 <select class="appearance-none bg-surface-container-low border border-outline-variant/30 text-on-surface font-label-md text-label-md py-2 pl-4 pr-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50">
 <option>All Categories</option>
-<option>Furniture</option>
+<option>Furniture</option>      
 <option>Lighting</option>
 <option>Hardware</option>
 </select>
@@ -360,15 +360,15 @@
 <nav class="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-outline-variant/20 z-50 px-4 py-2 flex justify-around items-center pb-safe">
 <a class="flex flex-col items-center p-2 text-on-surface-variant" href="{% url 'kanview:pedidos-tablero' %}">
 <span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
-<span class="text-[10px] mt-1">Dashboard</span>
+<span class="text-[10px] mt-1">Panel</span>
 </a>
 <a class="flex flex-col items-center p-2 text-primary font-bold" href="{% url 'kanview:inventario' %}">
 <span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
-<span class="text-[10px] mt-1">Inventory</span>
+<span class="text-[10px] mt-1">Inventario</span>
 </a>
 <a class="flex flex-col items-center p-2 text-on-surface-variant" href="{% url 'kanview:catalogo' %}">
 <span class="material-symbols-outlined" data-icon="menu_book">menu_book</span>
-<span class="text-[10px] mt-1">Catalog</span>
+<span class="text-[10px] mt-1">Catálogo</span>
 </a>
 </nav>
 <!-- Floating Action Button (Mobile Only context fallback) -->
