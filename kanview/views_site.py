@@ -3,16 +3,16 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import TemplateView
 
 NAV_ITEMS = [
-    ("dashboard", "Dashboard", "kanview:dashboard"),
-    ("shopping_cart", "Orders", "kanview:pedidos-tablero"),
-    ("inventory_2", "Inventory", "kanview:inventario"),
-    ("menu_book", "Catalog", "kanview:catalogo"),
-    ("assignment", "Tasks", "kanview:tareas"),
-    ("history", "Activities", "kanview:tareas"),
-    ("calendar_today", "Calendar", "kanview:calendario"),
-    ("fact_check", "Audit", "kanview:auditoria"),
-    ("group", "Users", "kanview:clientes"),
-    ("payments", "Finance", "kanview:finanzas"),
+    ("dashboard", "Panel", "kanview:dashboard"),
+    ("shopping_cart", "Pedidos", "kanview:pedidos-tablero"),
+    ("inventory_2", "Inventario", "kanview:inventario"),
+    ("menu_book", "Catálogo", "kanview:catalogo"),
+    ("assignment", "Tareas", "kanview:tareas"),
+    ("history", "Actividades", "kanview:tareas"),
+    ("calendar_today", "Calendario", "kanview:calendario"),
+    ("fact_check", "Auditoría", "kanview:auditoria"),
+    ("group", "Usuarios", "kanview:clientes"),
+    ("payments", "Finanzas", "kanview:finanzas"),
 ]
 
 
@@ -37,37 +37,37 @@ class KanviewLogoutView(LogoutView):
 
 class PedidosTableroView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/pedidos_tablero.html"
-    active_label = "Orders"
+    active_label = "Pedidos"
 
 
 class PedidoDetalleView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/pedidos_detalle.html"
-    active_label = "Orders"
+    active_label = "Pedidos"
 
 
 class TareasView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/tareas.html"
-    active_label = "Tasks"
+    active_label = "Tareas"
 
 
 class CalendarioView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/calendario.html"
-    active_label = "Calendar"
+    active_label = "Calendario"
 
 
 class InventarioView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/inventario.html"
-    active_label = "Inventory"
+    active_label = "Inventario"
 
 
 class FinanzasView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/finanzas.html"
-    active_label = "Finance"
+    active_label = "Finanzas"
 
 
 class AuditoriaView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/auditoria.html"
-    active_label = "Audit"
+    active_label = "Auditoría"
 
 
 class MensajeriaView(LoginRequiredMixin, SidebarMixin, TemplateView):
@@ -77,7 +77,7 @@ class MensajeriaView(LoginRequiredMixin, SidebarMixin, TemplateView):
 
 class ClientesView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/clientes.html"
-    active_label = "Users"
+    active_label = "Usuarios"
 
 
 class EmpleadosView(LoginRequiredMixin, SidebarMixin, TemplateView):
@@ -87,4 +87,4 @@ class EmpleadosView(LoginRequiredMixin, SidebarMixin, TemplateView):
 
 class CatalogoView(LoginRequiredMixin, SidebarMixin, TemplateView):
     template_name = "kanview/catalogo.html"
-    active_label = "Catalog"
+    active_label = "Catálogo"
