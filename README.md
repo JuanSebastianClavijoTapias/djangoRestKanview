@@ -1,6 +1,6 @@
 # Kanview
 
-Sistema de gestión para Cuir Tapicería (taller de tapicería en cuero): backend Django REST Framework más un conjunto de páginas de interfaz (Django templates) generadas a partir del diseño en Stitch.
+Sistema de gestión para Cuir Tapicería (taller de tapicería en cuero): API con Django REST Framework (vistas basadas en funciones) más un conjunto de páginas de interfaz (Django templates).
 
 ## Requisitos
 
@@ -11,29 +11,13 @@ Sistema de gestión para Cuir Tapicería (taller de tapicería en cuero): backen
 
 ```bash
 git clone <url-del-repo>
-cd dragonfish
+cd djangoRestKanview
 
 python3 -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
-
-## Variables de entorno
-
-Copia el archivo de ejemplo y ajusta los valores si es necesario:
-
-```bash
-cp .env.example .env
-```
-
-| Variable       | Descripción                                   | Default (`.env.example`)   |
-|----------------|------------------------------------------------|-----------------------------|
-| `SECRET_KEY`   | Clave secreta de Django                         | `change-me-generate-a-new-one` |
-| `DEBUG`        | Modo debug                                      | `True`                      |
-| `ALLOWED_HOSTS`| Hosts permitidos, separados por coma            | `localhost,127.0.0.1`       |
-
-Para producción, genera una `SECRET_KEY` propia y pon `DEBUG=False`.
 
 ## Base de datos
 
@@ -65,21 +49,22 @@ python3 manage.py runserver 8010
 
 ### API (Django REST Framework)
 
-Todas bajo el prefijo `/api/`, con CRUD completo (`ModelViewSet`):
+Todas bajo el prefijo `/api/`. Cada recurso tiene una ruta de lista (`GET` para listar,
+`POST` para crear) y una de detalle (`GET`, `PUT` y `DELETE` sobre un registro):
 
 ```
-/api/clientes/
-/api/empleados/
-/api/administradores/
-/api/analisis-financieros/
-/api/productos/
-/api/inventarios/
-/api/catalogos/
-/api/pedidos/
-/api/tareas-pedido/
-/api/actividades/
-/api/historial/
-/api/calendario/
+/api/clientes/                 /api/clientes/<id>/
+/api/empleados/                /api/empleados/<id>/
+/api/administradores/          /api/administradores/<id>/
+/api/analisis-financieros/     /api/analisis-financieros/<id>/
+/api/productos/                /api/productos/<id>/
+/api/inventarios/              /api/inventarios/<id>/
+/api/catalogos/                /api/catalogos/<id>/
+/api/pedidos/                  /api/pedidos/<id>/
+/api/tareas-pedido/            /api/tareas-pedido/<id>/
+/api/actividades/              /api/actividades/<id>/
+/api/historial/                /api/historial/<id>/
+/api/calendario/               /api/calendario/<id>/
 ```
 
 ### Interfaz (páginas)
@@ -87,6 +72,7 @@ Todas bajo el prefijo `/api/`, con CRUD completo (`ModelViewSet`):
 ```
 /                  Tablero de pedidos (home)
 /login/            Inicio de sesión
+/logout/           Cerrar sesión
 /pedidos/          Tablero de pedidos
 /pedidos/<id>/     Detalle de pedido
 /tareas/           Gestión de tareas
@@ -96,17 +82,43 @@ Todas bajo el prefijo `/api/`, con CRUD completo (`ModelViewSet`):
 /auditoria/        Auditoría y control
 /mensajeria/       Mensajería interna
 /clientes/         Gestión de clientes
-/empleados/         Gestión de empleados
+/empleados/        Gestión de empleados
 /catalogo/         Catálogo de productos
 /admin/            Panel de administración de Django
 ```
 
-> Nota: estas páginas están construidas a partir del diseño exportado de Stitch. Por ahora muestran datos de ejemplo fijos en el HTML; todavía no están conectadas a los datos reales de la API (`/api/...`).
+### CRUD (formularios de la interfaz)
+
+Cada recurso tiene listar, crear, editar y eliminar:
+
+```
+/crud/clientes/    /crud/clientes/nuevo/    /crud/clientes/<id>/editar/    /crud/clientes/<id>/eliminar/
+/crud/empleados/   ...
+/crud/administradores/
+/crud/productos/
+/crud/pedidos/
+/crud/inventario/
+/crud/calendario/
+/crud/tareas/
+/crud/actividades/
+/crud/catalogo/
+/crud/historial/
+```
 
 ## Estructura del proyecto
 
 ```
 config/     Configuración del proyecto Django (settings, urls raíz)
-kanview/    App principal: modelos, serializers, views/urls de la API,
-            y views/urls/templates de la interfaz
+kanview/    App principal:
+            models.py       Modelos de la base de datos
+            serializers.py  Serializers de DRF
+            views.py        Vistas de la API (@api_view, basadas en funciones)
+            urls.py         Rutas de la API
+            views_site.py   Vistas de las páginas (basadas en funciones)
+            views_crud.py   Vistas del CRUD (basadas en funciones)
+            urls_site.py    Rutas de las páginas y del CRUD
+            forms.py        Formularios (forms.ModelForm)
+            templates/      Plantillas HTML
 ```
+
+> Nota: las páginas de diseño (las que no son CRUD) muestran datos de ejemplo fijos en el HTML; todavía no están conectadas a los datos reales de la API (`/api/...`).

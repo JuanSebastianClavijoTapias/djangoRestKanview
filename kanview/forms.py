@@ -14,34 +14,15 @@ from .models import (
     TareasPedido,
 )
 
-WIDGET_ATTRS = {
-    "class": (
-        "w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm "
-        "focus:ring-2 focus:ring-[#008080]/30 focus:border-[#008080] outline-none transition-all"
-    )
-}
 
-
-class StyledModelForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            if isinstance(field.widget, (forms.CheckboxInput,)):
-                continue
-            existing = field.widget.attrs.get("class", "")
-            field.widget.attrs["class"] = (existing + " " + WIDGET_ATTRS["class"]).strip()
-            if isinstance(field.widget, forms.Textarea):
-                field.widget.attrs.setdefault("rows", 3)
-
-
-class ClienteForm(StyledModelForm):
+class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
         fields = ["nombre", "documento", "celular", "direccion", "fecha_nacimiento", "edad"]
         widgets = {"fecha_nacimiento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
 
-class EmpleadoForm(StyledModelForm):
+class EmpleadoForm(forms.ModelForm):
     class Meta:
         model = Empleado
         fields = [
@@ -51,19 +32,19 @@ class EmpleadoForm(StyledModelForm):
         widgets = {"fecha_nacimiento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
 
-class AdministradorForm(StyledModelForm):
+class AdministradorForm(forms.ModelForm):
     class Meta:
         model = Administrador
         fields = ["nombre", "documento", "celular"]
 
 
-class ProductoForm(StyledModelForm):
+class ProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
         fields = ["nombre", "categoria", "codigo_producto", "cantidad", "precio", "descripcion"]
 
 
-class PedidoForm(StyledModelForm):
+class PedidoForm(forms.ModelForm):
     class Meta:
         model = Pedido
         fields = [
@@ -76,20 +57,20 @@ class PedidoForm(StyledModelForm):
         }
 
 
-class InventarioForm(StyledModelForm):
+class InventarioForm(forms.ModelForm):
     class Meta:
         model = Inventario
         fields = ["cantidad", "id_producto"]
 
 
-class CalendarioForm(StyledModelForm):
+class CalendarioForm(forms.ModelForm):
     class Meta:
         model = Calendario
         fields = ["fecha", "anio", "mes", "nombre_mes", "dia", "nombre_dia", "id_pedido"]
         widgets = {"fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
 
-class TareasPedidoForm(StyledModelForm):
+class TareasPedidoForm(forms.ModelForm):
     class Meta:
         model = TareasPedido
         fields = ["nombre", "descripcion", "fecha_inicio", "fecha_fin", "estado", "id_pedido"]
@@ -99,7 +80,7 @@ class TareasPedidoForm(StyledModelForm):
         }
 
 
-class ActividadesForm(StyledModelForm):
+class ActividadesForm(forms.ModelForm):
     class Meta:
         model = Actividades
         fields = ["nombre", "descripcion", "fecha_inicio", "fecha_fin", "estado", "id_tarea"]
@@ -109,13 +90,13 @@ class ActividadesForm(StyledModelForm):
         }
 
 
-class CatalogoForm(StyledModelForm):
+class CatalogoForm(forms.ModelForm):
     class Meta:
         model = Catalogo
         fields = ["categorias", "id_inventario", "id_producto"]
 
 
-class HistorialForm(StyledModelForm):
+class HistorialForm(forms.ModelForm):
     class Meta:
         model = Historial
         fields = ["hora_creacion", "fecha_creacion", "id_cliente", "id_empleado", "id_producto"]
