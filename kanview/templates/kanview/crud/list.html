@@ -1,14 +1,13 @@
 {% extends "kanview/crud_base.html" %}
-{% load kanview_extras %}
 {% block title %}Kanview - {{ title }}{% endblock %}
 {% block header_title %}{{ title }}{% endblock %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
 <div>
 <h2 class="text-2xl font-bold">{{ title }}</h2>
-<p class="text-sm text-gray-500 mt-1">{{ paginator.count }} registro{{ paginator.count|pluralize }}</p>
+<p class="text-sm text-gray-500 mt-1">{{ filas|length }} registro{{ filas|length|pluralize }}</p>
 </div>
-<a class="bg-[#006565] hover:bg-[#004f4f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors" href="{{ create_url }}">
+<a class="bg-[#006565] hover:bg-[#004f4f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors" href="{{ crear_url }}">
 <span class="material-symbols-outlined text-[18px]">add</span>
     Nuevo
 </a>
@@ -17,34 +16,27 @@
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wider bg-gray-50">
-{% for col in columns %}
+{% for col in columnas %}
 <th class="py-3 px-6 font-semibold">{{ col }}</th>
 {% endfor %}
 <th class="py-3 px-6 font-semibold text-right">Acciones</th>
 </tr>
 </thead>
 <tbody class="text-sm">
-{% for object in object_list %}
+{% for fila in filas %}
 <tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-{% for col in columns %}
-<td class="py-3 px-6">{{ object|getattr:col }}</td>
+{% for valor in fila.valores %}
+<td class="py-3 px-6">{{ valor }}</td>
 {% endfor %}
 <td class="py-3 px-6 text-right whitespace-nowrap">
-<a class="text-[#006565] hover:underline font-medium mr-4" href="{% url update_url_name object.pk %}">Editar</a>
-<a class="text-red-600 hover:underline font-medium" href="{% url delete_url_name object.pk %}">Eliminar</a>
+<a class="text-[#006565] hover:underline font-medium mr-4" href="{% url editar_url fila.pk %}">Editar</a>
+<a class="text-red-600 hover:underline font-medium" href="{% url eliminar_url fila.pk %}">Eliminar</a>
 </td>
 </tr>
 {% empty %}
-<tr><td class="py-8 px-6 text-center text-gray-400" colspan="10">No hay registros todavía.</td></tr>
+<tr><td class="py-8 px-6 text-center text-gray-400" colspan="{{ columnas|length|add:1 }}">No hay registros todavía.</td></tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
-{% if is_paginated %}
-<div class="flex justify-center gap-2 mt-6 text-sm">
-{% if page_obj.has_previous %}<a class="px-3 py-1.5 rounded-lg bg-white shadow-sm" href="?page={{ page_obj.previous_page_number }}">Anterior</a>{% endif %}
-<span class="px-3 py-1.5">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-{% if page_obj.has_next %}<a class="px-3 py-1.5 rounded-lg bg-white shadow-sm" href="?page={{ page_obj.next_page_number }}">Siguiente</a>{% endif %}
-</div>
-{% endif %}
 {% endblock %}
