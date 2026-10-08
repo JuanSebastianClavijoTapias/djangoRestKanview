@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 
 from .views import (
     actividades_lista,
@@ -63,4 +64,8 @@ urlpatterns = [
 
     path("calendario/", calendario_lista, name="calendario-lista"),
     path("calendario/<int:pk>/", calendario_detalle, name="calendario-detalle"),
+
+    path('recuperar_clave/', views.recuperar_clave, name="recuperar_clave"),
+    path('verificar_token/', views.verificar_token, name="verificar_token"),
 ]
+

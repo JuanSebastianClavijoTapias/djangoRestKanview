@@ -172,7 +172,7 @@
 <input class="w-4 h-4 rounded text-primary bg-surface border-outline-variant focus:ring-primary focus:ring-offset-0 cursor-pointer" type="checkbox"/>
 <span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Recordarme</span>
 </label>
-<a class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim transition-colors font-semibold" href="#">¿Olvidé mi contraseña?</a>
+<a class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim transition-colors font-semibold" href="{% url 'kanview:recuperar' %}">¿Olvidé mi contraseña?</a>
 </div>
 <input name="next" type="hidden" value="{{ next }}"/>
 <button class="mt-4 w-full bg-primary hover:bg-primary-fixed-dim text-on-primary font-label-md text-label-md py-3.5 rounded-2xl shadow-[0_12px_24px_rgba(0,128,128,0.2)] hover:shadow-[0_16px_32px_rgba(0,128,128,0.3)] transition-all duration-300 active:scale-[0.98] flex justify-center items-center gap-2" type="submit">
@@ -182,7 +182,7 @@
 </form>
 <p class="text-center font-body-md text-body-md text-on-surface-variant mt-4">
                 ¿No tienes una cuenta? 
-                <a class="text-primary font-semibold hover:underline decoration-2 underline-offset-4" href="#">Regístrate</a>
+                <a class="text-primary font-semibold hover:underline decoration-2 underline-offset-4" href="{% url 'kanview:registro' %}">Regístrate</a>
 </p>
 </div>
 </main>
