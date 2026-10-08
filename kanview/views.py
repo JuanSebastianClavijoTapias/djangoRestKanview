@@ -1,3 +1,9 @@
+from random import randint
+
+from django.conf import settings
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -493,3 +499,59 @@ def calendario_detalle(request, pk):
 
     evento.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def recuperar_clave(request):
+    """Endpoint API /api/recuperar_clave/: genera token para Cliente y lo envía."""
+    if request.method == "POST":
+        correo = (request.POST.get("correo") or "").strip()
+        if not correo:
+            return HttpResponse("Ingresa tu correo.", status=400)
+        try:
+            cliente = Cliente.objects.get(correo=correo)
+        except Cliente.DoesNotExist:
+            # No revelar si existe o no (misma respuesta genérica).
+            return HttpResponse("Si el correo existe, revisa tu bandeja para recuperar...!")
+        token = f"{randint(100000, 999999):06d}"
+        cliente.token = token
+        cliente.url_valida = True
+        cliente.save(update_fields=["token", "url_valida"])
+        try:
+            send_mail(
+                "Kanview - Código de recuperación",
+                f"Hola {cliente.nombre},\n\nTu código de recuperación es: {token}",
+                settings.EMAIL_HOST_USER,
+                [correo],
+                fail_silently=False,
+            )
+        except Exception:
+            pass
+        return HttpResponse("Revise su correo para recuperar...!")
+
+    return render(request, "kanview/recuperar.html", {"correo": ""})
+
+def verificar_token(request):
+    """GET ?correo=: muestra el form si url_valida=True. POST: consume el token (single-use)."""
+    if request.method == "POST":
+        correo = (request.POST.get("correo") or "").strip()
+        token = (request.POST.get("token") or "").strip()
+        if not correo or not token:
+            return HttpResponse("Ingresa correo y código de 6 dígitos.", status=400)
+        try:
+            cliente = Cliente.objects.get(correo=correo, token=token, url_valida=True)
+        except Cliente.DoesNotExist:
+            return HttpResponse("Código incorrecto o URL no válida!", status=400)
+        cliente.url_valida = False
+        cliente.save(update_fields=["url_valida"])
+        return HttpResponse(f"Código verificado. Hola {cliente.nombre}, ya puedes iniciar sesión.")
+
+    correo = request.GET.get("correo")
+    if not correo:
+        return HttpResponse("Falta el correo.", status=400)
+    try:
+        cliente = Cliente.objects.get(correo=correo)
+    except Cliente.DoesNotExist:
+        return HttpResponse("URL no válida!")
+    if not cliente.url_valida:
+        return HttpResponse("URL no válida!")
+    return render(request, "kanview/recuperar_verificar.html", {"correo": correo})

@@ -60,6 +60,9 @@ from .views_site import (
     mensajeria,
     pedido_detalle,
     pedidos_tablero,
+    recuperar_solicitar,
+    recuperar_verificar,
+    registrarse,
     tareas,
 )
 
@@ -68,7 +71,10 @@ app_name = "kanview"
 urlpatterns = [
     path("", dashboard, name="dashboard"),
     path("login/", iniciar_sesion, name="login"),
+    path("registro/", registrarse, name="registro"),
     path("logout/", cerrar_sesion, name="logout"),
+    path("recuperar/", recuperar_solicitar, name="recuperar"),
+    path("recuperar/verificar/", recuperar_verificar, name="recuperar-verificar"),
 
     # Diseño (pantallas Stitch, solo lectura)
     path("pedidos/", pedidos_tablero, name="pedidos-tablero"),

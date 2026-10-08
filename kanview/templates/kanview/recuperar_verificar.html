@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Kanview - Verificar código</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#fbf9f8",
+                        "on-surface": "#1b1c1c",
+                        "surface-variant": "#e4e2e2",
+                        "on-surface-variant": "#3e4949",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#efeded",
+                        "on-primary": "#ffffff",
+                        "outline-variant": "#bdc9c8",
+                        "outline": "#6e7979",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "primary": "#006565",
+                        "primary-fixed-dim": "#76d6d5",
+                        "surface": "#fbf9f8",
+                        "surface-container-low": "#f5f3f3"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "boxShadow": {
+                        'neomorphic': '8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF',
+                        'inner-neomorphic': 'inset 4px 4px 8px rgba(0,0,0,0.03), inset -4px -4px 8px #FFFFFF',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen w-full flex overflow-hidden font-body-md antialiased">
+<main class="w-full md:w-1/2 flex flex-col justify-center items-center p-5 md:p-10 relative z-10 bg-surface-container-lowest h-full overflow-y-auto">
+<div class="w-full max-w-[420px] flex flex-col gap-8">
+<div class="flex flex-col gap-2 text-center md:text-left">
+<div class="flex items-center justify-center md:justify-start gap-3 mb-6">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">chair</span>
+<h1 class="text-2xl text-primary font-bold tracking-tight">Kanview</h1>
+</div>
+<h2 class="text-2xl md:text-[32px] md:leading-[40px] font-semibold text-on-surface">Verifica tu código</h2>
+<p class="text-on-surface-variant mt-2">Ingresa el código de 6 dígitos que enviamos a tu correo.</p>
+</div>
+{% if messages %}
+<div class="flex flex-col gap-2">
+{% for message in messages %}
+<div class="flex items-center gap-2 px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-error-container text-on-error-container{% else %}bg-surface-container text-on-surface{% endif %} text-sm font-medium">
+<span class="material-symbols-outlined text-[20px]">{% if message.tags == 'error' %}error{% else %}info{% endif %}</span>
+{{ message }}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+<form class="flex flex-col gap-5" method="post" action="{% url 'kanview:recuperar-verificar' %}">
+{% csrf_token %}
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-on-surface" for="id_correo2">Correo electrónico</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-outline z-10 pointer-events-none">mail</span>
+<input class="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-inner-neomorphic placeholder:text-outline/50" id="id_correo2" name="correo" placeholder="tu@empresa.com" type="email" value="{{ correo|default:'' }}" required/>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-sm font-medium text-on-surface" for="id_token">Código de 6 dígitos</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-outline z-10 pointer-events-none">pin</span>
+<input class="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-inner-neomorphic placeholder:text-outline/50 tracking-[0.3em] text-center font-bold" id="id_token" name="token" placeholder="000000" inputmode="numeric" maxlength="6" minlength="6" pattern="[0-9]{6}" required/>
+</div>
+</div>
+<button class="mt-2 w-full bg-primary hover:bg-primary-fixed-dim text-on-primary text-sm font-medium py-3.5 rounded-2xl shadow-[0_12px_24px_rgba(0,128,128,0.2)] transition-all duration-300 active:scale-[0.98] flex justify-center items-center gap-2" type="submit">
+Verificar
+<span class="material-symbols-outlined text-[20px]">verified</span>
+</button>
+</form>
+<div class="flex flex-col gap-2 text-center mt-2">
+<a class="text-sm text-primary font-semibold hover:underline underline-offset-4" href="{% url 'kanview:recuperar' %}">¿No recibiste el código? Reenviar</a>
+<a class="text-sm text-on-surface-variant hover:text-on-surface" href="{% url 'kanview:login' %}">Volver al inicio de sesión</a>
+</div>
+</div>
+</main>
+<aside class="hidden md:flex w-1/2 h-full relative bg-surface-container-low overflow-hidden items-center justify-center">
+<div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-90" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBrzAYaVFByjiY_CENmN7M9_C_77bnhfyiQMMfN6e78FO_dHnDYcM7fxZYCvye5nfodqfWrjJ0XfgEcb0CUKA_llwRz_pi7eXxw71m2MvOMnfZ4JRTAABiFt_C8eNonDTnbdwLSbm2TlnH-gnXHCUwm0QbjI4G0VJ8CIXhCJDDt08uJvy5q04HCOb7gxi2Ox6QkBa7Lp1GnGhtwQqkE6zk3ZPeKQFsD87kOpb8l4T6RndRureE_KmsUEQ')">
+</div>
+<div class="absolute inset-0 bg-gradient-to-tr from-surface/80 via-surface/40 to-transparent mix-blend-overlay"></div>
+<div class="relative z-10 flex flex-col items-center justify-center p-12 backdrop-blur-sm bg-surface/20 rounded-[3rem] border border-white/20 shadow-[0_32px_64px_rgba(0,0,0,0.1)]">
+<div class="text-center max-w-sm">
+<h3 class="text-2xl text-on-surface-variant font-bold tracking-wide">Artesanía Digital</h3>
+<p class="text-on-surface-variant/80 mt-4 leading-relaxed">Casi listo, verifica y vuelve a entrar.</p>
+</div>
+</div>
+</aside>
+</body></html>

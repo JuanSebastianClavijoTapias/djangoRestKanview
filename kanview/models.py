@@ -3,11 +3,15 @@ from django.db import models
 
 class Cliente(models.Model):
     nombre = models.CharField(max_length=100)
-    fecha_nacimiento = models.DateField()
-    documento = models.CharField(max_length=20)
-    celular = models.CharField(max_length=20)
-    direccion = models.CharField(max_length=50)
-    edad = models.IntegerField()
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    documento = models.CharField(max_length=20, default="", blank=True)
+    celular = models.CharField(max_length=20, default="", blank=True)
+    direccion = models.CharField(max_length=50, default="", blank=True)
+    edad = models.IntegerField(default=0)
+
+    correo = models.EmailField(max_length=254, unique=True, default="", blank=True)
+    token = models.CharField(max_length=6, default="000000")
+    url_valida = models.BooleanField(default=False)
 
     def __str__(self):
         return self.nombre
