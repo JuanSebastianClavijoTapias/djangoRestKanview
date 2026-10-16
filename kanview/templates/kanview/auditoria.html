@@ -163,12 +163,14 @@
 <div class="neomorphic-card rounded-2xl p-6 relative overflow-hidden">
 <div class="flex justify-between items-start mb-4">
 <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-<span class="material-symbols-outlined">group</span>
+<span class="material-symbols-outlined">history</span>
 </div>
-<span class="font-label-sm text-label-sm text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs">trending_up</span> +2.4%</span>
+{% if ultimo_registro %}
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1"><span class="material-symbols-outlined text-xs">trending_up</span> {{ ultimo_registro.fecha_creacion|date:"d M" }}</span>
+{% endif %}
 </div>
-<h3 class="font-label-md text-label-md text-on-surface-variant">Usuarios Activos</h3>
-<p class="font-display text-display text-on-surface mt-1">1,248</p>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Registros de historial</h3>
+<p class="font-display text-display text-on-surface mt-1">{{ total_historial }}</p>
 </div>
 <!-- Stat Card 2 -->
 <div class="neomorphic-card rounded-2xl p-6 relative overflow-hidden">
@@ -176,10 +178,10 @@
 <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error">
 <span class="material-symbols-outlined">warning</span>
 </div>
-<span class="font-label-sm text-label-sm text-on-surface-variant">Last 24h</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Hoy</span>
 </div>
-<h3 class="font-label-md text-label-md text-on-surface-variant">Failed Logins</h3>
-<p class="font-headline-lg text-headline-lg text-on-surface mt-1">23</p>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Registros de hoy</h3>
+<p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ registros_hoy }}</p>
 </div>
 <!-- Filter Card -->
 <div class="neomorphic-card rounded-2xl p-6">
@@ -195,22 +197,21 @@
 </select>
 </div>
 <div>
-<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Action Type</label>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Cargo</label>
 <select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30">
-<option>All Actions</option>
-<option>CREATE</option>
-<option>UPDATE</option>
-<option>DELETE</option>
-<option>LOGIN</option>
+<option>Todos los cargos</option>
+{% for codigo, nombre in cargos %}
+<option>{{ nombre }}</option>
+{% endfor %}
 </select>
 </div>
 <div>
-<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">User Role</label>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Cliente</label>
 <select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30">
-<option>All Roles</option>
-<option>Admin</option>
-<option>Manager</option>
-<option>Operator</option>
+<option>Todos los clientes</option>
+{% for nombre_cliente in clientes %}
+<option>{{ nombre_cliente }}</option>
+{% endfor %}
 </select>
 </div>
 <button class="w-full mt-2 py-2.5 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-colors">Apply Filters</button>
@@ -232,107 +233,66 @@
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="border-b border-outline-variant/30">
-<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">User</th>
-<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Action</th>
-<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Resource</th>
-<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date &amp; Time</th>
-<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Details</th>
+<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Empleado</th>
+<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Cliente</th>
+<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Producto</th>
+<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Fecha y hora</th>
+<th class="py-4 px-6 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Detalle</th>
 </tr>
 </thead>
 <tbody class="font-body-md text-body-md text-on-surface">
-<!-- Row 1 -->
+{% for registro in historial %}
 <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors group cursor-pointer">
 <td class="py-4 px-6">
 <div class="flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-label-sm">JS</div>
+<div class="w-8 h-8 rounded-full flex items-center justify-center font-label-sm {% cycle 'bg-primary/10 text-primary' 'bg-secondary/10 text-secondary' 'bg-error/10 text-error' %}">{{ registro.id_empleado.nombre|slice:":2"|upper }}</div>
 <div>
-<p class="font-label-md text-label-md">John Smith</p>
-<p class="text-xs text-on-surface-variant">Manager</p>
+<p class="font-label-md text-label-md">{{ registro.id_empleado.nombre }}</p>
+<p class="text-xs text-on-surface-variant">{{ registro.id_empleado.get_cargo_display }}</p>
 </div>
 </div>
 </td>
 <td class="py-4 px-6">
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-variant text-on-surface-variant border border-outline-variant/50">UPDATE</span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-variant text-on-surface-variant border border-outline-variant/50">{{ registro.id_cliente.nombre }}</span>
 </td>
-<td class="py-4 px-6 text-on-surface-variant">Artículo de Inventario #4421</td>
-<td class="py-4 px-6 text-on-surface-variant">Oct 24, 14:32</td>
+<td class="py-4 px-6 text-on-surface-variant">
+<p class="font-label-md text-label-md text-on-surface">{{ registro.id_producto.nombre }}</p>
+<p class="text-xs text-on-surface-variant">{{ registro.id_producto.categoria }}</p>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">{{ registro.fecha_creacion|date:"d M Y" }} · {{ registro.hora_creacion|time:"H:i" }}</td>
 <td class="py-4 px-6 text-right">
 <button class="text-primary hover:text-primary-container font-label-sm">View</button>
 </td>
 </tr>
-<!-- Row 2 -->
-<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors group cursor-pointer">
-<td class="py-4 px-6">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-label-sm">AL</div>
-<div>
-<p class="font-label-md text-label-md">Ana Lopez</p>
-<p class="text-xs text-on-surface-variant">Operator</p>
-</div>
-</div>
-</td>
-<td class="py-4 px-6">
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">CREATE</span>
-</td>
-<td class="py-4 px-6 text-on-surface-variant">Order #ORD-992</td>
-<td class="py-4 px-6 text-on-surface-variant">Oct 24, 11:15</td>
-<td class="py-4 px-6 text-right">
-<button class="text-primary hover:text-primary-container font-label-sm">View</button>
-</td>
+{% empty %}
+<tr class="border-b border-outline-variant/10">
+<td class="py-10 px-6 text-center text-on-surface-variant" colspan="5">Todavía no hay registros de historial.</td>
 </tr>
-<!-- Row 3 -->
-<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors group cursor-pointer">
-<td class="py-4 px-6">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center text-error font-label-sm">SYS</div>
-<div>
-<p class="font-label-md text-label-md">System</p>
-<p class="text-xs text-on-surface-variant">Automated</p>
-</div>
-</div>
-</td>
-<td class="py-4 px-6">
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-error/10 text-error border border-error/20">DELETE</span>
-</td>
-<td class="py-4 px-6 text-on-surface-variant">Expired Session Token</td>
-<td class="py-4 px-6 text-on-surface-variant">Oct 24, 03:00</td>
-<td class="py-4 px-6 text-right">
-<button class="text-primary hover:text-primary-container font-label-sm">View</button>
-</td>
-</tr>
-<!-- Row 4 -->
-<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50 transition-colors group cursor-pointer">
-<td class="py-4 px-6">
-<div class="flex items-center gap-3">
-<img class="w-8 h-8 rounded-full object-cover" data-alt="A professional headshot of a middle-aged male executive in a well-lit, modern office setting. The lighting is soft and bright, emphasizing a high-end corporate aesthetic. The man is wearing a tailored grey suit and smiling slightly, exuding calm authority. The background features subtle, blurred neomorphic office furniture in cool white and teal tones, fitting a premium digital platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsEzVQcATLbG_qNhkNeaHZdmliAmf8Oap6WmgZS5gDig-i-ju5NndskMAdd22GXLTaQ22J0i_mZxbLChg78a6-EyIdWnrMa9t2PZQRPmCo1UufKomwiz02GGyRpqCjDXtcqR9bI5hIrG8G93uueZyOsqzOvW8fd29yQaJ-DXTqh6DquUXjC_LQcAtE_0vC1WLctcLbCZ_tIxMpADU85EGaBQ-Kd6dTqniNGdWlRJ1e2t34Irz2NSz8sQ">
-<div>
-<p class="font-label-md text-label-md">Admin User</p>
-<p class="text-xs text-on-surface-variant">Admin</p>
-</div>
-</div>
-</td>
-<td class="py-4 px-6">
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-variant text-on-surface-variant border border-outline-variant/50">LOGIN</span>
-</td>
-<td class="py-4 px-6 text-on-surface-variant">Authentication Portal</td>
-<td class="py-4 px-6 text-on-surface-variant">Oct 23, 08:45</td>
-<td class="py-4 px-6 text-right">
-<button class="text-primary hover:text-primary-container font-label-sm">View</button>
-</td>
-</tr>
+{% endfor %}
 </tbody>
 </table>
 </div>
 <!-- Pagination -->
 <div class="p-4 border-t border-outline-variant/30 flex justify-between items-center z-10 bg-surface-container-lowest/80 rounded-b-2xl">
-<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 1-10 of 1,248</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">{% if page_obj.paginator.count %}Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ total_historial }} registros{% else %}Sin registros{% endif %}</span>
 <div class="flex gap-1">
-<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
-<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-label-sm">1</button>
-<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface hover:bg-surface-container-low font-label-sm">2</button>
-<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface hover:bg-surface-container-low font-label-sm">3</button>
-<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant">...</span>
-<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+{% if page_obj.has_previous %}
+<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low" href="?page={{ page_obj.previous_page_number }}"><span class="material-symbols-outlined text-sm">chevron_left</span></a>
+{% else %}
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50" disabled><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+{% endif %}
+{% for num in paginator.page_range %}
+{% if num == page_obj.number %}
+<a class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-label-sm" href="?page={{ num }}">{{ num }}</a>
+{% else %}
+<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface hover:bg-surface-container-low font-label-sm" href="?page={{ num }}">{{ num }}</a>
+{% endif %}
+{% endfor %}
+{% if page_obj.has_next %}
+<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low" href="?page={{ page_obj.next_page_number }}"><span class="material-symbols-outlined text-sm">chevron_right</span></a>
+{% else %}
+<button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50" disabled><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+{% endif %}
 </div>
 </div>
 </div>

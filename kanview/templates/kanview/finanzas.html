@@ -233,16 +233,16 @@
 <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
 <div>
 <h2 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Financial Overview</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mt-1">Q3 2024 Performance Metrics</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ total_registros }} registro{{ total_registros|pluralize }} · {{ total_productos_vendidos }} productos vendidos</p>
 </div>
 <div class="flex gap-3">
 <button class="px-6 py-2 rounded-full bg-surface-container-lowest border border-outline-variant text-primary font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-low transition-colors shadow-sm">
 <span class="material-symbols-outlined text-[18px]">download</span>
                         Export Report
                     </button>
-<button class="px-6 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:brightness-110 transition-colors shadow-sm">
+<a class="px-6 py-2 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:brightness-110 transition-colors shadow-sm" href="{% url 'kanview:analisis-financiero-crear' %}">
                         New Entry
-                    </button>
+                    </a>
 </div>
 </div>
 <!-- KPIs Bento Grid -->
@@ -257,11 +257,11 @@
 </div>
 </div>
 <div class="flex items-baseline gap-2">
-<span class="font-display text-display text-on-surface">$1.24M</span>
+<span class="font-display text-display text-on-surface">${{ total_ingresos|floatformat:"2g" }}</span>
 </div>
 <div class="mt-4 flex items-center gap-1 text-primary text-sm font-medium">
 <span class="material-symbols-outlined text-[16px]">trending_up</span>
-<span class="">+12.5% from last quarter</span>
+<span class="">Ingresos acumulados · {{ total_registros }} registro{{ total_registros|pluralize }}</span>
 </div>
 <!-- Decorative Wax Seal SVG -->
 <svg class="seal-watermark w-12 h-12 text-primary" fill="currentColor" viewBox="0 0 100 100">
@@ -274,17 +274,17 @@
 <div class="neomorphic-card p-6 relative overflow-hidden group">
 <div class="absolute top-0 right-0 w-32 h-32 bg-secondary opacity-10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110 duration-500"></div>
 <div class="flex justify-between items-start mb-4">
-<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Pedidos Liquidados</h3>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Net Balance</h3>
 <div class="w-10 h-10 rounded-full bg-surface-container-lowest neomorphic-inner flex items-center justify-center text-secondary">
 <span class="material-symbols-outlined">check_circle</span>
 </div>
 </div>
 <div class="flex items-baseline gap-2">
-<span class="font-display text-display text-on-surface">$892k</span>
+<span class="font-display text-display text-on-surface">${{ balance|floatformat:"2g" }}</span>
 </div>
-<div class="mt-4 flex items-center gap-1 text-primary text-sm font-medium">
-<span class="material-symbols-outlined text-[16px]">trending_up</span>
-<span class="">+4.2% from last quarter</span>
+<div class="mt-4 flex items-center gap-1 {% if balance < 0 %}text-error{% else %}text-primary{% endif %} text-sm font-medium">
+<span class="material-symbols-outlined text-[16px]">{% if balance < 0 %}trending_down{% else %}trending_up{% endif %}</span>
+<span class="">Margen neto {{ margen|floatformat:1 }}%</span>
 </div>
 </div>
 <!-- KPI 3: Expenses -->
@@ -297,11 +297,11 @@
 </div>
 </div>
 <div class="flex items-baseline gap-2">
-<span class="font-display text-display text-on-surface">$348k</span>
+<span class="font-display text-display text-on-surface">${{ total_gastos|floatformat:"2g" }}</span>
 </div>
 <div class="mt-4 flex items-center gap-1 text-error text-sm font-medium">
 <span class="material-symbols-outlined text-[16px]">trending_up</span>
-<span class="">+2.1% from last quarter</span>
+<span class="">Gastos acumulados · {{ total_registros }} registro{{ total_registros|pluralize }}</span>
 </div>
 </div>
 </div>
@@ -312,7 +312,7 @@
 <div class="flex justify-between items-center mb-6">
 <div>
 <h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Cash Flow Analysis</h3>
-<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Monthly Revenue vs Expenses</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Ingresos vs Gastos por registro</p>
 </div>
 <select class="bg-surface-container-lowest border border-outline-variant text-on-surface rounded-md font-label-md px-3 py-1.5 focus:ring-primary focus:border-primary">
 <option>Year to Date</option>
@@ -328,7 +328,7 @@
 <div class="neomorphic-card p-6 flex flex-col">
 <div class="mb-6">
 <h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Revenue Sources</h3>
-<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Distribution by Channel</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Distribución por canal (datos de ejemplo)</p>
 </div>
 <div class="flex-1 relative w-full h-[250px] flex justify-center items-center">
 <canvas id="revenueSourceChart" width="299" height="358" style="display: block; box-sizing: border-box; height: 300px; width: 250.7px;"></canvas>
@@ -366,46 +366,30 @@
 <h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Recent Transactions</h3>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Latest ledger entries</p>
 </div>
-<button class="text-primary font-label-md text-label-md hover:underline">View All</button>
+<a class="text-primary font-label-md text-label-md hover:underline" href="{% url 'kanview:analisis-financiero-lista' %}">View All</a>
 </div>
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="border-b border-surface-container-highest text-on-surface-variant">
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Date</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Description</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Category</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Status</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold text-right">Amount</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Administrador</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Productos Vendidos</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Ingresos</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Gastos</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold text-right">Balance</th>
 </tr>
 </thead>
 <tbody class="font-body-md text-body-md">
+{% for registro in registros %}
 <tr class="border-b border-surface-container-highest/50 hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
-<td class="py-4 px-4 text-on-surface-variant">Oct 12, 2024</td>
-<td class="py-4 px-4 font-medium text-on-surface">Acme Corp - Wholesale Order</td>
-<td class="py-4 px-4 text-on-surface-variant">Income</td>
-<td class="py-4 px-4">
-<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#e3fffe] text-[#006565]">Completed</span>
-</td>
-<td class="py-4 px-4 text-right font-medium text-[#006565]">+$24,500.00</td>
+<td class="py-4 px-4 font-medium text-on-surface">{{ registro.id_administrador.nombre }}</td>
+<td class="py-4 px-4 text-on-surface-variant">{{ registro.productos_vendidos }}</td>
+<td class="py-4 px-4 font-medium text-[#006565]">+${{ registro.fuentes_ingresos|floatformat:"2g" }}</td>
+<td class="py-4 px-4 text-on-surface-variant">-${{ registro.gastos|floatformat:"2g" }}</td>
+<td class="py-4 px-4 text-right font-medium {% if registro.balance < 0 %}text-error{% else %}text-[#006565]{% endif %}">${{ registro.balance|floatformat:"2g" }}</td>
 </tr>
-<tr class="border-b border-surface-container-highest/50 hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
-<td class="py-4 px-4 text-on-surface-variant">Oct 10, 2024</td>
-<td class="py-4 px-4 font-medium text-on-surface">Global Logistics Freight</td>
-<td class="py-4 px-4 text-on-surface-variant">Expense</td>
-<td class="py-4 px-4">
-<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#e3fffe] text-[#006565]">Completed</span>
-</td>
-<td class="py-4 px-4 text-right font-medium text-on-surface">-$3,200.50</td>
-</tr>
-<tr class="hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
-<td class="py-4 px-4 text-on-surface-variant">Oct 08, 2024</td>
-<td class="py-4 px-4 font-medium text-on-surface">Custom Fabrication Ltd</td>
-<td class="py-4 px-4 text-on-surface-variant">Income</td>
-<td class="py-4 px-4">
-<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-[#f5f3f3] text-[#5d5f5f]">Pending</span>
-</td>
-<td class="py-4 px-4 text-right font-medium text-[#006565]">+$12,800.00</td>
-</tr>
+{% empty %}
+<tr><td class="py-8 px-4 text-center text-on-surface-variant" colspan="5">No hay registros financieros todavía.</td></tr>
+{% endfor %}
 </tbody>
 </table>
 </div>
@@ -418,6 +402,7 @@
 <span class="">Support Chat</span>
 </div>
 </nav>
+{{ grafica_registros|json_script:"finanzas-chart-data" }}
 <script>
         // Chart.js Configuration
         const brandColors = {
@@ -428,6 +413,10 @@
             text: '#1b1c1c',
             grid: '#e4e2e2'
         };
+
+        // Datos reales por registro (provistos por kanview.views_finanzas.finanzas)
+        const chartDataEl = document.getElementById('finanzas-chart-data');
+        const chartData = chartDataEl ? (JSON.parse(chartDataEl.textContent) || []) : [];
 
         // Cash Flow Line Chart
         const ctxCashFlow = document.getElementById('cashFlowChart').getContext('2d');
@@ -440,11 +429,11 @@
         new Chart(ctxCashFlow, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                labels: chartData.map(function (item) { return item.label; }),
                 datasets: [
                     {
                         label: 'Revenue',
-                        data: [65000, 78000, 72000, 95000, 85000, 110000, 105000, 125000, 140000],
+                        data: chartData.map(function (item) { return item.ingresos; }),
                         borderColor: brandColors.primary,
                         backgroundColor: gradientIncome,
                         borderWidth: 3,
@@ -458,7 +447,7 @@
                     },
                     {
                         label: 'Expenses',
-                        data: [45000, 48000, 40000, 55000, 52000, 60000, 58000, 65000, 62000],
+                        data: chartData.map(function (item) { return item.gastos; }),
                         borderColor: brandColors.secondary,
                         borderWidth: 2,
                         borderDash: [5, 5],
