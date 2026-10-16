@@ -54,6 +54,9 @@ class AnalisisFinanciero(models.Model):
     productos_vendidos = models.IntegerField()
     id_administrador = models.ForeignKey(Administrador, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Análisis financiero #{self.pk}"
+
 
 class Producto(models.Model):
     nombre = models.CharField(max_length=100)
@@ -71,11 +74,17 @@ class Inventario(models.Model):
     cantidad = models.IntegerField()
     id_producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Inventario #{self.pk} · {self.id_producto}"
+
 
 class Catalogo(models.Model):
     categorias = models.CharField(max_length=100)
     id_inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE)
     id_producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Catálogo #{self.pk} · {self.categorias}"
 
 
 class Pedido(models.Model):
@@ -136,6 +145,9 @@ class Historial(models.Model):
     id_empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE)
     id_producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Historial #{self.pk} · {self.fecha_creacion}"
+
 
 class Calendario(models.Model):
     fecha = models.DateField()
@@ -145,3 +157,6 @@ class Calendario(models.Model):
     dia = models.IntegerField()
     nombre_dia = models.CharField(max_length=20)
     id_pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.nombre_dia} {self.dia} · {self.id_pedido}"

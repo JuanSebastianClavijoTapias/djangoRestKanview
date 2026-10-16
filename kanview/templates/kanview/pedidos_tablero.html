@@ -171,80 +171,76 @@
 <div class="kanban-col-bg rounded-2xl p-card-gap flex flex-col h-[calc(100vh-220px)] relative">
 <div class="flex justify-between items-center mb-6">
 <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">Pendiente</h3>
-<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">3</span>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">{{ pedidos_pendientes|length }}</span>
 </div>
 <!-- Cards Container -->
 <div class="flex flex-col gap-4 overflow-y-auto pr-2 pb-10">
-<!-- Card 1 -->
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200">
+{% for pedido in pedidos_pendientes %}
+<!-- Card -->
+<a class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200 block" href="{% url 'kanview:pedido-detalle' pedido.pk %}">
 <div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded">Alta Prioridad</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#ORD-089</span>
+<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded">{{ pedido.get_estado_display }}</span>
+<span class="font-label-sm text-label-sm text-outline-variant">#{{ pedido.codigo_pedido }}</span>
 </div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">Mesa de Comedor Nogal</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: Familia Torres</p>
+<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">{{ pedido.id_producto.nombre }}</h4>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: {{ pedido.id_cliente.nombre }}</p>
 <div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
 <div class="bg-surface-tint h-1.5 rounded-full" style="width: 0%"></div>
 </div>
 <div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
 <div class="flex items-center text-outline text-[12px] gap-1">
 <span class="material-symbols-outlined text-[16px]">calendar_today</span>
-                                        15 Oct
-                                    </div>
+                                    {{ pedido.fecha_creacion|date:"d M" }}
+                                </div>
 <div class="flex items-center gap-2">
-<span class="material-symbols-outlined text-outline text-[18px]">attach_file</span>
+{% if pedido.evidencias %}<span class="material-symbols-outlined text-outline text-[18px]">attach_file</span>{% endif %}
 </div>
 </div>
+</a>
+{% empty %}
+<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center">
+<span class="material-symbols-outlined text-outline-variant text-[28px]">inbox</span>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1">Sin pedidos pendientes.</p>
 </div>
-<!-- Card 2 -->
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200">
-<div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-secondary bg-secondary-container/50 px-2 py-1 rounded">Normal</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#ORD-092</span>
-</div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">Sillas de Roble (Set de 4)</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: Restaurante El Faro</p>
-<div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
-<div class="bg-surface-tint h-1.5 rounded-full" style="width: 15%"></div>
-</div>
-<div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
-<div class="flex items-center text-outline text-[12px] gap-1">
-<span class="material-symbols-outlined text-[16px]">calendar_today</span>
-                                        22 Oct
-                                    </div>
-</div>
-</div>
+{% endfor %}
 </div>
 </div>
 <!-- Column: En Proceso -->
 <div class="kanban-col-bg rounded-2xl p-card-gap flex flex-col h-[calc(100vh-220px)] relative">
 <div class="flex justify-between items-center mb-6">
 <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">En proceso</h3>
-<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label-sm text-label-sm">2</span>
+<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label-sm text-label-sm">{{ pedidos_en_proceso|length }}</span>
 </div>
 <div class="flex flex-col gap-4 overflow-y-auto pr-2 pb-10">
-<!-- Card 3 -->
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200">
+{% for pedido in pedidos_en_proceso %}
+<!-- Card -->
+<a class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200 block" href="{% url 'kanview:pedido-detalle' pedido.pk %}">
 <div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded">Alta Prioridad</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#ORD-085</span>
+<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded">{{ pedido.get_estado_display }}</span>
+<span class="font-label-sm text-label-sm text-outline-variant">#{{ pedido.codigo_pedido }}</span>
 </div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">Armario Empotrado Caoba</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: Hotel Imperial</p>
+<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">{{ pedido.id_producto.nombre }}</h4>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: {{ pedido.id_cliente.nombre }}</p>
 <div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
 <div class="bg-surface-tint h-1.5 rounded-full" style="width: 65%"></div>
 </div>
-<span class="font-label-sm text-label-sm text-primary flex justify-end">Ensamblaje</span>
+<span class="font-label-sm text-label-sm text-primary flex justify-end">{{ pedido.id_empleado.get_cargo_display }}</span>
 <div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
 <div class="flex items-center text-outline text-[12px] gap-1">
 <span class="material-symbols-outlined text-[16px]">calendar_today</span>
-                                        10 Oct
-                                    </div>
+                                    {{ pedido.fecha_creacion|date:"d M" }}
+                                </div>
 <div class="flex items-center gap-2 text-primary">
 <span class="material-symbols-outlined text-[18px]">engineering</span>
 </div>
 </div>
+</a>
+{% empty %}
+<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center">
+<span class="material-symbols-outlined text-outline-variant text-[28px]">work</span>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1">Sin pedidos en proceso.</p>
 </div>
+{% endfor %}
 </div>
 </div>
 <!-- Column: Hecho -->
@@ -253,30 +249,47 @@
 <img alt="" class="absolute -bottom-12 -right-12 w-64 h-64 opacity-5 pointer-events-none mix-blend-multiply" data-alt="A macro, highly detailed photograph of a stylized circular wax seal emblem, molded in a deep, rich teal color. The seal features elegant, modern neomorphic raised typography and minimalist iconography relating to artisanal craftsmanship. The lighting is soft and studio-quality, creating subtle highlights on the glossy wax texture, casting a realistic ambient shadow on an off-white, slightly textured paper background. The overall aesthetic is premium, flat modern, and meticulously clean." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9DWS7V6XBDwqXiGkMlitu2tPJQth16OR7LRrY0Nvt87cIX36Vfa1tsQHpsJZMEKCAhvHizJvNyPlu-vVdlapT_lyw_jNk5k1matTxqI_IIsBqXb_4IIYy5jWdE3wiF5rl8-jv_NmU_HHu1bJnCRhX98OS32DLZXBloowUKPlQK40F2npciWb2wk6y4KVXn4pYJGW0_i0bgrCIYYWsohkZoWde_zmHw_-5_oA9gjMkgbRm91_7A2UCLw">
 <div class="flex justify-between items-center mb-6 relative z-10">
 <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">Hecho</h3>
-<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">1</span>
+<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">{{ pedidos_hechos|length }}</span>
 </div>
 <div class="flex flex-col gap-4 overflow-y-auto pr-2 pb-10 relative z-10">
-<!-- Card 4 -->
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow opacity-75 grayscale-[20%]">
+{% for pedido in pedidos_hechos %}
+<!-- Card -->
+<a class="bg-surface-container-lowest rounded-xl p-5 neo-shadow opacity-75 grayscale-[20%] block cursor-pointer" href="{% url 'kanview:pedido-detalle' pedido.pk %}">
 <div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-surface-tint bg-primary-fixed/30 px-2 py-1 rounded">Completado</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#ORD-077</span>
+<span class="font-label-sm text-label-sm text-surface-tint bg-primary-fixed/30 px-2 py-1 rounded">{{ pedido.get_estado_display }}</span>
+<span class="font-label-sm text-label-sm text-outline-variant">#{{ pedido.codigo_pedido }}</span>
 </div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">Librero Minimalista Pino</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: Estudio Creativo ZX</p>
+<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">{{ pedido.id_producto.nombre }}</h4>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: {{ pedido.id_cliente.nombre }}</p>
 <div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
 <div class="bg-surface-tint h-1.5 rounded-full" style="width: 100%"></div>
 </div>
 <div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
 <div class="flex items-center text-outline text-[12px] gap-1">
 <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                                        Entregado
-                                    </div>
+                                    {{ pedido.fecha_creacion|date:"d M" }}
+                                </div>
+</div>
+</a>
+{% empty %}
+<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center relative z-10">
+<span class="material-symbols-outlined text-outline-variant text-[28px]">task_alt</span>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1">Todavía no hay pedidos finalizados.</p>
+</div>
+{% endfor %}
 </div>
 </div>
 </div>
+{% if not total_pedidos %}
+<div class="mt-6 bg-surface-container-lowest rounded-2xl p-6 neo-shadow flex items-center gap-4">
+<span class="material-symbols-outlined text-outline text-[32px]">shopping_cart</span>
+<div>
+<p class="font-headline-md text-headline-md text-[16px] text-on-surface">Aún no hay pedidos registrados</p>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant">Crea el primer pedido con el botón «+» para verlo en el tablero.</p>
 </div>
+<a class="ml-auto bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors" href="{% url 'kanview:pedido-crear' %}">Nuevo pedido</a>
 </div>
+{% endif %}
 </main>
 <!-- Floating Action Button (FAB) -->
 <a class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center fab-shadow hover:scale-105 active:scale-95 transition-transform duration-200 z-50 group" href="{% url 'kanview:pedido-crear' %}" title="Crear nuevo pedido">

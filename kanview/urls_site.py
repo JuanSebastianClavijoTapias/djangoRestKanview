@@ -1,5 +1,16 @@
 from django.urls import path
 
+from . import (
+    views_auditoria,
+    views_calendario,
+    views_catalogo,
+    views_clientes,
+    views_empleados,
+    views_finanzas,
+    views_inventario,
+    views_pedidos,
+    views_tareas,
+)
 from .views_crud import (
     actividad_crear,
     actividad_editar,
@@ -47,23 +58,13 @@ from .views_crud import (
     tarea_lista,
 )
 from .views_site import (
-    auditoria,
-    calendario,
-    catalogo,
     cerrar_sesion,
-    clientes,
     dashboard,
-    empleados,
-    finanzas,
     iniciar_sesion,
-    inventario,
     mensajeria,
-    pedido_detalle,
-    pedidos_tablero,
     recuperar_solicitar,
     recuperar_verificar,
     registrarse,
-    tareas,
 )
 
 app_name = "kanview"
@@ -76,18 +77,18 @@ urlpatterns = [
     path("recuperar/", recuperar_solicitar, name="recuperar"),
     path("recuperar/verificar/", recuperar_verificar, name="recuperar-verificar"),
 
-    # Diseño (pantallas Stitch, solo lectura)
-    path("pedidos/", pedidos_tablero, name="pedidos-tablero"),
-    path("pedidos/<int:pk>/", pedido_detalle, name="pedido-detalle"),
-    path("tareas/", tareas, name="tareas"),
-    path("calendario/", calendario, name="calendario"),
-    path("inventario/", inventario, name="inventario"),
-    path("finanzas/", finanzas, name="finanzas"),
-    path("auditoria/", auditoria, name="auditoria"),
+    # Pantallas de diseño (Stitch) conectadas a datos reales
+    path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
+    path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),
+    path("tareas/", views_tareas.tareas, name="tareas"),
+    path("calendario/", views_calendario.calendario, name="calendario"),
+    path("inventario/", views_inventario.inventario, name="inventario"),
+    path("finanzas/", views_finanzas.finanzas, name="finanzas"),
+    path("auditoria/", views_auditoria.auditoria, name="auditoria"),
     path("mensajeria/", mensajeria, name="mensajeria"),
-    path("clientes/", clientes, name="clientes"),
-    path("empleados/", empleados, name="empleados"),
-    path("catalogo/", catalogo, name="catalogo"),
+    path("clientes/", views_clientes.clientes, name="clientes"),
+    path("empleados/", views_empleados.empleados, name="empleados"),
+    path("catalogo/", views_catalogo.catalogo, name="catalogo"),
 
     # CRUD: Clientes
     path("crud/clientes/", cliente_lista, name="cliente-lista"),

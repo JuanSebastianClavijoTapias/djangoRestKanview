@@ -177,58 +177,15 @@ def dashboard(request):
     return render(request, "kanview/dashboard.html", contexto)
 
 
-# ---- Páginas de la interfaz (diseño Stitch) -------------------------------
+# ---- Helper de render para las pantallas conectadas a datos ----------------
 
-@login_required
-def pedidos_tablero(request):
-    return render(request, "kanview/pedidos_tablero.html", _nav("Pedidos"))
-
-
-@login_required
-def pedido_detalle(request, pk):
-    return render(request, "kanview/pedidos_detalle.html", _nav("Pedidos"))
+def _render(request, template, active=None, **context):
+    """Renderiza una plantilla con el contexto del sidebar (nav_items + active)."""
+    return render(request, template, {**context, **_nav(active)})
 
 
-@login_required
-def tareas(request):
-    return render(request, "kanview/tareas.html", _nav("Tareas"))
-
-
-@login_required
-def calendario(request):
-    return render(request, "kanview/calendario.html", _nav("Calendario"))
-
-
-@login_required
-def inventario(request):
-    return render(request, "kanview/inventario.html", _nav("Inventario"))
-
-
-@login_required
-def finanzas(request):
-    return render(request, "kanview/finanzas.html", _nav("Finanzas"))
-
-
-@login_required
-def auditoria(request):
-    return render(request, "kanview/auditoria.html", _nav("Auditoría"))
-
+# ---- Mensajería (maqueta estática por ahora: no hay modelo de mensajería) --
 
 @login_required
 def mensajeria(request):
     return render(request, "kanview/mensajeria.html", _nav(None))
-
-
-@login_required
-def clientes(request):
-    return render(request, "kanview/clientes.html", _nav("Usuarios"))
-
-
-@login_required
-def empleados(request):
-    return render(request, "kanview/empleados.html", _nav(None))
-
-
-@login_required
-def catalogo(request):
-    return render(request, "kanview/catalogo.html", _nav("Catálogo"))
