@@ -32,6 +32,7 @@ USERNAME = "e2e@kanview.com"
 PASSWORD = "E2ePass123!"
 
 MODULES = [
+    ("analisis-financiero", "Análisis financiero"),
     ("inventario", "Inventario"),
     ("catalogo", "Catálogo"),
     ("tarea", "Tareas"),
