@@ -140,16 +140,17 @@
 </header>
 <!-- Main Content -->
 <main class="flex-1 md:ml-64 pt-16 min-h-screen">
+{% if pedido %}
 <!-- Status Banner -->
 <div class="bg-primary/10 border-b border-primary/20 px-container-padding-mobile md:px-container-padding-desktop py-4 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">check_circle</span>
-<span class="font-label-md text-label-md text-primary font-semibold">Producto aprobado por el cliente</span>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">{% if pedido.estado == 'activo' %}check_circle{% else %}verified{% endif %}</span>
+<span class="font-label-md text-label-md text-primary font-semibold">{% if pedido.estado == 'activo' %}Pedido activo en producción{% else %}Pedido finalizado{% endif %}</span>
 </div>
-<button class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-2">
-                Mover a Historial
+<a class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors flex items-center gap-2" href="{% url 'kanview:pedidos-tablero' %}">
+                Volver al tablero
                 <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
-</button>
+</a>
 </div>
 <div class="p-container-padding-mobile md:p-container-padding-desktop">
 <div class="flex flex-col lg:flex-row gap-card-gap">
@@ -164,30 +165,40 @@
 </svg>
 <div class="flex justify-between items-start mb-6">
 <div>
-<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">#OR-5542</h2>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">#{{ pedido.codigo_pedido }}</h2>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Order ID</p>
 </div>
-<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full font-label-sm text-label-sm">En proceso</span>
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant rounded-full font-label-sm text-label-sm">{{ pedido.get_estado_display }}</span>
 </div>
 <div class="space-y-6">
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Cliente</p>
-<p class="font-body-md text-body-md font-medium">Familia Mendoza</p>
+<p class="font-body-md text-body-md font-medium">{{ pedido.id_cliente.nombre }}</p>
 </div>
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Descripción</p>
-<p class="font-body-md text-body-md">Sofá Modular de Cuero Cognac. Costuras contrastantes. Patas de nogal macizo.</p>
+<p class="font-body-md text-body-md">{{ pedido.descripcion }}</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Producto</p>
+<p class="font-body-md text-body-md font-medium">{{ pedido.id_producto.nombre }}</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ pedido.id_producto.categoria }} · ${{ pedido.id_producto.precio }}</p>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Empleado asignado</p>
+<p class="font-body-md text-body-md font-medium">{{ pedido.id_empleado.nombre }}</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ pedido.id_empleado.get_cargo_display }}</p>
 </div>
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Fechas</p>
 <div class="grid grid-cols-2 gap-4">
 <div>
-<p class="font-label-sm text-label-sm text-on-surface-variant">Inicio</p>
-<p class="font-body-md text-body-md">12 Oct 2023</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Fecha</p>
+<p class="font-body-md text-body-md">{{ pedido.fecha_creacion|date:"d M Y" }}</p>
 </div>
 <div>
-<p class="font-label-sm text-label-sm text-on-surface-variant">Entrega Est.</p>
-<p class="font-body-md text-body-md">05 Nov 2023</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Hora</p>
+<p class="font-body-md text-body-md">{{ pedido.hora_creacion|date:"H:i" }}</p>
 </div>
 </div>
 </div>
@@ -198,46 +209,47 @@
 <section class="lg:w-2/3 flex flex-col gap-card-gap">
 <div class="neomorphic-card rounded-2xl p-6 h-full">
 <div class="flex justify-between items-center mb-6">
-<h3 class="font-headline-md text-headline-md text-on-surface">Galería de Progreso</h3>
+<h3 class="font-headline-md text-headline-md text-on-surface">Evidencias del pedido</h3>
 <button class="bg-surface-container border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center gap-2">
 <span class="material-symbols-outlined text-[18px]">upload</span>
                                 Añadir archivos
                             </button>
 </div>
 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-<!-- Image 1 -->
+{% if pedido.evidencias %}
+<!-- Evidencia registrada -->
 <div class="aspect-square rounded-xl overflow-hidden relative group">
-<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A high-quality, close-up photograph of a bespoke cognac leather modular sofa frame being assembled in a bright, modern artisan workshop. Light mode aesthetic with soft shadows, highlighting the rich texture of the wood and early upholstery stages. Clean, industrial-chic background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMftnPw9z7tQNH-ahQt12_-TwPB_HzIvlr9moZTBbTfaxgh28h_TgQpE0-UXs_0aGNqoi6Bq1gO70-3Ab2a3eqAZP72zHeDC6dv4pjokgBEHbroMnZfPQ_KHXwxLqaMsKuXRtFjuxw79e_nUYE_-eCScNpuPSZqdTMCxuIHVA2eiECi-aabp900Nqb0z3QGyjsgqt9GPUsnjyM8PQS2FyWACqnhXLVYs3Zs-ixvcqJRlk3_nr8kn-HIA">
+<div class="w-full h-full bg-surface-container flex flex-col items-center justify-center gap-2 p-4">
+<span class="material-symbols-outlined text-primary text-4xl">description</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant text-center break-all">{{ pedido.evidencias }}</span>
+</div>
 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
 <span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
 </div>
 </div>
-<!-- Image 2 -->
-<div class="aspect-square rounded-xl overflow-hidden relative group">
-<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A detailed, premium photograph showing a skilled artisan hand-stitching the cognac leather of a modular sofa. The setting is a well-lit, contemporary workshop with a light mode aesthetic. Focus on the craftsmanship, the rich brown color of the leather, and the precision of the tools." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACobFM--BvVMkzaKPqLwDEPpjqD4cUQU9Npvv-bqjOv041isZ0t_C4rFblsTGK9qmCsn8Ywuq9ZBq_-UwzeK41DTaQX1se5p9FsqEK05A2lVHoxScklXHtFkNgkI9vIGGb2xjXN5tI71Owkfcfyp6xvyZQB5Qpg09D3hAB_alG0MEtPUyNCWjH73BJJY3EbqhANtw4fooDF2-YklnfbmfelaW4ApL-ijQBDOPCjQqZQNYmA2LhwF7hwQ">
-<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
+{% else %}
+<!-- Estado vacío -->
+<div class="col-span-2 md:col-span-3 aspect-[3/1] rounded-xl border border-dashed border-outline-variant bg-surface-container-low flex flex-col items-center justify-center gap-2 p-6">
+<span class="material-symbols-outlined text-outline text-4xl">image</span>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant text-center">Este pedido todavía no tiene evidencias adjuntas.</p>
 </div>
-</div>
-<!-- Image 3 -->
-<div class="aspect-square rounded-xl overflow-hidden relative group">
-<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A beautifully lit, high-resolution photo of the nearly completed cognac leather modular sofa section resting on a clean, light-grey workshop floor. The aesthetic is modern, spacious, and bright, emphasizing the premium quality of the materials and the meticulous attention to detail in the upholstery." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTAyy5N3uTv7A4mqrp1lea41L-ESjOphi9rYy_JBXd9yQo1q1BRRPi-16efq4mwgoJ5tyk-rt9nFbY8vIXZJWAPHC8CF41Jl9nNVM6rf5NBBaNw8EzBKGv0y2VfrdO_-wwm-cwo50ZOyfGR-lmuWHVqSI7CFkSG2sG-4rhkKalvqvEzkjkmVGo7E3vnd-OJ-oWZwN4EozvseUfNjJt1aLR2OGlcYXQt-IdNuBAVyZQYF3eRHjIbK0J1Q">
-<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
-</div>
-</div>
-<!-- Image 4 -->
-<div class="aspect-square rounded-xl overflow-hidden relative group">
-<img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A close-up macro shot of the solid walnut legs being attached to the base of the cognac leather sofa. The lighting is soft and bright, typical of a modern, clean light-mode UI aesthetic. The wood grain is clearly visible, contrasting elegantly with the metal hardware." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOODLtEOZ3CBvgbTbUfvPjNykht-aXWfJb_v9Ms3rCJunEn2KZ6IEcFVydftT94BJtboKEDWy6obEhLHAc6_eSG_tgPk-k5mxblFzt-JbY1VgmNljzLmM5Arp09bxRrlI98ORPwLtiBj_KzLA8o43pwdR5DflqgqlLK6nG1aLEAsoPF8qYD8wHd9yFciIz3WhAJNjX2ckuOA5PJWYuTjlQtZmVGfe6KFzH67JHL6M5NjM-eBJp8L3SjQ">
-<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-<span class="material-symbols-outlined text-white text-3xl">zoom_in</span>
-</div>
-</div>
+{% endif %}
 </div>
 </div>
 </section>
 </div>
 </div>
+{% else %}
+<!-- Estado vacío: pedido inexistente -->
+<div class="p-container-padding-mobile md:p-container-padding-desktop">
+<div class="neomorphic-card rounded-2xl p-10 flex flex-col items-center justify-center gap-3 text-center">
+<span class="material-symbols-outlined text-outline text-5xl">search_off</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Pedido no encontrado</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">El pedido solicitado no existe o fue eliminado.</p>
+<a class="bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors" href="{% url 'kanview:pedidos-tablero' %}">Volver al tablero</a>
+</div>
+</div>
+{% endif %}
 </main>
 <!-- BottomNavBar (Mobile only) -->
 <div class="md:hidden fixed bottom-0 left-0 w-full bg-surface border-t border-outline-variant/30 py-3 px-6 flex justify-around items-center z-50">

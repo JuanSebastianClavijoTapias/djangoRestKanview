@@ -174,7 +174,7 @@
 <div class="flex justify-between items-end w-full">
 <div>
 <h1 class="font-headline-lg text-headline-lg text-on-surface">Clientes</h1>
-<p class="font-body-md text-body-md text-on-surface-variant mt-2">48 clientes activos</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">{{ total_clientes }} cliente{{ total_clientes|pluralize }} registrado{{ total_clientes|pluralize }}</p>
 </div>
 <a class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-surface-tint transition-colors shadow-neomorphic-lift hover:translate-y-[-2px] active:translate-y-[1px]" href="{% url 'kanview:cliente-crear' %}">
 <span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">add</span>
@@ -215,92 +215,44 @@
 </tr>
 </thead>
 <tbody class="text-on-surface font-body-md text-body-md bg-surface-bright">
-<!-- Row 1 - Active -->
-<tr class="border-b border-outline-variant/20 hover:bg-surface-container-low transition-all cursor-pointer bg-surface-container-low/50 shadow-inner-recessed">
-<td class="py-4 px-6">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary font-bold overflow-hidden shadow-neomorphic-lift">
-<img class="w-full h-full object-cover" data-alt="A portrait photography shot of a young latin woman with dark hair smiling gently, soft natural lighting, light neutral background, high resolution, corporate clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgdY1mfpl0wTNQv2M_6Mh9qLzmPoeUv6pX1ni4Cp0191jeh9euC8nc6lqKL5tL0dfo6L-pPvnC8qgTW4MOMEaj5QpNPqUsWoOUO8ZlM2MfNjUuw--pAdDkzRo7Wi3t3-7jmsbgCV0-QGTV5RFUHK2tAss6oHEOQ9M1CSjPwB7JOUxDp4aMu9gH1h-SA6cMTJI9ltwe7wqlsjTo1nyGBcOojeqPViO5kwh7RHEl7EmpzUzRyoKfXdKYMOzOJa-bEG-8mB5joXtrJRw"/>
-</div>
-<div>
-<p class="font-label-md text-label-md font-semibold text-primary">Valentina Restrepo</p>
-<p class="text-[13px] text-on-surface-variant">Calle 10 #43-21, Medellín</p>
-</div>
-</div>
-</td>
-<td class="py-4 px-4 text-on-surface-variant">1.037.452.891</td>
-<td class="py-4 px-4 text-on-surface-variant">312 456 7890</td>
-<td class="py-4 px-4 text-on-surface-variant">28</td>
-<td class="py-4 px-6 text-center">
-<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-container text-on-primary-container font-label-md font-bold shadow-sm">12</span>
-</td>
-</tr>
-<!-- Row 2 -->
+{% for cliente in clientes %}
 <tr class="border-b border-outline-variant/20 shadow-neomorphic-hover cursor-pointer bg-surface-bright transition-all">
 <td class="py-4 px-6">
 <div class="flex items-center gap-3">
 <div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold overflow-hidden shadow-sm">
-                                                AC
-                                            </div>
+{{ cliente.nombre|slice:":2"|upper }}
+</div>
 <div>
-<p class="font-label-md text-label-md font-semibold">Andrés Felipe Castro</p>
-<p class="text-[13px] text-on-surface-variant">Cra 45 #8-12, Bogotá</p>
+<p class="font-label-md text-label-md font-semibold">
+<a class="text-primary hover:underline" href="{% url 'kanview:cliente-editar' cliente.pk %}">{{ cliente.nombre }}</a>
+</p>
+<p class="text-[13px] text-on-surface-variant">{{ cliente.direccion }}</p>
 </div>
 </div>
 </td>
-<td class="py-4 px-4 text-on-surface-variant">80.123.456</td>
-<td class="py-4 px-4 text-on-surface-variant">300 987 6543</td>
-<td class="py-4 px-4 text-on-surface-variant">42</td>
+<td class="py-4 px-4 text-on-surface-variant">{{ cliente.documento }}</td>
+<td class="py-4 px-4 text-on-surface-variant">{{ cliente.celular }}</td>
+<td class="py-4 px-4 text-on-surface-variant">{{ cliente.edad }}</td>
 <td class="py-4 px-6 text-center">
-<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">4</span>
+<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">{{ cliente.pedido_set.count }}</span>
 </td>
 </tr>
-<!-- Row 3 -->
-<tr class="border-b border-outline-variant/20 shadow-neomorphic-hover cursor-pointer bg-surface-bright transition-all">
-<td class="py-4 px-6">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold overflow-hidden shadow-sm">
-                                                MG
-                                            </div>
-<div>
-<p class="font-label-md text-label-md font-semibold">Mariana Gómez</p>
-<p class="text-[13px] text-on-surface-variant">Av El Poblado, Medellín</p>
-</div>
-</div>
-</td>
-<td class="py-4 px-4 text-on-surface-variant">1.152.678.901</td>
-<td class="py-4 px-4 text-on-surface-variant">315 234 5678</td>
-<td class="py-4 px-4 text-on-surface-variant">31</td>
-<td class="py-4 px-6 text-center">
-<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">7</span>
+{% empty %}
+<tr>
+<td class="py-12 px-6 text-center text-on-surface-variant" colspan="5">
+<span class="material-symbols-outlined block text-outline mb-2" style="font-variation-settings: 'FILL' 0;">group_off</span>
+<p class="font-label-md text-label-md">No hay clientes registrados todavía.</p>
+<p class="font-body-md text-[13px] text-outline mt-1">Usa el botón "Nuevo cliente" para agregar el primero.</p>
 </td>
 </tr>
-<!-- Row 4 -->
-<tr class="shadow-neomorphic-hover cursor-pointer bg-surface-bright transition-all">
-<td class="py-4 px-6">
-<div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary font-bold overflow-hidden shadow-sm">
-                                                SJ
-                                            </div>
-<div>
-<p class="font-label-md text-label-md font-semibold">Santiago Jaramillo</p>
-<p class="text-[13px] text-on-surface-variant">Vía Las Palmas, Envigado</p>
-</div>
-</div>
-</td>
-<td class="py-4 px-4 text-on-surface-variant">71.564.321</td>
-<td class="py-4 px-4 text-on-surface-variant">320 876 5432</td>
-<td class="py-4 px-4 text-on-surface-variant">55</td>
-<td class="py-4 px-6 text-center">
-<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-high text-on-surface font-label-md font-bold">2</span>
-</td>
-</tr>
+{% endfor %}
 </tbody>
 </table>
 </div>
 </div>
 <!-- RIGHT COLUMN: Customer Detail Panel (Spans 4 cols) -->
 <div class="col-span-4 sticky top-24">
+{% for cliente in clientes|slice:":1" %}
 <div class="bg-surface-bright rounded-2xl shadow-neomorphic-lift overflow-hidden relative flex flex-col h-full border border-outline-variant/10">
 <!-- Subtle Wax Seal Watermark Background -->
 <div class="absolute -bottom-10 -right-10 w-64 h-64 opacity-10 pointer-events-none z-0 mix-blend-multiply" style="background-image: url('https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c'); background-size: cover; background-position: center;">
@@ -309,9 +261,9 @@
 <div class="h-24 bg-surface-container-low w-full relative z-10">
 <!-- Action Buttons overlay -->
 <div class="absolute top-4 right-4 flex gap-2">
-<button class="p-2 bg-surface-bright rounded-full text-on-surface-variant shadow-sm hover:text-primary transition-colors">
+<a class="p-2 bg-surface-bright rounded-full text-on-surface-variant shadow-sm hover:text-primary transition-colors" href="{% url 'kanview:cliente-editar' cliente.pk %}">
 <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">edit</span>
-</button>
+</a>
 <button class="p-2 bg-surface-bright rounded-full text-on-surface-variant shadow-sm hover:text-error transition-colors">
 <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 0;">more_vert</span>
 </button>
@@ -320,19 +272,19 @@
 <!-- Profile Header -->
 <div class="px-6 pb-6 relative z-10 flex flex-col items-center -mt-12 border-b border-outline-variant/20">
 <div class="relative">
-<div class="w-24 h-24 rounded-full border-4 border-surface-bright shadow-neomorphic-lift overflow-hidden bg-surface-container">
-<img class="w-full h-full object-cover" data-alt="A portrait photography shot of a young latin woman with dark hair smiling gently, soft natural lighting, light neutral background, high resolution, corporate clean style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEnv2kTwa8C1TjVIC3PaP2xBvZfPrvl3Pb1BSa9ZY_gAKmCERdtrh2jOyXorcrfeZB9OCkisf2fqw_iG0UxzPNsBBsiKv2MKvSQXcaY53zf1GrRwUs8eVi-nsHvqfUzmgrjS4oTpH9aMa6fXjlo6_a_zkmVDwpt1HVSZidWfp8UJTtdtXcNP7BtpdxaxwPSdGGL7mbw_lpbQS-6WosFCYXhqk7aWm4jR8-IVbhU5pn2oXvT4prSCsVuM7XNdD8zGSKfvHWX_O4kuk"/>
+<div class="w-24 h-24 rounded-full border-4 border-surface-bright shadow-neomorphic-lift overflow-hidden bg-surface-container-highest flex items-center justify-center text-primary font-bold text-2xl">
+{{ cliente.nombre|slice:":2"|upper }}
 </div>
 <!-- Wax Seal Verified Badge -->
 <div class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-surface-bright shadow-sm p-[2px]">
 <img alt="Verified Customer" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c"/>
 </div>
 </div>
-<h2 class="font-headline-md text-headline-md text-on-surface mt-4 text-center">Valentina Restrepo</h2>
-<p class="font-body-md text-body-md text-on-surface-variant text-center">CC: 1.037.452.891</p>
+<h2 class="font-headline-md text-headline-md text-on-surface mt-4 text-center">{{ cliente.nombre }}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-center">CC: {{ cliente.documento }}</p>
 <div class="mt-3 flex items-center gap-2 bg-primary-container/20 px-3 py-1 rounded-full border border-primary/20">
 <span class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,128,128,0.5)]"></span>
-<span class="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">Activo</span>
+<span class="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">{{ cliente.pedido_set.count }} pedido{{ cliente.pedido_set.count|pluralize }}</span>
 </div>
 </div>
 <!-- Details Section -->
@@ -343,29 +295,29 @@
 <div class="flex items-start gap-3">
 <span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">call</span>
 <div>
-<p class="font-body-md text-body-md text-on-surface">+57 312 456 7890</p>
+<p class="font-body-md text-body-md text-on-surface">{{ cliente.celular }}</p>
 <p class="font-label-sm text-[11px] text-on-surface-variant">Móvil Principal</p>
 </div>
 </div>
 <div class="flex items-start gap-3">
-<span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">mail</span>
+<span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">badge</span>
 <div>
-<p class="font-body-md text-body-md text-on-surface">v.restrepo@email.com</p>
-<p class="font-label-sm text-[11px] text-on-surface-variant">Trabajo</p>
+<p class="font-body-md text-body-md text-on-surface">{{ cliente.documento }}</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Documento (CC)</p>
 </div>
 </div>
 <div class="flex items-start gap-3">
 <span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">location_on</span>
 <div>
-<p class="font-body-md text-body-md text-on-surface">Calle 10 #43-21, Apt 402</p>
-<p class="font-label-sm text-[11px] text-on-surface-variant">Medellín, Antioquia</p>
+<p class="font-body-md text-body-md text-on-surface">{{ cliente.direccion }}</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">Dirección</p>
 </div>
 </div>
 <div class="flex items-start gap-3">
 <span class="material-symbols-outlined text-outline mt-0.5" style="font-variation-settings: 'FILL' 0;">cake</span>
 <div>
-<p class="font-body-md text-body-md text-on-surface">15 de Mayo, 1995</p>
-<p class="font-label-sm text-[11px] text-on-surface-variant">28 años</p>
+<p class="font-body-md text-body-md text-on-surface">{{ cliente.fecha_nacimiento|date:"j \d\e F \d\e Y" }}</p>
+<p class="font-label-sm text-[11px] text-on-surface-variant">{{ cliente.edad }} años</p>
 </div>
 </div>
 </div>
@@ -373,33 +325,24 @@
 <div class="flex flex-col gap-4 mt-2">
 <div class="flex justify-between items-center mb-1">
 <h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Últimos Pedidos</h3>
-<a class="font-label-sm text-label-sm text-primary hover:underline" href="#">Ver todos (12)</a>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="{% url 'kanview:pedidos-tablero' %}">Ver todos ({{ cliente.pedido_set.count }})</a>
 </div>
 <div class="relative pl-4 border-l-2 border-surface-variant flex flex-col gap-5">
-<!-- Timeline Item 1 -->
+{% for pedido in cliente.pedido_set.all|slice:":2" %}
 <div class="relative">
 <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-surface-variant border-2 border-surface-bright"></div>
 <div class="flex justify-between items-start">
 <div>
-<p class="font-label-md text-label-md font-semibold text-on-surface">ORD-2023-89</p>
-<p class="font-body-md text-[13px] text-on-surface-variant">Mesa Comedor Nogal</p>
+<p class="font-label-md text-label-md font-semibold text-on-surface">{{ pedido.codigo_pedido }}</p>
+<p class="font-body-md text-[13px] text-on-surface-variant">{{ pedido.id_producto.nombre }}</p>
 </div>
-<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant">Entregado</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant">{{ pedido.get_estado_display }}</span>
 </div>
-<p class="font-label-sm text-[11px] text-outline mt-1">12 Oct 2023 • $1,250,000</p>
+<p class="font-label-sm text-[11px] text-outline mt-1">{{ pedido.fecha_creacion|date:"d M Y" }} • ${{ pedido.id_producto.precio|floatformat:"0" }}</p>
 </div>
-<!-- Timeline Item 2 -->
-<div class="relative">
-<div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-surface-variant border-2 border-surface-bright"></div>
-<div class="flex justify-between items-start">
-<div>
-<p class="font-label-md text-label-md font-semibold text-on-surface">ORD-2023-45</p>
-<p class="font-body-md text-[13px] text-on-surface-variant">Sillas Clásicas (x4)</p>
-</div>
-<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-container-high text-on-surface-variant">Entregado</span>
-</div>
-<p class="font-label-sm text-[11px] text-outline mt-1">05 Sep 2023 • $800,000</p>
-</div>
+{% empty %}
+<p class="font-body-md text-[13px] text-outline">Este cliente aún no tiene pedidos.</p>
+{% endfor %}
 </div>
 </div>
 <!-- Bottom Action -->
@@ -411,6 +354,13 @@
 </div>
 </div>
 </div>
+{% empty %}
+<div class="bg-surface-bright rounded-2xl shadow-neomorphic-lift p-8 flex flex-col items-center justify-center text-center gap-2 border border-outline-variant/10 min-h-[320px]">
+<span class="material-symbols-outlined text-outline text-[40px]" style="font-variation-settings: 'FILL' 0;">person_search</span>
+<p class="font-headline-md text-headline-md text-on-surface">Sin clientes</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Registra un cliente para ver aquí su ficha.</p>
+</div>
+{% endfor %}
 </div>
 </div>
 </main>

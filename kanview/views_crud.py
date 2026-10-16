@@ -1,274 +1,376 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 
-from .forms import AdministradorForm, ClienteForm, EmpleadoForm, PedidoForm, ProductoForm
-from .models import Administrador, Cliente, Empleado, Pedido, Producto
-from .views_site import SidebarMixin
-
-NavContextMixin = SidebarMixin  # shared sidebar context (see views_site.NAV_ITEMS)
-
-
-class DashboardView(LoginRequiredMixin, NavContextMixin, TemplateView):
-    template_name = "kanview/dashboard.html"
-    active_label = "Dashboard"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["total_clientes"] = Cliente.objects.count()
-        ctx["total_empleados"] = Empleado.objects.count()
-        ctx["total_productos"] = Producto.objects.count()
-        ctx["total_pedidos"] = Pedido.objects.count()
-        ctx["pedidos_activos"] = Pedido.objects.filter(estado="activo").count()
-        ctx["ultimos_pedidos"] = Pedido.objects.order_by("-id")[:5]
-        return ctx
-
-
-# ---- Generic CRUD scaffolding -------------------------------------------
-
-class BaseListView(LoginRequiredMixin, NavContextMixin, ListView):
-    template_name = "kanview/crud/list.html"
-    paginate_by = 20
-    ordering = "-id"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["title"] = self.title
-        ctx["columns"] = self.columns
-        ctx["create_url"] = reverse(self.create_url_name)
-        ctx["update_url_name"] = self.update_url_name
-        ctx["delete_url_name"] = self.delete_url_name
-        return ctx
+from .forms import (
+    ActividadesForm,
+    AdministradorForm,
+    AnalisisFinancieroForm,
+    CalendarioForm,
+    CatalogoForm,
+    ClienteForm,
+    EmpleadoForm,
+    HistorialForm,
+    InventarioForm,
+    PedidoForm,
+    ProductoForm,
+    TareasPedidoForm,
+)
+from .models import (
+    Actividades,
+    Administrador,
+    AnalisisFinanciero,
+    Calendario,
+    Catalogo,
+    Cliente,
+    Empleado,
+    Historial,
+    Inventario,
+    Pedido,
+    Producto,
+    TareasPedido,
+)
+from .views_site import _render
 
 
-class BaseCreateView(LoginRequiredMixin, NavContextMixin, CreateView):
-    template_name = "kanview/crud/form.html"
+# ---- Helpers (funciones, no clases) --------------------------------------
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["title"] = f"Nuevo {self.object_label}"
-        ctx["cancel_url"] = reverse(self.list_url_name)
-        return ctx
-
-    def form_valid(self, form):
-        messages.success(self.request, f"{self.object_label} creado correctamente.")
-        return super().form_valid(form)
-
-
-class BaseUpdateView(LoginRequiredMixin, NavContextMixin, UpdateView):
-    template_name = "kanview/crud/form.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["title"] = f"Editar {self.object_label}"
-        ctx["cancel_url"] = reverse(self.list_url_name)
-        return ctx
-
-    def form_valid(self, form):
-        messages.success(self.request, f"{self.object_label} actualizado correctamente.")
-        return super().form_valid(form)
+def _lista(request, modelo, active, title, columns, name):
+    objetos = modelo.objects.all().order_by("-id")
+    paginator = Paginator(objetos, 20)
+    page_obj = paginator.get_page(request.GET.get("page"))
+    return _render(
+        request,
+        "kanview/crud/list.html",
+        active,
+        title=title,
+        columns=columns,
+        object_list=page_obj.object_list,
+        paginator=paginator,
+        page_obj=page_obj,
+        is_paginated=page_obj.has_other_pages(),
+        create_url=reverse(f"kanview:{name}-crear"),
+        update_url_name=f"kanview:{name}-editar",
+        delete_url_name=f"kanview:{name}-eliminar",
+    )
 
 
-class BaseDeleteView(LoginRequiredMixin, NavContextMixin, DeleteView):
-    template_name = "kanview/crud/confirm_delete.html"
+def _crear(request, form_class, active, label, name):
+    if request.method == "POST":
+        form = form_class(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{label} creado correctamente.")
+            return redirect(f"kanview:{name}-lista")
+    else:
+        form = form_class()
+    return _render(
+        request,
+        "kanview/crud/form.html",
+        active,
+        title=f"Nuevo {label}",
+        form=form,
+        cancel_url=reverse(f"kanview:{name}-lista"),
+    )
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["title"] = f"Eliminar {self.object_label}"
-        ctx["cancel_url"] = reverse(self.list_url_name)
-        return ctx
 
-    def form_valid(self, form):
-        messages.success(self.request, f"{self.object_label} eliminado.")
-        return super().form_valid(form)
+def _editar(request, modelo, form_class, active, label, name, pk):
+    objeto = get_object_or_404(modelo, pk=pk)
+    if request.method == "POST":
+        form = form_class(request.POST, instance=objeto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{label} actualizado correctamente.")
+            return redirect(f"kanview:{name}-lista")
+    else:
+        form = form_class(instance=objeto)
+    return _render(
+        request,
+        "kanview/crud/form.html",
+        active,
+        title=f"Editar {label}",
+        form=form,
+        cancel_url=reverse(f"kanview:{name}-lista"),
+    )
+
+
+def _eliminar(request, modelo, active, label, name, pk):
+    objeto = get_object_or_404(modelo, pk=pk)
+    if request.method == "POST":
+        objeto.delete()
+        messages.success(request, f"{label} eliminado.")
+        return redirect(f"kanview:{name}-lista")
+    return _render(
+        request,
+        "kanview/crud/confirm_delete.html",
+        active,
+        title=f"Eliminar {label}",
+        object=objeto,
+        cancel_url=reverse(f"kanview:{name}-lista"),
+    )
 
 
 # ---- Cliente ---------------------------------------------------------------
 
-class ClienteListView(BaseListView):
-    model = Cliente
-    active_label = "Users"
-    title = "Clientes"
-    columns = ["nombre", "documento", "celular", "direccion", "edad"]
-    create_url_name = "kanview:cliente-crear"
-    update_url_name = "kanview:cliente-editar"
-    delete_url_name = "kanview:cliente-eliminar"
+@login_required
+def cliente_lista(request):
+    return _lista(request, Cliente, "Users", "Clientes", ["nombre", "documento", "celular", "direccion", "edad"], "cliente")
 
 
-class ClienteCreateView(BaseCreateView):
-    model = Cliente
-    form_class = ClienteForm
-    active_label = "Users"
-    object_label = "Cliente"
-    list_url_name = "kanview:cliente-lista"
-    success_url = reverse_lazy("kanview:cliente-lista")
+@login_required
+def cliente_crear(request):
+    return _crear(request, ClienteForm, "Users", "Cliente", "cliente")
 
 
-class ClienteUpdateView(BaseUpdateView):
-    model = Cliente
-    form_class = ClienteForm
-    active_label = "Users"
-    object_label = "Cliente"
-    list_url_name = "kanview:cliente-lista"
-    success_url = reverse_lazy("kanview:cliente-lista")
+@login_required
+def cliente_editar(request, pk):
+    return _editar(request, Cliente, ClienteForm, "Users", "Cliente", "cliente", pk)
 
 
-class ClienteDeleteView(BaseDeleteView):
-    model = Cliente
-    active_label = "Users"
-    object_label = "Cliente"
-    list_url_name = "kanview:cliente-lista"
-    success_url = reverse_lazy("kanview:cliente-lista")
+@login_required
+def cliente_eliminar(request, pk):
+    return _eliminar(request, Cliente, "Users", "Cliente", "cliente", pk)
 
 
 # ---- Empleado ---------------------------------------------------------------
 
-class EmpleadoListView(BaseListView):
-    model = Empleado
-    active_label = "Users"
-    title = "Empleados"
-    columns = ["nombre", "documento", "cargo", "celular", "salario"]
-    create_url_name = "kanview:empleado-crear"
-    update_url_name = "kanview:empleado-editar"
-    delete_url_name = "kanview:empleado-eliminar"
+@login_required
+def empleado_lista(request):
+    return _lista(request, Empleado, "Users", "Empleados", ["nombre", "documento", "cargo", "celular", "salario"], "empleado")
 
 
-class EmpleadoCreateView(BaseCreateView):
-    model = Empleado
-    form_class = EmpleadoForm
-    active_label = "Users"
-    object_label = "Empleado"
-    list_url_name = "kanview:empleado-lista"
-    success_url = reverse_lazy("kanview:empleado-lista")
+@login_required
+def empleado_crear(request):
+    return _crear(request, EmpleadoForm, "Users", "Empleado", "empleado")
 
 
-class EmpleadoUpdateView(BaseUpdateView):
-    model = Empleado
-    form_class = EmpleadoForm
-    active_label = "Users"
-    object_label = "Empleado"
-    list_url_name = "kanview:empleado-lista"
-    success_url = reverse_lazy("kanview:empleado-lista")
+@login_required
+def empleado_editar(request, pk):
+    return _editar(request, Empleado, EmpleadoForm, "Users", "Empleado", "empleado", pk)
 
 
-class EmpleadoDeleteView(BaseDeleteView):
-    model = Empleado
-    active_label = "Users"
-    object_label = "Empleado"
-    list_url_name = "kanview:empleado-lista"
-    success_url = reverse_lazy("kanview:empleado-lista")
+@login_required
+def empleado_eliminar(request, pk):
+    return _eliminar(request, Empleado, "Users", "Empleado", "empleado", pk)
 
 
 # ---- Administrador ------------------------------------------------------
 
-class AdministradorListView(BaseListView):
-    model = Administrador
-    active_label = "Dashboard"
-    title = "Administradores"
-    columns = ["nombre", "documento", "celular"]
-    create_url_name = "kanview:administrador-crear"
-    update_url_name = "kanview:administrador-editar"
-    delete_url_name = "kanview:administrador-eliminar"
+@login_required
+def administrador_lista(request):
+    return _lista(request, Administrador, "Dashboard", "Administradores", ["nombre", "documento", "celular"], "administrador")
 
 
-class AdministradorCreateView(BaseCreateView):
-    model = Administrador
-    form_class = AdministradorForm
-    active_label = "Dashboard"
-    object_label = "Administrador"
-    list_url_name = "kanview:administrador-lista"
-    success_url = reverse_lazy("kanview:administrador-lista")
+@login_required
+def administrador_crear(request):
+    return _crear(request, AdministradorForm, "Dashboard", "Administrador", "administrador")
 
 
-class AdministradorUpdateView(BaseUpdateView):
-    model = Administrador
-    form_class = AdministradorForm
-    active_label = "Dashboard"
-    object_label = "Administrador"
-    list_url_name = "kanview:administrador-lista"
-    success_url = reverse_lazy("kanview:administrador-lista")
+@login_required
+def administrador_editar(request, pk):
+    return _editar(request, Administrador, AdministradorForm, "Dashboard", "Administrador", "administrador", pk)
 
 
-class AdministradorDeleteView(BaseDeleteView):
-    model = Administrador
-    active_label = "Dashboard"
-    object_label = "Administrador"
-    list_url_name = "kanview:administrador-lista"
-    success_url = reverse_lazy("kanview:administrador-lista")
+@login_required
+def administrador_eliminar(request, pk):
+    return _eliminar(request, Administrador, "Dashboard", "Administrador", "administrador", pk)
 
 
 # ---- Producto ---------------------------------------------------------------
 
-class ProductoListView(BaseListView):
-    model = Producto
-    active_label = "Catalog"
-    title = "Productos"
-    columns = ["nombre", "categoria", "codigo_producto", "cantidad", "precio"]
-    create_url_name = "kanview:producto-crear"
-    update_url_name = "kanview:producto-editar"
-    delete_url_name = "kanview:producto-eliminar"
+@login_required
+def producto_lista(request):
+    return _lista(request, Producto, "Catalog", "Productos", ["nombre", "categoria", "codigo_producto", "cantidad", "precio"], "producto")
 
 
-class ProductoCreateView(BaseCreateView):
-    model = Producto
-    form_class = ProductoForm
-    active_label = "Catalog"
-    object_label = "Producto"
-    list_url_name = "kanview:producto-lista"
-    success_url = reverse_lazy("kanview:producto-lista")
+@login_required
+def producto_crear(request):
+    return _crear(request, ProductoForm, "Catalog", "Producto", "producto")
 
 
-class ProductoUpdateView(BaseUpdateView):
-    model = Producto
-    form_class = ProductoForm
-    active_label = "Catalog"
-    object_label = "Producto"
-    list_url_name = "kanview:producto-lista"
-    success_url = reverse_lazy("kanview:producto-lista")
+@login_required
+def producto_editar(request, pk):
+    return _editar(request, Producto, ProductoForm, "Catalog", "Producto", "producto", pk)
 
 
-class ProductoDeleteView(BaseDeleteView):
-    model = Producto
-    active_label = "Catalog"
-    object_label = "Producto"
-    list_url_name = "kanview:producto-lista"
-    success_url = reverse_lazy("kanview:producto-lista")
+@login_required
+def producto_eliminar(request, pk):
+    return _eliminar(request, Producto, "Catalog", "Producto", "producto", pk)
 
 
 # ---- Pedido ---------------------------------------------------------------
 
-class PedidoListView(BaseListView):
-    model = Pedido
-    active_label = "Orders"
-    title = "Pedidos"
-    columns = ["codigo_pedido", "id_cliente", "id_empleado", "estado", "fecha_creacion"]
-    create_url_name = "kanview:pedido-crear"
-    update_url_name = "kanview:pedido-editar"
-    delete_url_name = "kanview:pedido-eliminar"
+@login_required
+def pedido_lista(request):
+    return _lista(request, Pedido, "Orders", "Pedidos", ["codigo_pedido", "id_cliente", "id_empleado", "estado", "fecha_creacion"], "pedido")
 
 
-class PedidoCreateView(BaseCreateView):
-    model = Pedido
-    form_class = PedidoForm
-    active_label = "Orders"
-    object_label = "Pedido"
-    list_url_name = "kanview:pedido-lista"
-    success_url = reverse_lazy("kanview:pedido-lista")
+@login_required
+def pedido_crear(request):
+    return _crear(request, PedidoForm, "Orders", "Pedido", "pedido")
 
 
-class PedidoUpdateView(BaseUpdateView):
-    model = Pedido
-    form_class = PedidoForm
-    active_label = "Orders"
-    object_label = "Pedido"
-    list_url_name = "kanview:pedido-lista"
-    success_url = reverse_lazy("kanview:pedido-lista")
+@login_required
+def pedido_editar(request, pk):
+    return _editar(request, Pedido, PedidoForm, "Orders", "Pedido", "pedido", pk)
 
 
-class PedidoDeleteView(BaseDeleteView):
-    model = Pedido
-    active_label = "Orders"
-    object_label = "Pedido"
-    list_url_name = "kanview:pedido-lista"
-    success_url = reverse_lazy("kanview:pedido-lista")
+@login_required
+def pedido_eliminar(request, pk):
+    return _eliminar(request, Pedido, "Orders", "Pedido", "pedido", pk)
+
+
+# ---- Análisis financiero --------------------------------------------------
+
+@login_required
+def analisis_financiero_lista(request):
+    return _lista(request, AnalisisFinanciero, "Finance", "Análisis financiero", ["gastos", "fuentes_ingresos", "productos_vendidos", "id_administrador"], "analisis-financiero")
+
+
+@login_required
+def analisis_financiero_crear(request):
+    return _crear(request, AnalisisFinancieroForm, "Finance", "Análisis financiero", "analisis-financiero")
+
+
+@login_required
+def analisis_financiero_editar(request, pk):
+    return _editar(request, AnalisisFinanciero, AnalisisFinancieroForm, "Finance", "Análisis financiero", "analisis-financiero", pk)
+
+
+@login_required
+def analisis_financiero_eliminar(request, pk):
+    return _eliminar(request, AnalisisFinanciero, "Finance", "Análisis financiero", "analisis-financiero", pk)
+
+
+# ---- Inventario -----------------------------------------------------------
+
+@login_required
+def inventario_lista(request):
+    return _lista(request, Inventario, "Inventory", "Inventario", ["cantidad", "id_producto"], "inventario")
+
+
+@login_required
+def inventario_crear(request):
+    return _crear(request, InventarioForm, "Inventory", "Inventario", "inventario")
+
+
+@login_required
+def inventario_editar(request, pk):
+    return _editar(request, Inventario, InventarioForm, "Inventory", "Inventario", "inventario", pk)
+
+
+@login_required
+def inventario_eliminar(request, pk):
+    return _eliminar(request, Inventario, "Inventory", "Inventario", "inventario", pk)
+
+
+# ---- Catálogo -------------------------------------------------------------
+
+@login_required
+def catalogo_lista(request):
+    return _lista(request, Catalogo, "Catalog", "Catálogo", ["categorias", "id_inventario", "id_producto"], "catalogo")
+
+
+@login_required
+def catalogo_crear(request):
+    return _crear(request, CatalogoForm, "Catalog", "Catálogo", "catalogo")
+
+
+@login_required
+def catalogo_editar(request, pk):
+    return _editar(request, Catalogo, CatalogoForm, "Catalog", "Catálogo", "catalogo", pk)
+
+
+@login_required
+def catalogo_eliminar(request, pk):
+    return _eliminar(request, Catalogo, "Catalog", "Catálogo", "catalogo", pk)
+
+
+# ---- Tareas de pedido -----------------------------------------------------
+
+@login_required
+def tarea_lista(request):
+    return _lista(request, TareasPedido, "Tasks", "Tareas", ["nombre", "estado", "fecha_inicio", "fecha_fin", "id_pedido"], "tarea")
+
+
+@login_required
+def tarea_crear(request):
+    return _crear(request, TareasPedidoForm, "Tasks", "Tarea", "tarea")
+
+
+@login_required
+def tarea_editar(request, pk):
+    return _editar(request, TareasPedido, TareasPedidoForm, "Tasks", "Tarea", "tarea", pk)
+
+
+@login_required
+def tarea_eliminar(request, pk):
+    return _eliminar(request, TareasPedido, "Tasks", "Tarea", "tarea", pk)
+
+
+# ---- Actividades ----------------------------------------------------------
+
+@login_required
+def actividad_lista(request):
+    return _lista(request, Actividades, "Activities", "Actividades", ["nombre", "estado", "fecha_inicio", "fecha_fin", "id_tarea"], "actividad")
+
+
+@login_required
+def actividad_crear(request):
+    return _crear(request, ActividadesForm, "Activities", "Actividad", "actividad")
+
+
+@login_required
+def actividad_editar(request, pk):
+    return _editar(request, Actividades, ActividadesForm, "Activities", "Actividad", "actividad", pk)
+
+
+@login_required
+def actividad_eliminar(request, pk):
+    return _eliminar(request, Actividades, "Activities", "Actividad", "actividad", pk)
+
+
+# ---- Historial ------------------------------------------------------------
+
+@login_required
+def historial_lista(request):
+    return _lista(request, Historial, "Audit", "Historial", ["fecha_creacion", "hora_creacion", "id_cliente", "id_empleado", "id_producto"], "historial")
+
+
+@login_required
+def historial_crear(request):
+    return _crear(request, HistorialForm, "Audit", "Historial", "historial")
+
+
+@login_required
+def historial_editar(request, pk):
+    return _editar(request, Historial, HistorialForm, "Audit", "Historial", "historial", pk)
+
+
+@login_required
+def historial_eliminar(request, pk):
+    return _eliminar(request, Historial, "Audit", "Historial", "historial", pk)
+
+
+# ---- Calendario -----------------------------------------------------------
+
+@login_required
+def calendario_lista(request):
+    return _lista(request, Calendario, "Calendar", "Calendario", ["fecha", "nombre_mes", "nombre_dia", "dia", "id_pedido"], "calendario")
+
+
+@login_required
+def calendario_crear(request):
+    return _crear(request, CalendarioForm, "Calendar", "Calendario", "calendario")
+
+
+@login_required
+def calendario_editar(request, pk):
+    return _editar(request, Calendario, CalendarioForm, "Calendar", "Calendario", "calendario", pk)
+
+
+@login_required
+def calendario_eliminar(request, pk):
+    return _eliminar(request, Calendario, "Calendar", "Calendario", "calendario", pk)

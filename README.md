@@ -103,6 +103,20 @@ Todas bajo el prefijo `/api/`, con CRUD completo (`ModelViewSet`):
 
 > Nota: estas páginas están construidas a partir del diseño exportado de Stitch. Por ahora muestran datos de ejemplo fijos en el HTML; todavía no están conectadas a los datos reales de la API (`/api/...`).
 
+### CRUD (formularios de alta/baja/edición)
+
+Páginas de gestión reales (listar, crear, editar y eliminar) bajo el prefijo `/crud/`. Cubren los 12 modelos del sistema:
+
+```
+/crud/clientes/             /crud/empleados/          /crud/administradores/
+/crud/productos/            /crud/pedidos/
+/crud/analisis-financieros/ /crud/inventarios/        /crud/catalogos/
+/crud/tareas/               /crud/actividades/
+/crud/historial/            /crud/calendario/
+```
+
+Cada sección expone: `/crud/<seccion>/` (lista), `/nuevo/` (crear), `/<id>/editar/` y `/<id>/eliminar/`.
+
 ## Estructura del proyecto
 
 ```
