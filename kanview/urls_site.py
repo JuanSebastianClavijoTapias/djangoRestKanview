@@ -1,91 +1,108 @@
 from django.urls import path
 
-from .views_crud import (
-    AdministradorCreateView,
-    AdministradorDeleteView,
-    AdministradorListView,
-    AdministradorUpdateView,
-    ClienteCreateView,
-    ClienteDeleteView,
-    ClienteListView,
-    ClienteUpdateView,
-    DashboardView,
-    EmpleadoCreateView,
-    EmpleadoDeleteView,
-    EmpleadoListView,
-    EmpleadoUpdateView,
-    PedidoCreateView,
-    PedidoDeleteView,
-    PedidoListView,
-    PedidoUpdateView,
-    ProductoCreateView,
-    ProductoDeleteView,
-    ProductoListView,
-    ProductoUpdateView,
-)
-from .views_site import (
-    AuditoriaView,
-    CalendarioView,
-    CatalogoView,
-    ClientesView,
-    EmpleadosView,
-    FinanzasView,
-    InventarioView,
-    KanviewLoginView,
-    KanviewLogoutView,
-    MensajeriaView,
-    PedidoDetalleView,
-    PedidosTableroView,
-    TareasView,
+from . import (
+    views_auditoria,
+    views_calendario,
+    views_catalogo,
+    views_clientes,
+    views_crud,
+    views_empleados,
+    views_finanzas,
+    views_inventario,
+    views_pedidos,
+    views_site,
+    views_tareas,
 )
 
 app_name = "kanview"
 
 urlpatterns = [
-    path("", DashboardView.as_view(), name="dashboard"),
-    path("login/", KanviewLoginView.as_view(), name="login"),
-    path("logout/", KanviewLogoutView.as_view(), name="logout"),
+    path("", views_site.dashboard, name="dashboard"),
+    path("login/", views_site.login_view, name="login"),
+    path("logout/", views_site.logout_view, name="logout"),
 
-    # Diseño (pantallas Stitch, solo lectura)
-    path("pedidos/", PedidosTableroView.as_view(), name="pedidos-tablero"),
-    path("pedidos/<int:pk>/", PedidoDetalleView.as_view(), name="pedido-detalle"),
-    path("tareas/", TareasView.as_view(), name="tareas"),
-    path("calendario/", CalendarioView.as_view(), name="calendario"),
-    path("inventario/", InventarioView.as_view(), name="inventario"),
-    path("finanzas/", FinanzasView.as_view(), name="finanzas"),
-    path("auditoria/", AuditoriaView.as_view(), name="auditoria"),
-    path("mensajeria/", MensajeriaView.as_view(), name="mensajeria"),
-    path("clientes/", ClientesView.as_view(), name="clientes"),
-    path("empleados/", EmpleadosView.as_view(), name="empleados"),
-    path("catalogo/", CatalogoView.as_view(), name="catalogo"),
+    # Pantallas de diseño (Stitch) conectadas a datos reales
+    path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
+    path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),
+    path("tareas/", views_tareas.tareas, name="tareas"),
+    path("calendario/", views_calendario.calendario, name="calendario"),
+    path("inventario/", views_inventario.inventario, name="inventario"),
+    path("finanzas/", views_finanzas.finanzas, name="finanzas"),
+    path("auditoria/", views_auditoria.auditoria, name="auditoria"),
+    path("mensajeria/", views_site.mensajeria, name="mensajeria"),
+    path("clientes/", views_clientes.clientes, name="clientes"),
+    path("empleados/", views_empleados.empleados, name="empleados"),
+    path("catalogo/", views_catalogo.catalogo, name="catalogo"),
 
     # CRUD: Clientes
-    path("crud/clientes/", ClienteListView.as_view(), name="cliente-lista"),
-    path("crud/clientes/nuevo/", ClienteCreateView.as_view(), name="cliente-crear"),
-    path("crud/clientes/<int:pk>/editar/", ClienteUpdateView.as_view(), name="cliente-editar"),
-    path("crud/clientes/<int:pk>/eliminar/", ClienteDeleteView.as_view(), name="cliente-eliminar"),
+    path("crud/clientes/", views_crud.cliente_lista, name="cliente-lista"),
+    path("crud/clientes/nuevo/", views_crud.cliente_crear, name="cliente-crear"),
+    path("crud/clientes/<int:pk>/editar/", views_crud.cliente_editar, name="cliente-editar"),
+    path("crud/clientes/<int:pk>/eliminar/", views_crud.cliente_eliminar, name="cliente-eliminar"),
 
     # CRUD: Empleados
-    path("crud/empleados/", EmpleadoListView.as_view(), name="empleado-lista"),
-    path("crud/empleados/nuevo/", EmpleadoCreateView.as_view(), name="empleado-crear"),
-    path("crud/empleados/<int:pk>/editar/", EmpleadoUpdateView.as_view(), name="empleado-editar"),
-    path("crud/empleados/<int:pk>/eliminar/", EmpleadoDeleteView.as_view(), name="empleado-eliminar"),
+    path("crud/empleados/", views_crud.empleado_lista, name="empleado-lista"),
+    path("crud/empleados/nuevo/", views_crud.empleado_crear, name="empleado-crear"),
+    path("crud/empleados/<int:pk>/editar/", views_crud.empleado_editar, name="empleado-editar"),
+    path("crud/empleados/<int:pk>/eliminar/", views_crud.empleado_eliminar, name="empleado-eliminar"),
 
     # CRUD: Administradores
-    path("crud/administradores/", AdministradorListView.as_view(), name="administrador-lista"),
-    path("crud/administradores/nuevo/", AdministradorCreateView.as_view(), name="administrador-crear"),
-    path("crud/administradores/<int:pk>/editar/", AdministradorUpdateView.as_view(), name="administrador-editar"),
-    path("crud/administradores/<int:pk>/eliminar/", AdministradorDeleteView.as_view(), name="administrador-eliminar"),
+    path("crud/administradores/", views_crud.administrador_lista, name="administrador-lista"),
+    path("crud/administradores/nuevo/", views_crud.administrador_crear, name="administrador-crear"),
+    path("crud/administradores/<int:pk>/editar/", views_crud.administrador_editar, name="administrador-editar"),
+    path("crud/administradores/<int:pk>/eliminar/", views_crud.administrador_eliminar, name="administrador-eliminar"),
 
     # CRUD: Productos
-    path("crud/productos/", ProductoListView.as_view(), name="producto-lista"),
-    path("crud/productos/nuevo/", ProductoCreateView.as_view(), name="producto-crear"),
-    path("crud/productos/<int:pk>/editar/", ProductoUpdateView.as_view(), name="producto-editar"),
-    path("crud/productos/<int:pk>/eliminar/", ProductoDeleteView.as_view(), name="producto-eliminar"),
+    path("crud/productos/", views_crud.producto_lista, name="producto-lista"),
+    path("crud/productos/nuevo/", views_crud.producto_crear, name="producto-crear"),
+    path("crud/productos/<int:pk>/editar/", views_crud.producto_editar, name="producto-editar"),
+    path("crud/productos/<int:pk>/eliminar/", views_crud.producto_eliminar, name="producto-eliminar"),
 
     # CRUD: Pedidos
-    path("crud/pedidos/", PedidoListView.as_view(), name="pedido-lista"),
-    path("crud/pedidos/nuevo/", PedidoCreateView.as_view(), name="pedido-crear"),
-    path("crud/pedidos/<int:pk>/editar/", PedidoUpdateView.as_view(), name="pedido-editar"),
-    path("crud/pedidos/<int:pk>/eliminar/", PedidoDeleteView.as_view(), name="pedido-eliminar"),
+    path("crud/pedidos/", views_crud.pedido_lista, name="pedido-lista"),
+    path("crud/pedidos/nuevo/", views_crud.pedido_crear, name="pedido-crear"),
+    path("crud/pedidos/<int:pk>/editar/", views_crud.pedido_editar, name="pedido-editar"),
+    path("crud/pedidos/<int:pk>/eliminar/", views_crud.pedido_eliminar, name="pedido-eliminar"),
+
+    # CRUD: Análisis financiero
+    path("crud/analisis-financieros/", views_crud.analisis_financiero_lista, name="analisis-financiero-lista"),
+    path("crud/analisis-financieros/nuevo/", views_crud.analisis_financiero_crear, name="analisis-financiero-crear"),
+    path("crud/analisis-financieros/<int:pk>/editar/", views_crud.analisis_financiero_editar, name="analisis-financiero-editar"),
+    path("crud/analisis-financieros/<int:pk>/eliminar/", views_crud.analisis_financiero_eliminar, name="analisis-financiero-eliminar"),
+
+    # CRUD: Inventario
+    path("crud/inventarios/", views_crud.inventario_lista, name="inventario-lista"),
+    path("crud/inventarios/nuevo/", views_crud.inventario_crear, name="inventario-crear"),
+    path("crud/inventarios/<int:pk>/editar/", views_crud.inventario_editar, name="inventario-editar"),
+    path("crud/inventarios/<int:pk>/eliminar/", views_crud.inventario_eliminar, name="inventario-eliminar"),
+
+    # CRUD: Catálogo
+    path("crud/catalogos/", views_crud.catalogo_lista, name="catalogo-lista"),
+    path("crud/catalogos/nuevo/", views_crud.catalogo_crear, name="catalogo-crear"),
+    path("crud/catalogos/<int:pk>/editar/", views_crud.catalogo_editar, name="catalogo-editar"),
+    path("crud/catalogos/<int:pk>/eliminar/", views_crud.catalogo_eliminar, name="catalogo-eliminar"),
+
+    # CRUD: Tareas de pedido
+    path("crud/tareas/", views_crud.tarea_lista, name="tarea-lista"),
+    path("crud/tareas/nuevo/", views_crud.tarea_crear, name="tarea-crear"),
+    path("crud/tareas/<int:pk>/editar/", views_crud.tarea_editar, name="tarea-editar"),
+    path("crud/tareas/<int:pk>/eliminar/", views_crud.tarea_eliminar, name="tarea-eliminar"),
+
+    # CRUD: Actividades
+    path("crud/actividades/", views_crud.actividad_lista, name="actividad-lista"),
+    path("crud/actividades/nuevo/", views_crud.actividad_crear, name="actividad-crear"),
+    path("crud/actividades/<int:pk>/editar/", views_crud.actividad_editar, name="actividad-editar"),
+    path("crud/actividades/<int:pk>/eliminar/", views_crud.actividad_eliminar, name="actividad-eliminar"),
+
+    # CRUD: Historial
+    path("crud/historial/", views_crud.historial_lista, name="historial-lista"),
+    path("crud/historial/nuevo/", views_crud.historial_crear, name="historial-crear"),
+    path("crud/historial/<int:pk>/editar/", views_crud.historial_editar, name="historial-editar"),
+    path("crud/historial/<int:pk>/eliminar/", views_crud.historial_eliminar, name="historial-eliminar"),
+
+    # CRUD: Calendario
+    path("crud/calendario/", views_crud.calendario_lista, name="calendario-lista"),
+    path("crud/calendario/nuevo/", views_crud.calendario_crear, name="calendario-crear"),
+    path("crud/calendario/<int:pk>/editar/", views_crud.calendario_editar, name="calendario-editar"),
+    path("crud/calendario/<int:pk>/eliminar/", views_crud.calendario_eliminar, name="calendario-eliminar"),
 ]

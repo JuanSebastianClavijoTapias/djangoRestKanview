@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-
+{% load kanview_extras %}
 <html lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -151,11 +151,18 @@
 <h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">Catálogo de Productos</h2>
 <!-- Category Filter Chips -->
 <div class="flex flex-wrap items-center gap-3">
-<button class="bg-primary text-on-primary px-5 py-2 rounded-full font-label-md text-label-md shadow-sm transition-transform active:scale-95">Todos</button>
-<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Sofás</button>
-<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Sillas</button>
-<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Poltronas</button>
-<button class="bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all">Accesorios</button>
+{% if categoria_activa %}
+<a class="inline-block bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all" href="{% url 'kanview:catalogo' %}">Todos</a>
+{% else %}
+<a class="inline-block bg-primary text-on-primary px-5 py-2 rounded-full font-label-md text-label-md shadow-sm transition-transform active:scale-95" href="{% url 'kanview:catalogo' %}">Todos</a>
+{% endif %}
+{% for categoria in categorias %}
+{% if categoria|lower == categoria_activa|lower %}
+<a class="inline-block bg-primary text-on-primary px-5 py-2 rounded-full font-label-md text-label-md shadow-sm transition-transform active:scale-95" href="{% url 'kanview:catalogo' %}?categoria={{ categoria|urlencode }}">{{ categoria }}</a>
+{% else %}
+<a class="inline-block bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all" href="{% url 'kanview:catalogo' %}?categoria={{ categoria|urlencode }}">{{ categoria }}</a>
+{% endif %}
+{% endfor %}
 </div>
 </div>
 <a class="bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 hover:bg-primary/90 shadow-[0_4px_12px_rgba(0,128,128,0.2)] transition-all active:scale-95 group" href="{% url 'kanview:producto-crear' %}">
@@ -165,94 +172,98 @@
 </div>
 <!-- Catalog Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-card-gap">
-<!-- Featured Card (Best-seller) - Spans 2 columns -->
+{% if producto_destacado %}
+<!-- Featured Card (mayor disponibilidad) - Spans 2 columns -->
 <article class="col-span-1 lg:col-span-2 bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group relative flex flex-col md:flex-row">
 <!-- Wax Seal Watermark -->
 <svg class="absolute bottom-4 right-4 w-24 h-24 text-primary opacity-5 pointer-events-none" fill="currentColor" viewbox="0 0 100 100">
 <path d="M50,0 C77.6142375,0 100,22.3857625 100,50 C100,77.6142375 77.6142375,100 50,100 C22.3857625,100 0,77.6142375 0,50 C0,22.3857625 22.3857625,0 50,0 Z M50,10 C27.90861,10 10,27.90861 10,50 C10,72.09139 27.90861,90 50,90 C72.09139,90 90,72.09139 90,50 C90,27.90861 72.09139,10 50,10 Z M50,25 C63.8071187,25 75,36.1928813 75,50 C75,63.8071187 63.8071187,75 50,75 C36.1928813,75 25,63.8071187 25,50 C25,36.1928813 36.1928813,25 50,25 Z M50,35 C41.7157288,35 35,41.7157288 35,50 C35,58.2842712 41.7157288,65 50,65 C58.2842712,65 65,58.2842712 65,50 C65,41.7157288 58.2842712,35 50,35 Z"></path>
 </svg>
 <div class="w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden">
-<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A luxurious, high-end Chesterfield sofa upholstered in deep, rich brown leather, situated in a brightly lit, modern showroom with white walls and a polished concrete floor. The lighting is soft and diffused, creating a premium light-mode aesthetic that highlights the tufted leather texture and artisanal craftsmanship. The mood is elegant, sophisticated, and impeccably organized." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCDd_JsEmIGP3g-SmWiAHHD3F8JsHJY7jK3jvddm4mXHUazWVLp5Qz4EBhmiNCIo010Ib5UAZ9cuepH9xBOfAsByd_lh5XAKxyfV9CyANvVXlHsFEuuTbFl5ojDxOAa8mBjuloDk2PoSdYO4M0Ne3Dbj7G2p1fCw0yKJo71xRawKNJIyKO-v9D0Oam-9m5B1vksx0HW-K9sI5Mb3Prlk-yprNFOv9eN6gfGkI8GkIGAq8a5LG5hRfEceISl_a6fG5zWkz7fajvFXGU')"></div>
+<div class="w-full h-full bg-surface-container-low flex items-center justify-center transition-transform duration-700 group-hover:scale-105" aria-hidden="true">
+<span class="material-symbols-outlined text-outline/40 text-[72px]">inventory_2</span>
+</div>
 <div class="absolute top-4 left-4 bg-surface-container-lowest/90 backdrop-blur px-3 py-1 rounded-full border border-outline-variant/20 flex items-center gap-1.5 shadow-sm">
-<span class="material-symbols-outlined text-[16px] text-tertiary">star</span>
-<span class="font-label-sm text-label-sm text-on-surface">Más vendido</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">menu_book</span>
+<span class="font-label-sm text-label-sm text-on-surface">{{ producto_destacado.categoria }}</span>
 </div>
 </div>
 <div class="p-8 flex flex-col justify-between w-full md:w-1/2 relative z-10">
 <div>
 <div class="flex justify-between items-start mb-2">
-<span class="font-mono text-sm text-outline tracking-wider">SF-4821</span>
+<span class="font-mono text-sm text-outline tracking-wider">{{ producto_destacado.codigo_producto }}</span>
 <div class="flex items-center gap-2 px-2 py-1 bg-surface-container-low rounded-full">
+{% if producto_destacado.cantidad <= umbral_stock_bajo %}
+<div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Bajo stock ({{ producto_destacado.cantidad }})</span>
+{% else %}
 <div class="w-2 h-2 rounded-full bg-primary"></div>
-<span class="font-label-sm text-label-sm text-on-surface-variant">En stock (12)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">En stock ({{ producto_destacado.cantidad }})</span>
+{% endif %}
 </div>
 </div>
-<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Sofá Chesterfield Imperial</h3>
-<p class="font-label-md text-label-md text-primary mb-4 uppercase tracking-widest">Sofás Premium</p>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">{{ producto_destacado.nombre }}</h3>
+<p class="font-label-md text-label-md text-primary mb-4 uppercase tracking-widest">{% if catalogo_destacado %}{{ catalogo_destacado.categorias }}{% else %}{{ producto_destacado.categoria }}{% endif %}</p>
 <p class="font-body-md text-body-md text-on-surface-variant mb-6 text-truncate-2">
-                            Pieza maestra de tapicería tradicional. Cuero de grano completo curtido vegetal, capitoné hecho a mano y estructura en madera de roble macizo. Diseñado para perdurar generaciones en espacios ejecutivos.
+                            {{ producto_destacado.descripcion }}
                         </p>
 </div>
 <div class="flex items-center justify-between border-t border-outline-variant/30 pt-6 mt-4">
 <div class="flex flex-col">
 <span class="font-label-sm text-label-sm text-outline">Precio Base (COP)</span>
-<span class="font-headline-md text-headline-md text-on-surface font-bold">$4.500.000</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">${{ producto_destacado.precio|moneda_cop }}</span>
 </div>
-<button class="text-primary hover:text-primary-fixed-dim font-label-md text-label-md font-semibold flex items-center gap-1 transition-colors" onclick="openProductDetail()">
+<button class="text-primary hover:text-primary-fixed-dim font-label-md text-label-md font-semibold flex items-center gap-1 transition-colors" onclick="openProductDetail('{{ producto_destacado.pk }}')">
                             Ver detalles
                             <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
 </button>
 </div>
 </div>
 </article>
-<!-- Standard Card 1 -->
+<!-- Standard Card -->
+{% for producto in productos_restantes %}
 <article class="bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group flex flex-col cursor-pointer transition-transform hover:-translate-y-1">
 <div class="w-full h-56 relative overflow-hidden bg-surface-container-low">
-<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A sleek, contemporary leather armchair with a minimalist wooden frame, positioned in a spacious, sunlit gallery setting. The scene features a pristine white background with subtle architectural shadows, emphasizing the chair's smooth texture and high-quality build. The overall aesthetic is calm, authoritative, and clean, perfectly suited for a premium manufacturing catalog." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCx9r_IyYK5LsFU9z3uwBTu2K_UR3jMOoa_gm0lm5JwyjqV6XO0_9owSa91Mapuecrm3jgA_4CvHY9NzDlZGq-LblRP8lZNXhCmU3xnZQv9QzJWRCzMyUxqzNyuWHuEQ_1LwV0u9IOTSIvn4VMknTrwUziFIoqzFH8rdxj1dRBJRemxTif7DJA6IUwbtiZGOJMbgDPVtqPf1H0DU9o1rfmPTxUFidimHyzwOLmJ4pDG4xVChfcdthEEptADyIxDiqhA9o4vAjlFq3o')"></div>
+<div class="w-full h-full bg-surface-container-low flex items-center justify-center transition-transform duration-700 group-hover:scale-105" aria-hidden="true">
+<span class="material-symbols-outlined text-outline/40 text-[56px]">inventory_2</span>
+</div>
 </div>
 <div class="p-6 flex flex-col flex-1">
 <div class="flex justify-between items-center mb-3">
-<span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">PL-1092</span>
+<span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">{{ producto.codigo_producto }}</span>
 <div class="flex items-center gap-1.5">
+{% if producto.cantidad <= umbral_stock_bajo %}
 <div class="w-2 h-2 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(169,96,57,0.6)]"></div>
-<span class="font-label-sm text-[11px] text-outline uppercase">Bajo stock (2)</span>
-</div>
-</div>
-<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">Poltrona Nórdica Ostra</h3>
-<p class="font-label-sm text-label-sm text-outline mb-3">Poltronas</p>
-<p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-1 text-truncate-2">
-                        Líneas puras y ergonomía perfecta. Tapizado en cuero napa suave sobre estructura de nogal curvo.
-                    </p>
-<div class="flex items-center justify-between border-t border-outline-variant/30 pt-4">
-<span class="font-body-lg text-body-lg text-on-surface font-semibold">$1.850.000</span>
-<span class="text-primary font-label-md text-label-md hover:underline cursor-pointer" onclick="openProductDetail()">Ver más</span>
-</div>
-</div>
-</article>
-<!-- Standard Card 2 -->
-<article class="bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group flex flex-col cursor-pointer transition-transform hover:-translate-y-1">
-<div class="w-full h-56 relative overflow-hidden bg-surface-container-low">
-<div class="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="A set of four premium leather dining chairs arranged elegantly around a subtle modern table edge in a bright, white showroom. The chairs feature rich tan leather and slender matte black metal legs. Soft neomorphic lighting casts gentle shadows, highlighting the precision stitching and high-end industrial design aesthetic." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBUh3EIKUJTjIU0F73T_-ausXZmb0dCVKNWaHUKu3lH5KZVTkxm30JlJwqtgnJCpeGJV5TQXuQxJjHjwyEt1FxrQuSrWH18Pxn1raMpEtGRCOrYFfTnwkOsqqwUMPxxNiCqH9BexDzxhP9utd-OSU89KxsZFlajqsKLjciwGkV-fmx_iLEy4gljPZBLlwpC8hFOxZHHupsAtQ2ene7po_ChqYARKExzmU03a6mSzLBdrhQDO2K6hPrMcDOTDwM7wzBS7WKwALAWrh8')"></div>
-</div>
-<div class="p-6 flex flex-col flex-1">
-<div class="flex justify-between items-center mb-3">
-<span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">SL-2044</span>
-<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-[11px] text-outline uppercase">Bajo stock ({{ producto.cantidad }})</span>
+{% else %}
 <div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,101,101,0.6)]"></div>
-<span class="font-label-sm text-[11px] text-outline uppercase">En stock (45)</span>
+<span class="font-label-sm text-[11px] text-outline uppercase">En stock ({{ producto.cantidad }})</span>
+{% endif %}
 </div>
 </div>
-<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">Silla Comedor Viena (Set 4)</h3>
-<p class="font-label-sm text-label-sm text-outline mb-3">Sillas</p>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-1">{{ producto.nombre }}</h3>
+<p class="font-label-sm text-label-sm text-outline mb-3">{{ producto.categoria }}</p>
 <p class="font-body-md text-body-md text-on-surface-variant text-sm mb-4 flex-1 text-truncate-2">
-                        Respaldo continuo y asiento de espuma de alta densidad, revestido en cuero ecológico premium resistente a líquidos.
+                        {{ producto.descripcion }}
                     </p>
 <div class="flex items-center justify-between border-t border-outline-variant/30 pt-4">
-<span class="font-body-lg text-body-lg text-on-surface font-semibold">$2.200.000</span>
-<span class="text-primary font-label-md text-label-md hover:underline cursor-pointer" onclick="openProductDetail()">Ver más</span>
+<span class="font-body-lg text-body-lg text-on-surface font-semibold">${{ producto.precio|moneda_cop }}</span>
+<span class="text-primary font-label-md text-label-md hover:underline cursor-pointer" onclick="openProductDetail('{{ producto.pk }}')">Ver más</span>
 </div>
 </div>
 </article>
+{% endfor %}
+{% else %}
+<!-- Empty State -->
+<article class="col-span-1 lg:col-span-3 bg-surface-container-lowest rounded-xl neomorphic-card p-10 flex flex-col items-center justify-center gap-3 text-center">
+<span class="material-symbols-outlined text-outline text-[40px]">menu_book</span>
+<p class="font-headline-md text-headline-md text-on-surface">Sin productos en el catálogo</p>
+<p class="font-body-md text-body-md text-on-surface-variant">
+{% if categoria_activa %}No hay productos registrados en la categoría «{{ categoria_activa }}».{% else %}Todavía no hay productos registrados.{% endif %}
+</p>
+<a class="text-primary font-label-md text-label-md hover:underline" href="{% url 'kanview:producto-crear' %}">Crear el primer producto</a>
+</article>
+{% endif %}
 </div>
 </main>
 <!-- Side Panel / Modal for Product Detail -->
@@ -264,17 +275,17 @@
 <!-- Panel Header -->
 <div class="sticky top-0 bg-surface/90 backdrop-blur-md z-10 p-6 border-b border-outline-variant/30 flex justify-between items-center">
 <div class="flex items-center gap-3">
-<span class="font-mono text-sm text-outline bg-surface-container-high px-2 py-1 rounded">SF-4821</span>
+<span class="font-mono text-sm text-outline bg-surface-container-high px-2 py-1 rounded" id="pd-codigo">{{ producto_destacado.codigo_producto }}</span>
 <div class="flex items-center gap-1.5">
-<div class="w-2 h-2 rounded-full bg-primary"></div>
-<span class="font-label-sm text-[11px] text-primary uppercase font-bold">Activo</span>
+<div class="w-2 h-2 rounded-full bg-primary" id="pd-estado-dot"></div>
+<span class="font-label-sm text-[11px] text-primary uppercase font-bold" id="pd-estado">{% if producto_destacado.cantidad <= umbral_stock_bajo %}Bajo stock{% else %}En stock{% endif %}{% if producto_destacado %} ({{ producto_destacado.cantidad }}){% endif %}</span>
 </div>
 </div>
 <div class="flex gap-2">
-<button class="bg-surface-container-lowest border border-outline-variant/50 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2">
+<a class="bg-surface-container-lowest border border-outline-variant/50 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2" href="{% if producto_destacado %}{% url 'kanview:producto-editar' producto_destacado.pk %}{% else %}{% url 'kanview:producto-lista' %}{% endif %}" id="pd-editar">
 <span class="material-symbols-outlined text-sm">edit</span>
                         Editar
-                    </button>
+                    </a>
 <button class="p-2 text-outline hover:text-on-surface transition-colors rounded-full hover:bg-surface-container-high" onclick="closeProductDetail()">
 <span class="material-symbols-outlined">close</span>
 </button>
@@ -282,103 +293,131 @@
 </div>
 <!-- Panel Content -->
 <div class="p-6 flex-1 flex flex-col gap-8">
-<!-- Hero Image -->
-<div class="w-full h-72 rounded-xl overflow-hidden neomorphic-inner relative">
-<div class="w-full h-full bg-cover bg-center" data-alt="Close-up macro shot of premium tufted brown leather on a luxury sofa, showcasing the intricate stitching, deep buttons, and the rich, natural grain of the material under soft, studio-quality light-mode illumination. Artisanal quality vibe." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD2kr9xIiJmz4FkLexH1-leWxZ3DcFKzN1qmeVGn1tJwhGBvP6614pit_k5Jy_KhppoWhVgyapM3iVyq1kQ8QQuthUsXE9MxSYrqpz7vX_jYmqRkl2pmdBnMxEoSPNpLhqqw6lscbcANgNtDkRUscENLfGpP6-A2HPsqZP-IR19R0yEFDtRj2YeS7R7Hl9Fm4v3Mki3hUyxXSmyiTMg3AqaMtEN3BoLjjgSwmBxUYBLhwz9-SkIjesWDbmA56ZnNL4ANxtVLoF33So')"></div>
+<!-- Product Visual -->
+<div class="w-full h-72 rounded-xl overflow-hidden neomorphic-inner relative bg-surface-container-low flex items-center justify-center" aria-hidden="true">
+<span class="material-symbols-outlined text-outline/40 text-[88px]">inventory_2</span>
 <button class="absolute bottom-4 right-4 bg-surface/80 backdrop-blur p-2 rounded-full text-on-surface shadow-sm hover:bg-surface transition-colors">
 <span class="material-symbols-outlined">fullscreen</span>
 </button>
 </div>
 <!-- Title & Core Info -->
 <div>
-<h2 class="font-display text-display text-on-surface mb-2 leading-tight">Sofá Chesterfield Imperial</h2>
-<p class="font-headline-md text-headline-md text-primary font-bold mb-4">$4.500.000 <span class="text-sm font-normal text-outline">COP</span></p>
-<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
-                        El Sofá Chesterfield Imperial representa la cumbre de la artesanía en Kanview. Cada pieza es ensamblada a mano utilizando técnicas tradicionales de tapicería sobre una robusta estructura de madera de roble secada al horno. El capitoné profundo asegura que el relleno mantenga su forma durante décadas, mientras que el cuero de grano completo desarrolla una pátina única con el paso del tiempo.
+<h2 class="font-display text-display text-on-surface mb-2 leading-tight" id="pd-nombre">{{ producto_destacado.nombre }}</h2>
+<p class="font-headline-md text-headline-md text-primary font-bold mb-4" id="pd-precio">${{ producto_destacado.precio|moneda_cop }} <span class="text-sm font-normal text-outline">COP</span></p>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed" id="pd-descripcion">
+                        {{ producto_destacado.descripcion }}
                     </p>
 </div>
 <!-- Tech Specs (Bento style mini-grid) -->
 <div class="grid grid-cols-2 gap-4">
 <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
-<span class="material-symbols-outlined text-outline text-[20px]">straighten</span>
-<span class="font-label-sm text-label-sm text-outline mt-1">Dimensiones</span>
-<span class="font-body-md text-body-md text-on-surface">220cm x 95cm x 78cm</span>
+<span class="material-symbols-outlined text-outline text-[20px]">sell</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Categoría</span>
+<span class="font-body-md text-body-md text-on-surface" id="pd-categoria">{{ producto_destacado.categoria }}</span>
 </div>
 <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
-<span class="material-symbols-outlined text-outline text-[20px]">texture</span>
-<span class="font-label-sm text-label-sm text-outline mt-1">Material</span>
-<span class="font-body-md text-body-md text-on-surface">Cuero Vacuno (Anilina)</span>
+<span class="material-symbols-outlined text-outline text-[20px]">tag</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Código</span>
+<span class="font-body-md text-body-md text-on-surface" id="pd-codigo-box">{{ producto_destacado.codigo_producto }}</span>
 </div>
 <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
-<span class="material-symbols-outlined text-outline text-[20px]">weight</span>
-<span class="font-label-sm text-label-sm text-outline mt-1">Peso Neto</span>
-<span class="font-body-md text-body-md text-on-surface">65 kg</span>
+<span class="material-symbols-outlined text-outline text-[20px]">payments</span>
+<span class="font-label-sm text-label-sm text-outline mt-1">Precio Unitario</span>
+<span class="font-body-md text-body-md text-on-surface" id="pd-precio-box">${{ producto_destacado.precio|moneda_cop }}</span>
 </div>
 <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
 <span class="material-symbols-outlined text-outline text-[20px]">inventory</span>
 <span class="font-label-sm text-label-sm text-outline mt-1">Inventario Actual</span>
-<span class="font-body-md text-body-md text-on-surface font-semibold text-primary">12 Unidades</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold text-primary" id="pd-inventario">{% if producto_destacado %}{{ producto_destacado.cantidad }} Unidades{% endif %}</span>
 </div>
 </div>
-<!-- Sales History Mini Chart -->
+<!-- Orders History (últimos meses, desde Pedido) -->
 <div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
 <div class="flex justify-between items-end mb-6">
 <div>
-<h4 class="font-label-md text-label-md text-on-surface font-semibold">Historial de Ventas</h4>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">Pedidos registrados</h4>
 <p class="font-label-sm text-label-sm text-outline">Últimos 6 meses</p>
 </div>
-<span class="font-headline-md text-headline-md text-primary font-bold">48 <span class="text-sm font-normal text-outline">uds</span></span>
+<span class="font-headline-md text-headline-md text-primary font-bold"><span id="pd-ventas-total">0</span> <span class="text-sm font-normal text-outline">uds</span></span>
 </div>
 <!-- CSS Bar Chart -->
-<div class="h-32 flex items-end justify-between gap-2 pt-4">
-<div class="w-full flex flex-col items-center gap-2 group">
-<div class="w-full bg-primary/20 rounded-t-sm h-[40%] relative transition-all group-hover:bg-primary">
-<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">6</span>
-</div>
-<span class="font-label-sm text-[10px] text-outline uppercase">Ene</span>
-</div>
-<div class="w-full flex flex-col items-center gap-2 group">
-<div class="w-full bg-primary/20 rounded-t-sm h-[60%] relative transition-all group-hover:bg-primary">
-<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">9</span>
-</div>
-<span class="font-label-sm text-[10px] text-outline uppercase">Feb</span>
-</div>
-<div class="w-full flex flex-col items-center gap-2 group">
-<div class="w-full bg-primary/20 rounded-t-sm h-[30%] relative transition-all group-hover:bg-primary">
-<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">4</span>
-</div>
-<span class="font-label-sm text-[10px] text-outline uppercase">Mar</span>
-</div>
-<div class="w-full flex flex-col items-center gap-2 group">
-<div class="w-full bg-primary/20 rounded-t-sm h-[80%] relative transition-all group-hover:bg-primary">
-<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">12</span>
-</div>
-<span class="font-label-sm text-[10px] text-outline uppercase">Abr</span>
-</div>
-<div class="w-full flex flex-col items-center gap-2 group">
-<div class="w-full bg-primary/40 rounded-t-sm h-[50%] relative transition-all group-hover:bg-primary">
-<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity">7</span>
-</div>
-<span class="font-label-sm text-[10px] text-outline uppercase">May</span>
-</div>
-<div class="w-full flex flex-col items-center gap-2 group">
-<div class="w-full bg-primary rounded-t-sm h-[100%] shadow-[0_-4px_12px_rgba(0,128,128,0.2)] relative">
-<span class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-sm text-[10px] text-primary font-bold">15</span>
-</div>
-<span class="font-label-sm text-[10px] text-primary font-bold uppercase">Jun</span>
-</div>
-</div>
+<div class="h-32 flex items-end justify-between gap-2 pt-4" id="pd-chart"></div>
+<p class="font-label-sm text-label-sm text-outline pt-4" id="pd-chart-vacio">Sin pedidos registrados en los últimos 6 meses.</p>
 </div>
 <div class="pb-10"></div>
 </div>
 </aside>
 </div>
+{{ datos_ficha|json_script:"catalogo-datos" }}
 <script>
-    function openProductDetail() {
+    var CATALOGO = JSON.parse(document.getElementById('catalogo-datos').textContent);
+
+    function setEstado(estado, dot, stockBajo, texto) {
+        estado.textContent = texto;
+        estado.classList.remove('text-primary', 'text-tertiary');
+        dot.classList.remove('bg-primary', 'bg-tertiary-container');
+        estado.classList.add(stockBajo ? 'text-tertiary' : 'text-primary');
+        dot.classList.add(stockBajo ? 'bg-tertiary-container' : 'bg-primary');
+    }
+
+    function pintarHistorial(p) {
+        var cont = document.getElementById('pd-chart');
+        var vacio = document.getElementById('pd-chart-vacio');
+        document.getElementById('pd-ventas-total').textContent = p.ventas_total;
+        cont.innerHTML = '';
+        if (!p.ventas_max) {
+            cont.style.display = 'none';
+            vacio.style.display = '';
+            return;
+        }
+        cont.style.display = '';
+        vacio.style.display = 'none';
+        p.serie.forEach(function (mes, i) {
+            var ultimo = i === p.serie.length - 1;
+            var barra = ultimo
+                ? 'bg-primary shadow-[0_-4px_12px_rgba(0,128,128,0.2)]'
+                : 'bg-primary/20 group-hover:bg-primary';
+            var etiqueta = ultimo
+                ? 'font-label-sm text-[10px] text-primary font-bold'
+                : 'font-label-sm text-[10px] text-outline';
+            var valor = ultimo
+                ? 'font-label-sm text-[10px] text-primary font-bold'
+                : 'font-label-sm text-[10px] text-on-surface opacity-0 group-hover:opacity-100 transition-opacity';
+            var alto = Math.max(mes.pct, 2);
+            cont.insertAdjacentHTML('beforeend',
+                '<div class="w-full flex flex-col items-center gap-2 group">' +
+                '<div class="w-full rounded-t-sm relative transition-all ' + barra + '" style="height:' + alto + '%">' +
+                '<span class="absolute -top-6 left-1/2 -translate-x-1/2 ' + valor + '">' + mes.total + '</span>' +
+                '</div>' +
+                '<span class="' + etiqueta + ' uppercase">' + mes.label + '</span>' +
+                '</div>');
+        });
+    }
+
+    function openProductDetail(pk) {
+        var p = CATALOGO[String(pk)];
+        if (!p) { return; }
+        document.getElementById('pd-codigo').textContent = p.codigo;
+        document.getElementById('pd-nombre').textContent = p.nombre;
+        document.getElementById('pd-precio').innerHTML = '$' + p.precio + ' <span class="text-sm font-normal text-outline">COP</span>';
+        document.getElementById('pd-descripcion').textContent = p.descripcion;
+        document.getElementById('pd-categoria').textContent = p.categoria;
+        document.getElementById('pd-codigo-box').textContent = p.codigo;
+        document.getElementById('pd-precio-box').textContent = '$' + p.precio;
+        document.getElementById('pd-inventario').textContent = p.inventario + ' Unidades';
+        document.getElementById('pd-editar').href = p.editar_url;
+        setEstado(
+            document.getElementById('pd-estado'),
+            document.getElementById('pd-estado-dot'),
+            p.stock_bajo,
+            p.estado + ' (' + p.cantidad + ')'
+        );
+        pintarHistorial(p);
         var modal = document.getElementById('product-detail-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
+
     function closeProductDetail() {
         var modal = document.getElementById('product-detail-modal');
         modal.classList.add('hidden');

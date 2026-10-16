@@ -1,6 +1,9 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import TemplateView
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import redirect, render
+
+from .models import Cliente, Empleado, Pedido, Producto
 
 NAV_ITEMS = [
     ("dashboard", "Dashboard", "kanview:dashboard"),
@@ -16,75 +19,51 @@ NAV_ITEMS = [
 ]
 
 
-class SidebarMixin:
-    active_label = None
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["nav_items"] = NAV_ITEMS
-        ctx["active"] = self.active_label
-        return ctx
+def _render(request, template, active=None, **context):
+    """Renderiza una página con el contexto del sidebar (nav_items + active)."""
+    context["nav_items"] = NAV_ITEMS
+    context["active"] = active
+    return render(request, template, context)
 
 
-class KanviewLoginView(LoginView):
-    template_name = "kanview/login.html"
-    redirect_authenticated_user = True
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect("kanview:dashboard")
+
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+
+    if request.method == "POST":
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            login(request, form.get_user())
+            return redirect(next_url or "kanview:dashboard")
+    else:
+        form = AuthenticationForm()
+
+    return render(request, "kanview/login.html", {"form": form, "next": next_url})
 
 
-class KanviewLogoutView(LogoutView):
-    next_page = "kanview:login"
+def logout_view(request):
+    logout(request)
+    return redirect("kanview:login")
 
 
-class PedidosTableroView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/pedidos_tablero.html"
-    active_label = "Orders"
+@login_required
+def dashboard(request):
+    return _render(
+        request,
+        "kanview/dashboard.html",
+        "Dashboard",
+        total_clientes=Cliente.objects.count(),
+        total_empleados=Empleado.objects.count(),
+        total_productos=Producto.objects.count(),
+        total_pedidos=Pedido.objects.count(),
+        pedidos_activos=Pedido.objects.filter(estado="activo").count(),
+        ultimos_pedidos=Pedido.objects.order_by("-id")[:5],
+    )
 
 
-class PedidoDetalleView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/pedidos_detalle.html"
-    active_label = "Orders"
-
-
-class TareasView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/tareas.html"
-    active_label = "Tasks"
-
-
-class CalendarioView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/calendario.html"
-    active_label = "Calendar"
-
-
-class InventarioView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/inventario.html"
-    active_label = "Inventory"
-
-
-class FinanzasView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/finanzas.html"
-    active_label = "Finance"
-
-
-class AuditoriaView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/auditoria.html"
-    active_label = "Audit"
-
-
-class MensajeriaView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/mensajeria.html"
-    active_label = None
-
-
-class ClientesView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/clientes.html"
-    active_label = "Users"
-
-
-class EmpleadosView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/empleados.html"
-    active_label = None
-
-
-class CatalogoView(LoginRequiredMixin, SidebarMixin, TemplateView):
-    template_name = "kanview/catalogo.html"
-    active_label = "Catalog"
+@login_required
+def mensajeria(request):
+    # Maqueta estática por ahora (no hay modelo de mensajería).
+    return _render(request, "kanview/mensajeria.html", None)

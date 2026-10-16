@@ -146,10 +146,9 @@
 <div>
 <h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-4">Gestión de Talento Humano</h2>
 <div class="flex flex-wrap gap-3">
-<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">6 Tapiceros</span>
-<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">4 Costureras</span>
-<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">2 Gerentes</span>
-<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">1 Secretario</span>
+{% for cargo in resumen_cargos %}
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container border border-outline-variant font-label-md text-label-md text-on-surface-variant">{{ cargo.total }} {{ cargo.etiqueta }}</span>
+{% endfor %}
 </div>
 </div>
 <a class="bg-primary text-on-primary font-label-md text-label-md px-6 py-3 rounded-[16px] flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm" href="{% url 'kanview:empleado-crear' %}">
@@ -161,31 +160,32 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-section-margin">
 <div class="neomorphic-card rounded-[24px] p-6 flex flex-col justify-between">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Empleados Activos</span>
-<span class="font-display text-display text-primary">13</span>
+<span class="font-display text-display text-primary">{{ total_empleados }}</span>
 </div>
 <div class="neomorphic-card rounded-[24px] p-6 flex flex-col justify-between">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Tareas Completadas (Mes)</span>
-<span class="font-display text-display text-primary">142</span>
+<span class="font-display text-display text-primary">{{ total_tareas }}</span>
 </div>
 <div class="neomorphic-card rounded-[24px] p-6 flex flex-col justify-between">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">Productividad Promedio</span>
 <div class="flex items-end gap-2">
-<span class="font-display text-display text-primary">94%</span>
+<span class="font-display text-display text-primary">{{ productividad }}%</span>
 <span class="material-symbols-outlined text-green-600 mb-2" data-icon="trending_up">trending_up</span>
 </div>
 </div>
 </div>
 <!-- Employee Grid (Asymmetrical) -->
 <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter auto-rows-[minmax(180px,auto)]">
-<!-- Card 1: Top Performer (Large) -->
+{% for empleado in empleados %}
+{% if forloop.first %}
+<!-- Tarjeta 1: Empleado destacado (Grande) -->
 <div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-8 relative overflow-hidden transition-all duration-300">
 <img alt="" class="absolute -bottom-10 -right-10 w-48 h-48 wax-seal pointer-events-none" src="https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c"/>
 <div class="flex items-start justify-between mb-6">
 <div class="flex items-center gap-4">
-<img class="w-16 h-16 rounded-full object-cover shadow-inner" data-alt="A highly detailed professional portrait of a male upholstery craftsman in his 40s. He is wearing a clean, modern workshop apron over a light-colored shirt. The background is a brightly lit, premium furniture manufacturing studio with neomorphic architectural details. High key lighting, warm inviting mood, shallow depth of field focusing strictly on his face." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAADtTbwdBYdBphCoM1KM06U0oLqw7JL6kym6oLCT9wI5tXPZ45Y3U0Lwfgz5hoIJRvLT_a5FPwf7Z3430RUy47kKyllEAjeI1wGrhpk9gL3Yh-FnqBS6g0gZlYAptQp1zBl6ublDIu-tGGg8OSB90Eh-cDBI0vT0_cm9X-aOZV11FqQikircTFP8Kk4XUDeQbxNgzQQf7zuKOx_aiwaqv8ujCzI3AAAblCmlf-QOiB9VUvPNy4Cq62Z_WiCHf7PdiGXtuPA9d-Fw"/>
 <div>
-<h3 class="font-headline-md text-headline-md text-on-surface">Carlos Arturo Montoya</h3>
-<span class="inline-block mt-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-label-sm text-label-sm uppercase">Tapicero</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">{{ empleado.nombre }}</h3>
+<span class="inline-block mt-1 px-3 py-1 rounded-full {% if empleado.cargo == 'tapcr' %}bg-blue-100 text-blue-800{% elif empleado.cargo == 'gerente' %}bg-primary-container text-on-primary-container{% elif empleado.cargo == 'costr' %}bg-purple-100 text-purple-800{% else %}bg-amber-100 text-amber-800{% endif %} font-label-sm text-label-sm uppercase">{{ empleado.get_cargo_display }}</span>
 </div>
 </div>
 <button class="text-on-surface-variant hover:text-primary transition-colors">
@@ -195,100 +195,90 @@
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Documento</p>
-<p class="font-body-md text-body-md text-on-surface">CC 10234567</p>
+<p class="font-body-md text-body-md text-on-surface">{{ empleado.documento }}</p>
 </div>
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Móvil</p>
-<p class="font-body-md text-body-md text-on-surface">310 555 1234</p>
+<p class="font-body-md text-body-md text-on-surface">{{ empleado.celular }}</p>
 </div>
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Edad</p>
-<p class="font-body-md text-body-md text-on-surface">42 años</p>
+<p class="font-body-md text-body-md text-on-surface">{{ empleado.edad }} años</p>
 </div>
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Salario</p>
 <p class="font-body-md text-body-md text-on-surface flex items-center gap-1">
 <span class="material-symbols-outlined text-[16px] text-on-surface-variant" data-icon="lock">lock</span>
-                            Confidencial
+                            ${{ empleado.salario|floatformat:"0g" }}
                         </p>
 </div>
 </div>
 <div class="bg-surface-container-lowest rounded-xl p-4 shadow-inner border border-surface-variant">
 <div class="flex justify-between items-center mb-2">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Tareas Realizadas (Mes)</span>
-<span class="font-mono font-bold text-primary text-lg">45</span>
+<span class="font-mono font-bold text-primary text-lg">{{ empleado.tareas_realizadas }}</span>
 </div>
 <div class="w-full bg-surface-container-highest rounded-full h-2">
-<div class="bg-primary h-2 rounded-full" style="width: 85%"></div>
+<div class="bg-primary h-2 rounded-full" style="width: {% widthratio empleado.tareas_realizadas max_tareas 100 %}%"></div>
 </div>
 </div>
 </div>
-<!-- Card 2: Manager (Tall) -->
+{% elif forloop.counter == 2 %}
+<!-- Tarjeta 2: Segundo empleado (Alta) -->
 <div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-4 row-span-2 relative transition-all duration-300">
 <div class="flex flex-col items-center text-center mb-6 pt-4">
-<img class="w-24 h-24 rounded-full object-cover shadow-md mb-4 border-4 border-surface" data-alt="A highly detailed professional portrait of a modern female production manager in her late 30s. She is wearing a chic, minimalist business casual outfit in neutral tones. The background is a pristine, brightly lit premium manufacturing office environment with neomorphic soft shadows and teal accents. High key lighting, authoritative yet approachable mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMHp8eSSF6zL-o8_zQJnpX3cusQ4Meld_tGVO6qP2BQI1y3frFiAgKom0FTul27M_QhFSwSmpLVVIkig1OS1MpCXAOL4ZClNzQ9Gh48d2PfOFG_5f0lxzjcjH60Ro6djlORGPJZub_2GV-OLQlGxe7vmLcX9-Y8e-eXxQh-HBceVwRwZgeaHK_gs1ZQN4EVjKFQwM2PVUmNpxrLVDCagtJRNtozAhMr3CQ6hHqeTI1U1s72Hpk7vjzDpS2qzT_FUkafuVJQe4I66Q"/>
-<h3 class="font-headline-md text-headline-md text-on-surface">Luz Marina Restrepo</h3>
-<span class="inline-block mt-2 px-3 py-1 rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm uppercase tracking-wide">Gerente</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">{{ empleado.nombre }}</h3>
+<span class="inline-block mt-2 px-3 py-1 rounded-full {% if empleado.cargo == 'tapcr' %}bg-blue-100 text-blue-800{% elif empleado.cargo == 'gerente' %}bg-primary-container text-on-primary-container{% elif empleado.cargo == 'costr' %}bg-purple-100 text-purple-800{% else %}bg-amber-100 text-amber-800{% endif %} font-label-sm text-label-sm uppercase tracking-wide">{{ empleado.get_cargo_display }}</span>
 </div>
 <div class="space-y-4">
 <div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">CC</span>
-<span class="font-body-md text-body-md text-on-surface">43987654</span>
+<span class="font-body-md text-body-md text-on-surface">{{ empleado.documento }}</span>
 </div>
 <div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Móvil</span>
-<span class="font-body-md text-body-md text-on-surface">300 123 4567</span>
+<span class="font-body-md text-body-md text-on-surface">{{ empleado.celular }}</span>
 </div>
 <div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Edad</span>
-<span class="font-body-md text-body-md text-on-surface">38 años</span>
+<span class="font-body-md text-body-md text-on-surface">{{ empleado.edad }} años</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-outline-variant/20">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Tareas</span>
+<span class="font-body-md text-body-md text-on-surface">{{ empleado.tareas_realizadas }}</span>
 </div>
 <div class="bg-surface-container rounded-xl p-4 mt-4">
 <span class="font-label-sm text-label-sm text-on-surface-variant uppercase block mb-1">Salario</span>
-<span class="font-headline-md text-headline-md text-on-surface font-bold">$4.500.000</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">${{ empleado.salario|floatformat:"0g" }}</span>
 </div>
 </div>
 </div>
-<!-- Card 3: Standard -->
+{% else %}
+<!-- Tarjeta 3+: Empleado estándar -->
 <div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-4 transition-all duration-300">
 <div class="flex items-start gap-4 mb-4">
-<img class="w-12 h-12 rounded-full object-cover shadow-inner" data-alt="A highly detailed professional portrait of a male secretary/admin assistant in his 20s. He is wearing a neat, light-colored smart casual shirt. The background is a clean, bright minimalist office with soft lighting and subtle neomorphic surfaces. Warm, welcoming mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbZnJm8vRD-GQHRlORM5dlUGI55pkld6KcRBU-V2pcO-ViqMgbTso8PQzIOHpBSnGe8BNYhrT5pZD_QjPYblV4O58LMUCisCMqD7TFvSjBVEqStjPHTxHCHZ4Mng-02v2szhKxilREoBhb3PGGb2PTjmz0XRsqnra3KihuWfpKbSKxYN9bE3tEzKY7IBF7HKRAAsYP8aBApuokxDO-nuMLeTUiHSqPltwfmfZjg5hS_LLvRPBuDgaEtgQc3UyzxiVGJP4zfC73IiM"/>
 <div class="flex-1">
-<h3 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Jairo Alberto Gómez</h3>
-<span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-label-sm text-[10px] uppercase">Secretario</span>
+<h3 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">{{ empleado.nombre }}</h3>
+<span class="inline-block mt-1 px-2 py-0.5 rounded-full {% if empleado.cargo == 'tapcr' %}bg-blue-100 text-blue-800{% elif empleado.cargo == 'gerente' %}bg-primary-container text-on-primary-container{% elif empleado.cargo == 'costr' %}bg-purple-100 text-purple-800{% else %}bg-amber-100 text-amber-800{% endif %} font-label-sm text-[10px] uppercase">{{ empleado.get_cargo_display }}</span>
 </div>
 </div>
 <div class="space-y-2 mb-4">
-<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>CC:</span> <span class="text-on-surface">11543218</span></p>
-<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Móvil:</span> <span class="text-on-surface">315 987 6543</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>CC:</span> <span class="text-on-surface">{{ empleado.documento }}</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Móvil:</span> <span class="text-on-surface">{{ empleado.celular }}</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Edad:</span> <span class="text-on-surface">{{ empleado.edad }} años</span></p>
+<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Tareas:</span> <span class="text-on-surface">{{ empleado.tareas_realizadas }}</span></p>
 <p class="font-body-md text-sm text-on-surface-variant flex justify-between">
 <span>Salario:</span>
 <span class="text-on-surface flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span> Confidencial
+<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span> ${{ empleado.salario|floatformat:"0g" }}
                          </span>
 </p>
 </div>
 </div>
-<!-- Card 4: Standard -->
-<div class="neomorphic-card neomorphic-card-hover rounded-[24px] p-6 col-span-1 md:col-span-4 transition-all duration-300">
-<div class="flex items-start gap-4 mb-4">
-<img class="w-12 h-12 rounded-full object-cover shadow-inner" data-alt="A highly detailed professional portrait of a female seamstress in her 50s. She is wearing a practical, high-quality dark apron. The background is a bright, organized premium tailoring workspace with soft, high key lighting. Neomorphic styling cues in the environment. Calm, focused mood." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzpKkLDQcWFSYuuXfn9h4O7b-_bjeN75jbWoFkD6goHfH0oUI_7kj19LUTbX9GpCqAYjYr1MG5oZm0inYDSUsJx2aNm0Hj7LU_lF75P0EHHFT8WJESwpV32j5rsTV-3SXSvbi1l9-fJAyM4XgsUv5Qj_zbIbfaZ2FPggMYAK0ltYb4E3jO0_11wpB6E0hCocnI-OSZUkWQJIpRh4hleRnUkovxWynyBuRHUW80uLEV_MM7LFf6kb4af8_xRqTrzhdcm4zXVla-3fs"/>
-<div class="flex-1">
-<h3 class="font-body-lg text-body-lg text-on-surface font-semibold leading-tight">Sandra Milena Pineda</h3>
-<span class="inline-block mt-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-label-sm text-[10px] uppercase">Costurera</span>
-</div>
-</div>
-<div class="space-y-2 mb-4">
-<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>CC:</span> <span class="text-on-surface">42876543</span></p>
-<p class="font-body-md text-sm text-on-surface-variant flex justify-between"><span>Móvil:</span> <span class="text-on-surface">320 456 7890</span></p>
-<p class="font-body-md text-sm text-on-surface-variant flex justify-between">
-<span>Salario:</span>
-<span class="text-on-surface flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]" data-icon="lock">lock</span> Confidencial
-                         </span>
-</p>
-</div>
-</div>
+{% endif %}
+{% empty %}
+<div class="neomorphic-card rounded-[24px] p-6 col-span-1 md:col-span-12 flex items-center justify-center text-on-surface-variant font-body-md">No hay empleados registrados todavía.</div>
+{% endfor %}
 </div>
 </main>
 <!-- BottomNavBar (from JSON) - Mobile only -->

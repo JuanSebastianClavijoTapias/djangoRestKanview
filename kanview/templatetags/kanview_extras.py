@@ -10,3 +10,12 @@ def getattr_filter(obj, attr_name):
     if callable(display_method):
         return display_method()
     return value
+
+
+@register.filter(name="moneda_cop")
+def moneda_cop(valor):
+    """Formatea un número como pesos colombianos: 4500000 -> '4.500.000'."""
+    try:
+        return f"{int(round(float(valor))):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return valor
