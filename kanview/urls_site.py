@@ -20,6 +20,10 @@ from .views_crud import (
     administrador_editar,
     administrador_eliminar,
     administrador_lista,
+    analisis_financiero_crear,
+    analisis_financiero_editar,
+    analisis_financiero_eliminar,
+    analisis_financiero_lista,
     calendario_crear,
     calendario_crud_lista,
     calendario_editar,
@@ -155,4 +159,10 @@ urlpatterns = [
     path("crud/historial/nuevo/", historial_crear, name="historial-crear"),
     path("crud/historial/<int:pk>/editar/", historial_editar, name="historial-editar"),
     path("crud/historial/<int:pk>/eliminar/", historial_eliminar, name="historial-eliminar"),
+
+    # CRUD: Análisis financiero
+    path("crud/analisis-financiero/", analisis_financiero_lista, name="analisis-financiero-lista"),
+    path("crud/analisis-financiero/nuevo/", analisis_financiero_crear, name="analisis-financiero-crear"),
+    path("crud/analisis-financiero/<int:pk>/editar/", analisis_financiero_editar, name="analisis-financiero-editar"),
+    path("crud/analisis-financiero/<int:pk>/eliminar/", analisis_financiero_eliminar, name="analisis-financiero-eliminar"),
 ]

@@ -6,6 +6,7 @@ from django.urls import reverse
 from .forms import (
     ActividadesForm,
     AdministradorForm,
+    AnalisisFinancieroForm,
     CalendarioForm,
     CatalogoForm,
     ClienteForm,
@@ -19,6 +20,7 @@ from .forms import (
 from .models import (
     Actividades,
     Administrador,
+    AnalisisFinanciero,
     Calendario,
     Catalogo,
     Cliente,
@@ -810,4 +812,75 @@ def historial_eliminar(request, pk):
         "title": "Eliminar registro de historial",
         "cancel_url": reverse("kanview:historial-lista"),
         **_nav("Auditoría"),
+    })
+
+
+# ---- Análisis financiero --------------------------------------------------
+
+@login_required
+def analisis_financiero_lista(request):
+    filas = [
+        {"pk": obj.pk, "valores": [obj.gastos, obj.fuentes_ingresos, obj.productos_vendidos, obj.id_administrador]}
+        for obj in AnalisisFinanciero.objects.select_related("id_administrador").order_by("-id")
+    ]
+    return render(request, "kanview/crud/list.html", {
+        "title": "Análisis financiero",
+        "columnas": ["Gastos", "Ingresos", "Productos vendidos", "Administrador"],
+        "filas": filas,
+        "crear_url": reverse("kanview:analisis-financiero-crear"),
+        "editar_url": "kanview:analisis-financiero-editar",
+        "eliminar_url": "kanview:analisis-financiero-eliminar",
+        **_nav("Finanzas"),
+    })
+
+
+@login_required
+def analisis_financiero_crear(request):
+    if request.method == "POST":
+        form = AnalisisFinancieroForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Análisis financiero creado correctamente.")
+            return redirect("kanview:analisis-financiero-lista")
+    else:
+        form = AnalisisFinancieroForm()
+    return render(request, "kanview/crud/form.html", {
+        "form": form,
+        "title": "Nuevo análisis financiero",
+        "cancel_url": reverse("kanview:analisis-financiero-lista"),
+        **_nav("Finanzas"),
+    })
+
+
+@login_required
+def analisis_financiero_editar(request, pk):
+    registro = get_object_or_404(AnalisisFinanciero, pk=pk)
+    if request.method == "POST":
+        form = AnalisisFinancieroForm(request.POST, instance=registro)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Análisis financiero actualizado correctamente.")
+            return redirect("kanview:analisis-financiero-lista")
+    else:
+        form = AnalisisFinancieroForm(instance=registro)
+    return render(request, "kanview/crud/form.html", {
+        "form": form,
+        "title": "Editar análisis financiero",
+        "cancel_url": reverse("kanview:analisis-financiero-lista"),
+        **_nav("Finanzas"),
+    })
+
+
+@login_required
+def analisis_financiero_eliminar(request, pk):
+    registro = get_object_or_404(AnalisisFinanciero, pk=pk)
+    if request.method == "POST":
+        registro.delete()
+        messages.success(request, "Análisis financiero eliminado.")
+        return redirect("kanview:analisis-financiero-lista")
+    return render(request, "kanview/crud/confirm_delete.html", {
+        "object": registro,
+        "title": "Eliminar análisis financiero",
+        "cancel_url": reverse("kanview:analisis-financiero-lista"),
+        **_nav("Finanzas"),
     })

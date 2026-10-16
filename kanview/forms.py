@@ -3,6 +3,7 @@ from django import forms
 from .models import (
     Actividades,
     Administrador,
+    AnalisisFinanciero,
     Calendario,
     Catalogo,
     Cliente,
@@ -104,3 +105,9 @@ class HistorialForm(forms.ModelForm):
             "hora_creacion": forms.TimeInput(attrs={"type": "time"}),
             "fecha_creacion": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
         }
+
+
+class AnalisisFinancieroForm(forms.ModelForm):
+    class Meta:
+        model = AnalisisFinanciero
+        fields = ["gastos", "fuentes_ingresos", "productos_vendidos", "id_administrador"]

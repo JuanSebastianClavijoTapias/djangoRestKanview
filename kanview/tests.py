@@ -64,6 +64,14 @@ class CrudModulesTestCase(TestCase):
         """(url_name_prefix, model, create_data, update_data) para los 7 módulos nuevos."""
         return [
             (
+                "analisis-financiero",
+                AnalisisFinanciero,
+                {"gastos": "100.00", "fuentes_ingresos": "500.00",
+                 "productos_vendidos": "5", "id_administrador": self.administrador.pk},
+                {"gastos": "200.00", "fuentes_ingresos": "600.00",
+                 "productos_vendidos": "6", "id_administrador": self.administrador.pk},
+            ),
+            (
                 "inventario",
                 Inventario,
                 {"cantidad": "15", "id_producto": self.producto.pk},
@@ -118,7 +126,7 @@ class CrudModulesTestCase(TestCase):
     def test_all_list_pages_render(self):
         prefixes = [
             "cliente", "empleado", "administrador", "producto", "pedido",
-            "inventario", "catalogo", "tarea",
+            "analisis-financiero", "inventario", "catalogo", "tarea",
             "actividad", "historial", "calendario",
         ]
         for prefix in prefixes:
