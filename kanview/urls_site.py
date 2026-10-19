@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import (
+    views_actividades,
     views_auditoria,
     views_calendario,
     views_catalogo,
@@ -85,6 +86,7 @@ urlpatterns = [
     path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
     path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),
     path("tareas/", views_tareas.tareas, name="tareas"),
+    path("actividades/", views_actividades.actividades, name="actividades"),
     path("calendario/", views_calendario.calendario, name="calendario"),
     path("inventario/", views_inventario.inventario, name="inventario"),
     path("finanzas/", views_finanzas.finanzas, name="finanzas"),
