@@ -28,11 +28,9 @@ from kanview.models import (  # noqa: E402
     Administrador,
     AnalisisFinanciero,
     Calendario,
-    Catalogo,
     Cliente,
     Empleado,
     Historial,
-    Inventario,
     Pedido,
     Producto,
     TareasPedido,
@@ -60,8 +58,6 @@ def limpiar():
     TareasPedido.objects.filter(nombre__startswith=MARK).delete()
     AnalisisFinanciero.objects.filter(id_administrador__documento="ZZE2E").delete()
     Pedido.objects.filter(codigo_pedido="E2EZET").delete()
-    Catalogo.objects.filter(categorias=MARK).delete()
-    Inventario.objects.filter(id_producto__codigo_producto="ZZE2E1").delete()
     Producto.objects.filter(codigo_producto="ZZE2E1").delete()
     Cliente.objects.filter(documento="ZZE2E").delete()
     Empleado.objects.filter(documento="ZZE2E").delete()
@@ -93,8 +89,6 @@ def sembrar():
         nombre=f"Producto {MARK}", categoria="Muebles", cantidad=9, precio=1234500,
         descripcion="e2e", codigo_producto="ZZE2E1",
     )
-    inventario = Inventario.objects.create(cantidad=9, id_producto=producto)
-    Catalogo.objects.create(categorias=MARK, id_inventario=inventario, id_producto=producto)
     pedido = Pedido.objects.create(
         codigo_pedido="E2EZET", fecha_creacion=hoy, hora_creacion=timezone.now(),
         estado="activo", evidencias="foto.jpg", descripcion=f"Pedido {MARK}",
@@ -102,11 +96,11 @@ def sembrar():
     )
     tarea = TareasPedido.objects.create(
         nombre=f"{MARK} Tarea", descripcion="d", fecha_inicio=hoy, fecha_fin=hoy + timedelta(days=2),
-        estado="pendiente", id_pedido=pedido,
+        estado="pendiente", id_pedido=pedido, id_empleado=empleado,
     )
     Actividades.objects.create(
         nombre=f"{MARK} Actividad", descripcion="d", fecha_inicio=hoy, fecha_fin=hoy,
-        estado="en progreso", id_tarea=tarea,
+        estado="en progreso", id_tarea=tarea, id_empleado=empleado,
     )
     AnalisisFinanciero.objects.create(
         gastos=350000, fuentes_ingresos=550000, productos_vendidos=15, id_administrador=admin
@@ -131,7 +125,6 @@ PAGINAS = [
     ("empleados", f"Empleado {MARK}"),
     ("catalogo", f"Producto {MARK}"),
     ("inventario", f"Producto {MARK}"),
-    ("tareas", f"{MARK} Tarea"),
     ("pedidos-tablero", "E2EZET"),
     ("finanzas", f"Admin {MARK}"),
     ("auditoria", f"Cliente {MARK}"),

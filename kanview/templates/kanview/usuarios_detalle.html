@@ -1,0 +1,139 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - {{ titulo }}{% endblock %}
+{% block content %}
+<!-- Ficha de un cliente o trabajador: datos, cuenta de acceso y relaciones.
+     Claves del contrato: tipo, titulo, persona, datos[{etiqueta,valor}], correo, rol, activo,
+     tiene_acceso, acceso_url, estado_url, volver_url, relacionados[{titulo, filas:[str]}].
+     "acceso_url" y "estado_url" se usan tal cual (la vista los manda ya resueltos). -->
+<div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
+<div class="flex items-start gap-4">
+<div class="w-14 h-14 rounded-full bg-[#e3fffe] text-[#004f4f] flex items-center justify-center">
+<span class="material-symbols-outlined text-[28px]">{% if tipo == "trabajador" %}badge{% else %}group{% endif %}</span>
+</div>
+<div>
+<h2 class="text-2xl font-bold">{{ titulo }}</h2>
+<p class="text-sm text-gray-500 mt-1">{{ persona }}</p>
+<div class="flex flex-wrap gap-2 mt-3">
+<span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">
+{% if tipo == "trabajador" %}Trabajador{% else %}Cliente{% endif %}
+</span>
+{% if activo %}
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e3fffe] text-[#004f4f] text-xs font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#006565]"></span>Activo
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>Inactivo
+</span>
+{% endif %}
+{% if tiene_acceso %}
+<span class="px-3 py-1 rounded-full bg-[#e3fffe] text-[#004f4f] text-xs font-semibold">Con cuenta de acceso{% if rol %} · {{ rol }}{% endif %}</span>
+{% else %}
+<span class="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold">Sin cuenta de acceso</span>
+{% endif %}
+</div>
+</div>
+</div>
+{% if volver_url %}
+<a class="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2 self-start" href="{{ volver_url }}">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>Volver a Usuarios
+</a>
+{% endif %}
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<section class="lg:col-span-2 flex flex-col gap-6">
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-8">
+<h3 class="text-lg font-bold mb-6">Datos de {{ persona }}</h3>
+<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+{% for dato in datos %}
+<div class="flex flex-col gap-1 border-b border-gray-100 pb-2">
+<dt class="text-xs uppercase tracking-wider text-gray-500">{{ dato.etiqueta }}</dt>
+<!-- default_if_none: un 0 (p. ej. «Tareas realizadas») es un dato real y se muestra;
+     la vista ya manda «—» en los textos vacíos. -->
+<dd class="text-sm font-medium">{{ dato.valor|default_if_none:"—" }}</dd>
+</div>
+{% empty %}
+<p class="text-sm text-gray-500">Sin datos registrados.</p>
+{% endfor %}
+</dl>
+</div>
+{% for bloque in relacionados %}
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-8">
+<h3 class="text-lg font-bold mb-4">{{ bloque.titulo }}</h3>
+<ul class="flex flex-col gap-2 text-sm">
+{% for fila in bloque.filas %}
+<li class="flex items-center gap-2 text-gray-600">
+<span class="w-1.5 h-1.5 rounded-full bg-[#006565]"></span>{{ fila }}
+</li>
+{% empty %}
+<li class="text-gray-500">Sin registros.</li>
+{% endfor %}
+</ul>
+</div>
+{% endfor %}
+</section>
+<aside class="flex flex-col gap-6">
+<!-- Cuenta de acceso: crea o actualiza el usuario y su rol -->
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#006565]">key</span>
+<h3 class="text-lg font-bold">Cuenta de acceso</h3>
+</div>
+<p class="text-sm text-gray-500">
+    Correo: <span class="font-medium text-gray-700">{{ correo|default:"Sin correo registrado" }}</span>
+</p>
+{% if correo %}
+<form class="flex flex-col gap-4" method="post" action="{{ acceso_url }}">
+{% csrf_token %}
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700" for="id_rol">Rol de la cuenta</label>
+{% if roles %}
+<select id="id_rol" name="rol">
+{% for opcion in roles %}
+<option value="{{ opcion }}"{% if rol == opcion %} selected="selected"{% endif %}>{{ opcion }}</option>
+{% endfor %}
+</select>
+{% else %}
+<input id="id_rol" name="rol" type="text" value="{{ rol|default:'' }}" placeholder="Rol"/>
+{% endif %}
+<span class="text-xs text-gray-500">
+{% if tiene_acceso %}Actualiza la cuenta existente con el rol elegido.{% else %}Crea la cuenta de acceso para este correo.{% endif %}
+</span>
+</div>
+<button class="bg-[#006565] hover:bg-[#004f4f] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">
+{% if tiene_acceso %}Actualizar acceso{% else %}Crear acceso{% endif %}
+</button>
+</form>
+{% else %}
+<p class="text-sm text-gray-500">
+    Este registro no tiene correo electrónico: agrégalo en «Editar» antes de crear la cuenta de acceso.
+</p>
+{% endif %}
+</div>
+<!-- Activar o desactivar el registro -->
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#006565]">toggle_on</span>
+<h3 class="text-lg font-bold">Estado</h3>
+</div>
+<p class="text-sm text-gray-500">
+{% if activo %}
+    El registro está <span class="font-medium text-gray-700">activo</span>. Desactivarlo no lo borra: queda inactivo y puedes reactivarlo después.
+{% else %}
+    El registro está <span class="font-medium text-gray-700">inactivo</span>. Actívalo para que vuelva a aparecer disponible.
+{% endif %}
+</p>
+{% if estado_url %}
+<form method="post" action="{{ estado_url }}">
+{% csrf_token %}
+{% if activo %}
+<button class="w-full bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Desactivar</button>
+{% else %}
+<button class="w-full bg-[#006565] hover:bg-[#004f4f] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Activar</button>
+{% endif %}
+</form>
+{% endif %}
+</div>
+</aside>
+</div>
+{% endblock %}

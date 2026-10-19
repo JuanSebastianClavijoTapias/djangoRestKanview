@@ -6,98 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "secondary-fixed-dim": "#c6c6c7",
-                        "primary-fixed": "#93f2f2",
-                        "tertiary-fixed": "#ffdbcb",
-                        "surface-container-low": "#f5f3f3",
-                        "on-error": "#ffffff",
-                        "on-tertiary-container": "#fff9f7",
-                        "background": "#fbf9f8",
-                        "surface-container-highest": "#e4e2e2",
-                        "on-primary-container": "#e3fffe",
-                        "on-secondary": "#ffffff",
-                        "on-error-container": "#93000a",
-                        "surface-variant": "#e4e2e2",
-                        "surface": "#fbf9f8",
-                        "on-tertiary-fixed-variant": "#733512",
-                        "surface-bright": "#fbf9f8",
-                        "on-tertiary-fixed": "#341100",
-                        "outline-variant": "#bdc9c8",
-                        "inverse-surface": "#303030",
-                        "surface-tint": "#006a6a",
-                        "on-tertiary": "#ffffff",
-                        "tertiary": "#8b4823",
-                        "primary-container": "#008080",
-                        "surface-container-lowest": "#ffffff",
-                        "tertiary-container": "#a96039",
-                        "secondary-container": "#dcdddd",
-                        "surface-dim": "#dbdad9",
-                        "outline": "#6e7979",
-                        "inverse-primary": "#76d6d5",
-                        "secondary-fixed": "#e2e2e2",
-                        "on-primary-fixed-variant": "#004f4f",
-                        "on-primary": "#ffffff",
-                        "tertiary-fixed-dim": "#ffb692",
-                        "on-secondary-container": "#5f6161",
-                        "primary-fixed-dim": "#76d6d5",
-                        "on-secondary-fixed": "#1a1c1c",
-                        "on-primary-fixed": "#002020",
-                        "primary": "#006565",
-                        "inverse-on-surface": "#f2f0f0",
-                        "on-surface-variant": "#3e4949",
-                        "on-background": "#1b1c1c",
-                        "on-secondary-fixed-variant": "#454747",
-                        "on-surface": "#1b1c1c",
-                        "error": "#ba1a1a",
-                        "surface-container": "#efeded",
-                        "error-container": "#ffdad6",
-                        "surface-container-high": "#eae8e7",
-                        "secondary": "#5d5f5f"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "container-padding-mobile": "20px",
-                        "card-gap": "24px",
-                        "base": "8px",
-                        "section-margin": "64px",
-                        "container-padding-desktop": "40px",
-                        "gutter": "24px"
-                    },
-                    "fontFamily": {
-                        "headline-lg": ["Inter"],
-                        "display": ["Inter"],
-                        "body-lg": ["Inter"],
-                        "body-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "headline-md": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "label-md": ["Inter"]
-                    },
-                    "fontSize": {
-                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
-                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
-                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }]
-                    }
-                }
-            }
-        }
-    </script>
+{% include "kanview/_tailwind_config.html" %}
 <style>
         .neomorphic-card {
             background: #ffffff;
@@ -113,45 +22,23 @@
             opacity: 0.1;
         }
     </style>
-<style>html,body{background-color:#F5F5F5 !important;}</style>
 </head>
 <body class="bg-surface text-on-surface font-body-md h-full flex overflow-hidden">
 <!-- SideNavBar (Desktop) -->
 {% include "kanview/_sidebar.html" %}
 <!-- TopNavBar -->
-<header class="fixed top-0 right-0 w-full md:w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-desktop">
-<div class="flex items-center gap-4">
-<button class="md:hidden p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
-<span class="material-symbols-outlined">menu</span>
-</button>
-<div class="relative hidden sm:block">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-<input class="w-64 h-10 pl-10 pr-4 rounded-full bg-surface-container-low border-none focus:ring-2 focus:ring-primary/20 font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant neomorphic-inner outline-none transition-shadow" placeholder="Search audit logs..." type="text">
-</div>
-</div>
-<div class="flex items-center gap-2">
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all">
-<span class="material-symbols-outlined">chat_bubble</span>
-</button>
-<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all md:hidden">
-<span class="material-symbols-outlined">account_circle</span>
-</button>
-</div>
-</header>
+{% include "kanview/_header.html" %}
 <!-- Main Content -->
-<main class="flex-1 ml-0 md:ml-64 mt-16 p-container-padding-mobile md:p-container-padding-desktop overflow-y-auto bg-background">
+<main class="flex-1 lg:ml-64 mt-16 p-container-padding-mobile lg:p-container-padding-desktop overflow-y-auto bg-background">
 <div class="max-w-7xl mx-auto space-y-card-gap">
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-section-margin">
 <div>
 <h2 class="font-headline-lg text-headline-lg text-on-surface">Auditoría y Usuarios</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mt-2">Comprehensive system activity logs and user management.</p>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Registro completo de la actividad del sistema y gestión de usuarios.</p>
 </div>
 <div class="flex gap-3">
-<button class="px-6 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm">Export CSV</button>
+<button class="px-6 py-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors shadow-sm">Exportar CSV</button>
 <a class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md hover:brightness-110 transition-colors shadow-md flex items-center gap-2" href="{% url 'kanview:actividad-crear' %}"><span class="material-symbols-outlined text-sm">add</span> Nueva Actividad</a>
 </div>
 </div>
@@ -183,22 +70,22 @@
 <h3 class="font-label-md text-label-md text-on-surface-variant">Registros de hoy</h3>
 <p class="font-headline-lg text-headline-lg text-on-surface mt-1">{{ registros_hoy }}</p>
 </div>
-<!-- Filter Card -->
+<!-- Tarjeta de filtros -->
 <div class="neomorphic-card rounded-2xl p-6">
-<h3 class="font-label-md text-label-md text-on-surface font-semibold mb-4 border-b border-outline-variant/30 pb-2">Filter Logs</h3>
+<h3 class="font-label-md text-label-md text-on-surface font-semibold mb-4 border-b border-outline-variant/30 pb-2">Filtrar registros</h3>
 <div class="space-y-4">
 <div>
-<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Date Range</label>
-<select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30">
-<option>Last 7 Days</option>
-<option>Last 30 Days</option>
-<option>This Month</option>
-<option>Custom Range...</option>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase" for="filtro-rango">Rango de fechas</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30" id="filtro-rango">
+<option>Últimos 7 días</option>
+<option>Últimos 30 días</option>
+<option>Este mes</option>
+<option>Rango personalizado...</option>
 </select>
 </div>
 <div>
-<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Cargo</label>
-<select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase" for="filtro-cargo">Cargo</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30" id="filtro-cargo">
 <option>Todos los cargos</option>
 {% for codigo, nombre in cargos %}
 <option>{{ nombre }}</option>
@@ -206,15 +93,15 @@
 </select>
 </div>
 <div>
-<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase">Cliente</label>
-<select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase" for="filtro-cliente">Cliente</label>
+<select class="w-full bg-surface-container-low border-none rounded-lg text-body-md text-on-surface p-2.5 neomorphic-inner outline-none focus:ring-1 focus:ring-primary/30" id="filtro-cliente">
 <option>Todos los clientes</option>
 {% for nombre_cliente in clientes %}
 <option>{{ nombre_cliente }}</option>
 {% endfor %}
 </select>
 </div>
-<button class="w-full mt-2 py-2.5 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-colors">Apply Filters</button>
+<button class="w-full mt-2 py-2.5 rounded-lg border border-primary text-primary font-label-md text-label-md hover:bg-primary/5 transition-colors">Aplicar filtros</button>
 </div>
 </div>
 </div>
@@ -223,7 +110,7 @@
 <!-- Wax seal watermark -->
 <div class="absolute bottom-4 right-4 w-16 h-16 wax-seal z-0"></div>
 <div class="p-6 border-b border-outline-variant/30 flex justify-between items-center z-10 bg-surface-container-lowest/80 backdrop-blur-sm rounded-t-2xl">
-<h3 class="font-headline-md text-headline-md text-on-surface">Recent Activity Logs</h3>
+<h3 class="font-headline-md text-headline-md text-on-surface">Registros recientes</h3>
 <div class="flex gap-2">
 <button class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">refresh</span></button>
 <button class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined text-sm">more_vert</span></button>
@@ -261,12 +148,12 @@
 </td>
 <td class="py-4 px-6 text-on-surface-variant">{{ registro.fecha_creacion|date:"d M Y" }} · {{ registro.hora_creacion|time:"H:i" }}</td>
 <td class="py-4 px-6 text-right">
-<button class="text-primary hover:text-primary-container font-label-sm">View</button>
+<button class="text-primary hover:text-primary-container font-label-sm">Ver</button>
 </td>
 </tr>
 {% empty %}
 <tr class="border-b border-outline-variant/10">
-<td class="py-10 px-6 text-center text-on-surface-variant" colspan="5">Todavía no hay registros de historial.</td>
+<td class="py-10 px-6 text-center text-on-surface-variant" colspan="5">{% if q %}No hay registros de auditoría que coincidan con «{{ q }}».{% else %}Todavía no hay registros de historial.{% endif %}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -277,19 +164,19 @@
 <span class="font-label-sm text-label-sm text-on-surface-variant">{% if page_obj.paginator.count %}Mostrando {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ total_historial }} registros{% else %}Sin registros{% endif %}</span>
 <div class="flex gap-1">
 {% if page_obj.has_previous %}
-<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low" href="?page={{ page_obj.previous_page_number }}"><span class="material-symbols-outlined text-sm">chevron_left</span></a>
+<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low" href="?page={{ page_obj.previous_page_number }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"><span class="material-symbols-outlined text-sm">chevron_left</span></a>
 {% else %}
 <button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50" disabled><span class="material-symbols-outlined text-sm">chevron_left</span></button>
 {% endif %}
 {% for num in paginator.page_range %}
 {% if num == page_obj.number %}
-<a class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-label-sm" href="?page={{ num }}">{{ num }}</a>
+<a class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-label-sm" href="?page={{ num }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">{{ num }}</a>
 {% else %}
-<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface hover:bg-surface-container-low font-label-sm" href="?page={{ num }}">{{ num }}</a>
+<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface hover:bg-surface-container-low font-label-sm" href="?page={{ num }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">{{ num }}</a>
 {% endif %}
 {% endfor %}
 {% if page_obj.has_next %}
-<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low" href="?page={{ page_obj.next_page_number }}"><span class="material-symbols-outlined text-sm">chevron_right</span></a>
+<a class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low" href="?page={{ page_obj.next_page_number }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"><span class="material-symbols-outlined text-sm">chevron_right</span></a>
 {% else %}
 <button class="w-8 h-8 flex items-center justify-center rounded border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50" disabled><span class="material-symbols-outlined text-sm">chevron_right</span></button>
 {% endif %}

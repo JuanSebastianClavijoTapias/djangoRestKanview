@@ -10,59 +10,63 @@ from . import (
     views_inventario,
     views_pedidos,
     views_tareas,
+    views_usuarios,
 )
 from .views_crud import (
     actividad_crear,
     actividad_editar,
     actividad_eliminar,
     actividad_lista,
+    actividad_reactivar,
     administrador_crear,
     administrador_editar,
     administrador_eliminar,
     administrador_lista,
+    administrador_reactivar,
     analisis_financiero_crear,
     analisis_financiero_editar,
     analisis_financiero_eliminar,
     analisis_financiero_lista,
+    analisis_financiero_reactivar,
     calendario_crear,
     calendario_crud_lista,
     calendario_editar,
     calendario_eliminar,
-    catalogo_crear,
-    catalogo_crud_lista,
-    catalogo_editar,
-    catalogo_eliminar,
+    calendario_reactivar,
     cliente_crear,
     cliente_editar,
     cliente_eliminar,
     cliente_lista,
+    cliente_reactivar,
     empleado_crear,
     empleado_editar,
     empleado_eliminar,
     empleado_lista,
+    empleado_reactivar,
     historial_crear,
     historial_crud_lista,
     historial_editar,
     historial_eliminar,
-    inventario_crear,
-    inventario_editar,
-    inventario_eliminar,
-    inventario_lista,
+    historial_reactivar,
     pedido_crear,
     pedido_editar,
     pedido_eliminar,
     pedido_lista,
+    pedido_reactivar,
     producto_crear,
     producto_editar,
     producto_eliminar,
     producto_lista,
+    producto_reactivar,
     tarea_crear,
     tarea_editar,
     tarea_eliminar,
     tarea_lista,
+    tarea_reactivar,
 )
 from .views_site import (
     cerrar_sesion,
+    configuracion,
     dashboard,
     iniciar_sesion,
     mensajeria,
@@ -84,7 +88,11 @@ urlpatterns = [
     # Pantallas de diseño (Stitch) conectadas a datos reales
     path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
     path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),
-    path("tareas/", views_tareas.tareas, name="tareas"),
+    # /tareas/ ya no es un tablero: es el mismo kanban único («Procesos»). Se
+    # conserva el nombre de la ruta porque hay enlaces y avisos antiguos.
+    path("tareas/", views_pedidos.redirigir_a_procesos, name="tareas"),
+    path("tareas/<int:pk>/estado/", views_tareas.tarea_estado, name="tarea-estado"),
+    path("tareas/actividad/<int:pk>/estado/", views_tareas.actividad_estado, name="actividad-estado"),
     path("calendario/", views_calendario.calendario, name="calendario"),
     path("inventario/", views_inventario.inventario, name="inventario"),
     path("finanzas/", views_finanzas.finanzas, name="finanzas"),
@@ -94,75 +102,82 @@ urlpatterns = [
     path("empleados/", views_empleados.empleados, name="empleados"),
     path("catalogo/", views_catalogo.catalogo, name="catalogo"),
 
+    # Módulo Usuarios (clientes y trabajadores + cuentas de acceso)
+    path("usuarios/", views_usuarios.usuarios, name="usuarios"),
+    path("usuarios/<str:tipo>/<int:pk>/", views_usuarios.usuario_ver, name="usuario-ver"),
+    path("usuarios/<str:tipo>/<int:pk>/acceso/", views_usuarios.usuario_acceso, name="usuario-acceso"),
+    path("usuarios/<str:tipo>/<int:pk>/estado/", views_usuarios.usuario_estado, name="usuario-estado"),
+
+    # Configuración (reemplaza el enlace al admin de Django)
+    path("configuracion/", configuracion, name="configuracion"),
+
     # CRUD: Clientes
     path("crud/clientes/", cliente_lista, name="cliente-lista"),
     path("crud/clientes/nuevo/", cliente_crear, name="cliente-crear"),
     path("crud/clientes/<int:pk>/editar/", cliente_editar, name="cliente-editar"),
     path("crud/clientes/<int:pk>/eliminar/", cliente_eliminar, name="cliente-eliminar"),
+    path("crud/clientes/<int:pk>/reactivar/", cliente_reactivar, name="cliente-reactivar"),
 
     # CRUD: Empleados
     path("crud/empleados/", empleado_lista, name="empleado-lista"),
     path("crud/empleados/nuevo/", empleado_crear, name="empleado-crear"),
     path("crud/empleados/<int:pk>/editar/", empleado_editar, name="empleado-editar"),
     path("crud/empleados/<int:pk>/eliminar/", empleado_eliminar, name="empleado-eliminar"),
+    path("crud/empleados/<int:pk>/reactivar/", empleado_reactivar, name="empleado-reactivar"),
 
     # CRUD: Administradores
     path("crud/administradores/", administrador_lista, name="administrador-lista"),
     path("crud/administradores/nuevo/", administrador_crear, name="administrador-crear"),
     path("crud/administradores/<int:pk>/editar/", administrador_editar, name="administrador-editar"),
     path("crud/administradores/<int:pk>/eliminar/", administrador_eliminar, name="administrador-eliminar"),
+    path("crud/administradores/<int:pk>/reactivar/", administrador_reactivar, name="administrador-reactivar"),
 
     # CRUD: Productos
     path("crud/productos/", producto_lista, name="producto-lista"),
     path("crud/productos/nuevo/", producto_crear, name="producto-crear"),
     path("crud/productos/<int:pk>/editar/", producto_editar, name="producto-editar"),
     path("crud/productos/<int:pk>/eliminar/", producto_eliminar, name="producto-eliminar"),
+    path("crud/productos/<int:pk>/reactivar/", producto_reactivar, name="producto-reactivar"),
 
     # CRUD: Pedidos
     path("crud/pedidos/", pedido_lista, name="pedido-lista"),
     path("crud/pedidos/nuevo/", pedido_crear, name="pedido-crear"),
     path("crud/pedidos/<int:pk>/editar/", pedido_editar, name="pedido-editar"),
     path("crud/pedidos/<int:pk>/eliminar/", pedido_eliminar, name="pedido-eliminar"),
-
-    # CRUD: Inventario
-    path("crud/inventario/", inventario_lista, name="inventario-lista"),
-    path("crud/inventario/nuevo/", inventario_crear, name="inventario-crear"),
-    path("crud/inventario/<int:pk>/editar/", inventario_editar, name="inventario-editar"),
-    path("crud/inventario/<int:pk>/eliminar/", inventario_eliminar, name="inventario-eliminar"),
+    path("crud/pedidos/<int:pk>/reactivar/", pedido_reactivar, name="pedido-reactivar"),
 
     # CRUD: Calendario
     path("crud/calendario/", calendario_crud_lista, name="calendario-lista"),
     path("crud/calendario/nuevo/", calendario_crear, name="calendario-crear"),
     path("crud/calendario/<int:pk>/editar/", calendario_editar, name="calendario-editar"),
     path("crud/calendario/<int:pk>/eliminar/", calendario_eliminar, name="calendario-eliminar"),
+    path("crud/calendario/<int:pk>/reactivar/", calendario_reactivar, name="calendario-reactivar"),
 
     # CRUD: Tareas
     path("crud/tareas/", tarea_lista, name="tarea-lista"),
     path("crud/tareas/nuevo/", tarea_crear, name="tarea-crear"),
     path("crud/tareas/<int:pk>/editar/", tarea_editar, name="tarea-editar"),
     path("crud/tareas/<int:pk>/eliminar/", tarea_eliminar, name="tarea-eliminar"),
+    path("crud/tareas/<int:pk>/reactivar/", tarea_reactivar, name="tarea-reactivar"),
 
     # CRUD: Actividades (Auditoría)
     path("crud/actividades/", actividad_lista, name="actividad-lista"),
     path("crud/actividades/nuevo/", actividad_crear, name="actividad-crear"),
     path("crud/actividades/<int:pk>/editar/", actividad_editar, name="actividad-editar"),
     path("crud/actividades/<int:pk>/eliminar/", actividad_eliminar, name="actividad-eliminar"),
-
-    # CRUD: Catálogo
-    path("crud/catalogo/", catalogo_crud_lista, name="catalogo-lista"),
-    path("crud/catalogo/nuevo/", catalogo_crear, name="catalogo-crear"),
-    path("crud/catalogo/<int:pk>/editar/", catalogo_editar, name="catalogo-editar"),
-    path("crud/catalogo/<int:pk>/eliminar/", catalogo_eliminar, name="catalogo-eliminar"),
+    path("crud/actividades/<int:pk>/reactivar/", actividad_reactivar, name="actividad-reactivar"),
 
     # CRUD: Historial
     path("crud/historial/", historial_crud_lista, name="historial-lista"),
     path("crud/historial/nuevo/", historial_crear, name="historial-crear"),
     path("crud/historial/<int:pk>/editar/", historial_editar, name="historial-editar"),
     path("crud/historial/<int:pk>/eliminar/", historial_eliminar, name="historial-eliminar"),
+    path("crud/historial/<int:pk>/reactivar/", historial_reactivar, name="historial-reactivar"),
 
     # CRUD: Análisis financiero
     path("crud/analisis-financiero/", analisis_financiero_lista, name="analisis-financiero-lista"),
     path("crud/analisis-financiero/nuevo/", analisis_financiero_crear, name="analisis-financiero-crear"),
     path("crud/analisis-financiero/<int:pk>/editar/", analisis_financiero_editar, name="analisis-financiero-editar"),
     path("crud/analisis-financiero/<int:pk>/eliminar/", analisis_financiero_eliminar, name="analisis-financiero-eliminar"),
+    path("crud/analisis-financiero/<int:pk>/reactivar/", analisis_financiero_reactivar, name="analisis-financiero-reactivar"),
 ]

@@ -4,16 +4,18 @@ FBV `catalogo` que alimenta `kanview/catalogo.html`: lista de productos con sus
 tarjetas, chips de categoría, ficha lateral (detalle) e historial de pedidos
 por mes derivado de `Pedido`.
 
-No crea ni modifica modelos: solo consulta `Producto`, `Catalogo`,
-`Inventario` y `Pedido`.
+No crea ni modifica modelos: solo consulta `Producto` y `Pedido`. La categoría
+y el stock salen de `Producto` (ya no hay tabla `Catalogo`).
 """
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import Count, F, Sum
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Catalogo, Inventario, Pedido, Producto
+from . import busqueda
+from .formato import moneda_cop as _moneda_cop
+from .models import Pedido, Producto
+from .permisos import seccion_requerida
 from .views_site import _render
 
 #: Un producto con esta cantidad o menos se muestra como "Bajo stock".
@@ -29,14 +31,6 @@ MESES_CORTOS = [
 
 
 # ---- Helpers (funciones, no clases) ---------------------------------------
-
-def _moneda_cop(valor):
-    """Formatea un número como pesos colombianos: 4500000 -> '4.500.000'."""
-    try:
-        return f"{int(round(float(valor))):,}".replace(",", ".")
-    except (TypeError, ValueError):
-        return valor
-
 
 def _meses_ventana(hoy, cantidad=MESES_VENTANA):
     """[(anio, mes), ...] de los últimos `cantidad` meses (más antiguo primero)."""
@@ -64,7 +58,7 @@ def _pedidos_por_mes(producto_id, ventana):
     return [por_mes.get(clave, 0) for clave in ventana]
 
 
-def _datos_ficha(producto, ventana, inventario_por_producto, categoria_catalogo):
+def _datos_ficha(producto, ventana):
     """Datos que la ficha lateral (JS) pinta para un producto."""
     totales = _pedidos_por_mes(producto.pk, ventana)
     maximo = max(totales, default=0)
@@ -73,10 +67,10 @@ def _datos_ficha(producto, ventana, inventario_por_producto, categoria_catalogo)
         "id": producto.pk,
         "codigo": producto.codigo_producto,
         "nombre": producto.nombre,
-        "categoria": categoria_catalogo or producto.categoria,
+        "categoria": producto.get_categoria_display(),
         "descripcion": producto.descripcion,
         "cantidad": producto.cantidad,
-        "inventario": inventario_por_producto.get(producto.pk, producto.cantidad),
+        "inventario": producto.cantidad,
         "estado": "Bajo stock" if stock_bajo else "En stock",
         "stock_bajo": stock_bajo,
         "precio": _moneda_cop(producto.precio),
@@ -96,18 +90,28 @@ def _datos_ficha(producto, ventana, inventario_por_producto, categoria_catalogo)
 
 # ---- Vista -----------------------------------------------------------------
 
-@login_required
+@seccion_requerida("catalogo")
 def catalogo(request):
-    """Catálogo de productos con filtro por categoría (query `?categoria=`)."""
-    filtro = (request.GET.get("categoria") or "").strip()
+    """Catálogo de productos con filtro por categoría (`?categoria=`) y buscador (`?q=`).
 
-    consulta = Producto.objects.all()
+    El buscador del header filtra en el servidor por nombre o categoría del
+    producto; el filtro de categoría de la pantalla se mantiene.
+    """
+    filtro = (request.GET.get("categoria") or "").strip()
+    q = busqueda.texto(request)
+
+    consulta = busqueda.filtrar(
+        Producto.objects.filter(activo=True),
+        q,
+        ("nombre", "categoria", "codigo_producto"),
+    )
     if filtro:
         consulta = consulta.filter(categoria__iexact=filtro)
     productos = list(consulta.order_by("-cantidad", "nombre"))
 
     categorias = list(
-        Producto.objects.exclude(categoria="")
+        Producto.objects.filter(activo=True)
+        .exclude(categoria="")
         .values_list("categoria", flat=True)
         .order_by("categoria")
         .distinct()
@@ -116,34 +120,13 @@ def catalogo(request):
     destacado = productos[0] if productos else None
     restantes = productos[1:]
 
-    # Categoría del catálogo (modelo Catalogo) del producto destacado, si existe.
-    catalogo_destacado = None
-    if destacado is not None:
-        catalogo_destacado = (
-            Catalogo.objects.filter(id_producto=destacado).select_related("id_inventario").first()
-        )
-
-    categoria_catalogo = {
-        fila["id_producto"]: fila["categorias"]
-        for fila in Catalogo.objects.values("id_producto", "categorias")
-    }
-    inventario_por_producto = {
-        fila["id_producto"]: fila["total"]
-        for fila in Inventario.objects.values("id_producto").annotate(total=Sum("cantidad"))
-    }
-
     ventana = _meses_ventana(timezone.localdate())
     datos_ficha = {
-        str(producto.pk): _datos_ficha(
-            producto,
-            ventana,
-            inventario_por_producto,
-            categoria_catalogo.get(producto.pk),
-        )
+        str(producto.pk): _datos_ficha(producto, ventana)
         for producto in productos
     }
 
-    agregados = Producto.objects.aggregate(
+    agregados = Producto.objects.filter(activo=True).aggregate(
         unidades=Sum("cantidad"),
         valor=Sum(F("precio") * F("cantidad")),
     )
@@ -157,10 +140,10 @@ def catalogo(request):
         productos_restantes=restantes,
         categorias=categorias,
         categoria_activa=filtro,
-        catalogo_destacado=catalogo_destacado,
         datos_ficha=datos_ficha,
         umbral_stock_bajo=STOCK_BAJO,
         total_productos=len(productos),
         unidades_totales=agregados["unidades"] or 0,
         valor_inventario=_moneda_cop(agregados["valor"] or 0),
+        **busqueda.contexto(request, "Buscar en catálogo...", "catálogo"),
     )

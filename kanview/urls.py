@@ -10,16 +10,12 @@ from .views import (
     analisis_financieros_lista,
     calendario_detalle,
     calendario_lista,
-    catalogo_detalle,
-    catalogos_lista,
     cliente_detalle,
     clientes_lista,
     empleado_detalle,
     empleados_lista,
     historial_detalle,
     historial_lista,
-    inventario_detalle,
-    inventarios_lista,
     pedido_detalle,
     pedidos_lista,
     producto_detalle,
@@ -43,12 +39,6 @@ urlpatterns = [
 
     path("productos/", productos_lista, name="productos-lista"),
     path("productos/<int:pk>/", producto_detalle, name="producto-detalle"),
-
-    path("inventarios/", inventarios_lista, name="inventarios-lista"),
-    path("inventarios/<int:pk>/", inventario_detalle, name="inventario-detalle"),
-
-    path("catalogos/", catalogos_lista, name="catalogos-lista"),
-    path("catalogos/<int:pk>/", catalogo_detalle, name="catalogo-detalle"),
 
     path("pedidos/", pedidos_lista, name="pedidos-lista"),
     path("pedidos/<int:pk>/", pedido_detalle, name="pedido-detalle"),

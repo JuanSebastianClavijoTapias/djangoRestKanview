@@ -1,52 +1,59 @@
-"""Pantalla de Tareas y Actividades: tablero kanban agrupado por ESTADO real.
+"""Cambio de estado de tareas y actividades desde el tablero de procesos.
 
-El diseño original agrupaba por departamento (Costura / Tapicería / Carpintería)
-con prioridad y responsable, datos que no existen en el modelo. Aquí se reagrupa
-por el estado real de `TareasPedido` / `Actividades` (pendiente / en progreso /
-completado) reutilizando el mismo layout de columnas y tarjetas.
+El tablero (`/pedidos/`, «Procesos») pinta las actividades de cada pedido y su
+modal permite cambiar el estado. Estas dos FBV son el único punto de escritura:
+validan el estado contra ``ESTADOS_KANBAN`` y vuelven al tablero conservando la
+búsqueda. No hay pantalla propia de tareas: ``/tareas/`` redirige a
+``/pedidos/``.
 """
 
-from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from .models import ESTADOS_KANBAN, Actividades, TareasPedido
-from .views_site import _render
-
-# Columnas del tablero, en el orden real de ESTADOS_KANBAN (3 columnas del diseño).
-COLUMNAS = tuple(estado for estado, _etiqueta in ESTADOS_KANBAN)
+from .permisos import seccion_requerida
 
 
-def _agrupar(queryset):
-    """Reparte un queryset de tareas/actividades en listas por estado."""
-    grupos = {estado: [] for estado in COLUMNAS}
-    for obj in queryset:
-        grupos[obj.estado].append(obj)
-    return grupos
+def _volver_al_tablero(request):
+    """Vuelve a /pedidos/ conservando la query del tablero (q, vista, etc.)."""
+    url = reverse("kanview:pedidos-tablero")
+    query = request.GET.urlencode()
+    return f"{url}?{query}" if query else url
 
 
-@login_required
-def tareas(request):
-    """Tablero de tareas de pedido y actividades agrupadas por estado."""
-    grupos_tareas = _agrupar(
-        TareasPedido.objects.select_related("id_pedido", "id_pedido__id_empleado")
-        .prefetch_related("actividades_set")
-        .order_by("fecha_fin", "nombre")
-    )
-    grupos_actividades = _agrupar(
-        Actividades.objects.select_related("id_tarea", "id_tarea__id_pedido").order_by(
-            "fecha_fin", "nombre"
+def _cambiar_estado(request, objeto, etiqueta):
+    """Valida el estado contra ESTADOS_KANBAN, lo guarda y avisa en español."""
+    estado = (request.POST.get("estado") or "").strip()
+    validos = dict(ESTADOS_KANBAN)
+    if estado not in validos:
+        messages.error(
+            request,
+            f"El estado «{estado}» no es válido: {etiqueta.lower()} no cambió.",
         )
-    )
+        return redirect(_volver_al_tablero(request))
 
-    return _render(
+    objeto.estado = estado
+    objeto.save(update_fields=["estado"])
+    messages.success(
         request,
-        "kanview/tareas.html",
-        "Tareas",
-        pendientes=grupos_tareas["pendiente"],
-        en_progreso=grupos_tareas["en progreso"],
-        completadas=grupos_tareas["completado"],
-        actividades_pendientes=grupos_actividades["pendiente"],
-        actividades_en_progreso=grupos_actividades["en progreso"],
-        actividades_completadas=grupos_actividades["completado"],
-        total_tareas=TareasPedido.objects.count(),
-        total_actividades=Actividades.objects.count(),
+        f"{etiqueta} pasó a «{objeto.get_estado_display()}».",
     )
+    return redirect(_volver_al_tablero(request))
+
+
+@seccion_requerida("tareas")
+@require_POST
+def tarea_estado(request, pk):
+    """POST: cambia el estado de una tarea desde el tablero."""
+    tarea = get_object_or_404(TareasPedido, pk=pk)
+    return _cambiar_estado(request, tarea, f"La tarea «{tarea.nombre}»")
+
+
+@seccion_requerida("tareas")
+@require_POST
+def actividad_estado(request, pk):
+    """POST: cambia el estado de una actividad desde su modal del tablero."""
+    actividad = get_object_or_404(Actividades, pk=pk)
+    return _cambiar_estado(request, actividad, f"La actividad «{actividad.nombre}»")

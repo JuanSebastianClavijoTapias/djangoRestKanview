@@ -1,0 +1,101 @@
+<!-- Columna de usuarios (clientes o trabajadores). Se incluye dos veces desde usuarios.html.
+     Variables que recibe: filas, tipo ("cliente"|"trabajador"), titulo, icono, crear_url,
+     total, etiqueta_nuevo. Usa además "roles" del contexto del padre.
+     Cada fila del contrato trae: pk, nombre, documento, contacto, correo, estado, estado_clase,
+     tiene_acceso, rol, ver_url, editar_url, acceso_url, estado_url.
+     Los *_url se aceptan como ruta ya resuelta ("/usuarios/...") o como nombre de URL
+     ("kanview:usuario-ver"); se resuelven en los dos casos. Si la vista no manda la clave,
+     la acción correspondiente se oculta en vez de romper la pantalla. -->
+<div class="bg-white rounded-2xl shadow-neomorphic-lift overflow-hidden flex flex-col">
+<div class="flex justify-between items-center gap-3 px-6 py-5 border-b border-gray-100">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#006565]">{{ icono }}</span>
+<div>
+<h3 class="text-lg font-bold">{{ titulo }}</h3>
+<p class="text-xs text-gray-500">{{ total }} registro{{ total|pluralize }}</p>
+</div>
+</div>
+{% if crear_url %}
+<a class="bg-[#006565] hover:bg-[#004f4f] text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors" href="{% if crear_url|slice:':1' == '/' %}{{ crear_url }}{% else %}{% url crear_url %}{% endif %}">
+<span class="material-symbols-outlined text-[16px]">add</span>{{ etiqueta_nuevo }}
+</a>
+{% endif %}
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-200 text-gray-500 text-[11px] uppercase tracking-wider bg-gray-50">
+<th class="py-3 px-4 font-semibold">Nombre</th>
+<th class="py-3 px-4 font-semibold">Documento</th>
+<th class="py-3 px-4 font-semibold">Contacto</th>
+<th class="py-3 px-4 font-semibold">Correo</th>
+<th class="py-3 px-4 font-semibold">Acceso</th>
+<th class="py-3 px-4 font-semibold">Estado</th>
+<th class="py-3 px-4 font-semibold text-right">Acciones</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+{% for fila in filas %}
+<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors align-top">
+<td class="py-3 px-4 font-medium">{{ fila.nombre|default:"—" }}</td>
+<td class="py-3 px-4 text-gray-500">{{ fila.documento|default:"—" }}</td>
+<td class="py-3 px-4 text-gray-500">{{ fila.contacto|default:"—" }}</td>
+<td class="py-3 px-4 text-gray-500">{{ fila.correo|default:"—" }}</td>
+<td class="py-3 px-4">
+{% if fila.tiene_acceso %}
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#e3fffe] text-[#004f4f]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#006565]"></span>{{ fila.rol|default:"Con acceso" }}
+</span>
+{% else %}
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Sin acceso</span>
+{% endif %}
+</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ fila.estado_clase|default:'bg-gray-100 text-gray-500' }}">{{ fila.estado|default:"—" }}</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex flex-col items-end gap-2">
+<div class="whitespace-nowrap">
+{% if fila.ver_url %}
+<a class="text-[#006565] hover:underline font-medium mr-3" href="{% if fila.ver_url|slice:':1' == '/' %}{{ fila.ver_url }}{% else %}{% url fila.ver_url tipo fila.pk %}{% endif %}">Ver</a>
+{% else %}
+<a class="text-[#006565] hover:underline font-medium mr-3" href="{% url 'kanview:usuario-ver' tipo fila.pk %}">Ver</a>
+{% endif %}
+{% if fila.editar_url %}
+<a class="text-[#006565] hover:underline font-medium" href="{% if fila.editar_url|slice:':1' == '/' %}{{ fila.editar_url }}{% else %}{% url fila.editar_url fila.pk %}{% endif %}" title="Editar los datos de {{ fila.nombre }}">Editar</a>
+{% endif %}
+</div>
+<form class="flex items-center gap-1.5 justify-end" method="post" action="{% if fila.acceso_url|slice:':1' == '/' %}{{ fila.acceso_url }}{% else %}{% url fila.acceso_url tipo fila.pk %}{% endif %}">
+{% csrf_token %}
+<div class="w-32">
+<select class="text-xs py-1.5" name="rol" aria-label="Rol de {{ fila.nombre }}" title="Rol con el que se crea o actualiza la cuenta">
+{% for rol in roles %}
+<option value="{{ rol }}"{% if fila.rol == rol %} selected="selected"{% endif %}>{{ rol }}</option>
+{% endfor %}
+</select>
+</div>
+<button class="text-[#006565] hover:underline font-medium whitespace-nowrap" type="submit" title="{% if fila.tiene_acceso %}Actualizar la cuenta de acceso{% else %}Crear la cuenta de acceso{% endif %}">Acceso</button>
+</form>
+<form class="flex justify-end" method="post" action="{% if fila.estado_url|slice:':1' == '/' %}{{ fila.estado_url }}{% else %}{% url fila.estado_url tipo fila.pk %}{% endif %}">
+{% csrf_token %}
+{% if fila.estado == "Inactivo" %}
+<button class="text-[#006565] hover:underline font-medium" type="submit">Activar</button>
+{% else %}
+<button class="text-red-600 hover:underline font-medium" type="submit">Desactivar</button>
+{% endif %}
+</form>
+</div>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td class="py-10 px-4 text-center text-gray-500" colspan="7">
+<span class="material-symbols-outlined block text-gray-300 mb-2">group_off</span>
+No hay {{ titulo|lower }} registrados todavía. Usa «{{ etiqueta_nuevo }}» para crear el primero.
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>

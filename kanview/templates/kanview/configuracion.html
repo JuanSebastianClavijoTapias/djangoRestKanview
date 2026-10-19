@@ -1,0 +1,100 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Configuración{% endblock %}
+{% block content %}
+<!-- Configuración del taller (antes llevaba al admin de Django).
+     Claves del contrato: roles[{nombre,total}], total_usuarios, usuarios_url,
+     correo_contacto, secciones[{nombre, roles:[str]}]. -->
+<div class="mb-6">
+<h2 class="text-2xl font-bold">Configuración</h2>
+<p class="text-sm text-gray-500 mt-1">
+    Roles del taller, accesos por sección y datos de contacto. Los roles se asignan desde el
+    módulo Usuarios; aquí solo se consultan.
+</p>
+</div>
+<!-- Resumen -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-6">
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 flex items-center gap-4">
+<span class="material-symbols-outlined text-[#006565]">group</span>
+<div>
+<p class="text-xs uppercase tracking-wider text-gray-500">Cuentas de usuario</p>
+<p class="text-2xl font-bold">{{ total_usuarios }}</p>
+</div>
+</div>
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 flex items-center gap-4">
+<span class="material-symbols-outlined text-[#006565]">admin_panel_settings</span>
+<div>
+<p class="text-xs uppercase tracking-wider text-gray-500">Roles definidos</p>
+<p class="text-2xl font-bold">{{ roles|length }}</p>
+</div>
+</div>
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 flex items-center gap-4">
+<span class="material-symbols-outlined text-[#006565]">mail</span>
+<div>
+<p class="text-xs uppercase tracking-wider text-gray-500">Correo de contacto</p>
+<p class="text-sm font-semibold break-all">
+{% if correo_contacto %}<a class="text-[#006565] hover:underline" href="mailto:{{ correo_contacto }}">{{ correo_contacto }}</a>{% else %}Sin configurar{% endif %}
+</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+<!-- Roles y cuántas cuentas tiene cada uno -->
+<section class="lg:col-span-1 bg-white rounded-2xl shadow-neomorphic-lift p-8">
+<h3 class="text-lg font-bold mb-6">Roles del taller</h3>
+<div class="flex flex-col gap-4">
+{% for rol in roles %}
+<div class="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
+<span class="text-sm font-medium">{{ rol.nombre }}</span>
+<span class="px-3 py-1 rounded-full bg-[#e3fffe] text-[#004f4f] text-xs font-semibold">
+{{ rol.total }} cuenta{{ rol.total|pluralize }}
+</span>
+</div>
+{% empty %}
+<p class="text-sm text-gray-500">La vista no envió la lista de roles.</p>
+{% endfor %}
+</div>
+{% if usuarios_url %}
+<a class="mt-8 bg-[#006565] hover:bg-[#004f4f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors" href="{% if usuarios_url|slice:':1' == '/' %}{{ usuarios_url }}{% else %}{% url usuarios_url %}{% endif %}">
+<span class="material-symbols-outlined text-[18px]">manage_accounts</span>Administrar usuarios
+</a>
+{% endif %}
+</section>
+<!-- Accesos por sección -->
+<section class="lg:col-span-2 bg-white rounded-2xl shadow-neomorphic-lift overflow-hidden">
+<div class="px-8 py-6 border-b border-gray-100">
+<h3 class="text-lg font-bold">Accesos por sección</h3>
+<p class="text-xs text-gray-500 mt-1">Qué roles ven cada sección del sistema.</p>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-gray-200 text-gray-500 text-[11px] uppercase tracking-wider bg-gray-50">
+<th class="py-3 px-8 font-semibold">Sección</th>
+<th class="py-3 px-8 font-semibold">Roles con acceso</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+{% for seccion in secciones %}
+<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+<td class="py-3 px-8 font-medium capitalize">{{ seccion.nombre }}</td>
+<td class="py-3 px-8">
+<div class="flex flex-wrap gap-2">
+{% for rol in seccion.roles %}
+<span class="px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">{{ rol }}</span>
+{% empty %}
+<span class="text-xs text-gray-500">Sin roles asignados</span>
+{% endfor %}
+</div>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td class="py-10 px-8 text-center text-gray-500" colspan="2">La vista no envió las secciones.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+</div>
+{% endblock %}
