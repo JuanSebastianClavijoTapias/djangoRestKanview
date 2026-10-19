@@ -19,7 +19,7 @@ NAV_ITEMS = [
     ("inventory_2", "Inventario", "kanview:inventario"),
     ("menu_book", "Catálogo", "kanview:catalogo"),
     ("assignment", "Tareas", "kanview:tareas"),
-    ("history", "Actividades", "kanview:tareas"),
+    ("history", "Actividades", "kanview:actividades"),
     ("calendar_today", "Calendario", "kanview:calendario"),
     ("fact_check", "Auditoría", "kanview:auditoria"),
     ("group", "Usuarios", "kanview:clientes"),
