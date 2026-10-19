@@ -2,48 +2,11 @@
 <html lang="es"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Kanview - Registrarse</title>
+<title>Kanview - Crear cuenta de acceso</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "background": "#fbf9f8",
-                        "on-surface": "#1b1c1c",
-                        "surface-variant": "#e4e2e2",
-                        "on-surface-variant": "#3e4949",
-                        "surface-container-lowest": "#ffffff",
-                        "surface-container": "#efeded",
-                        "on-primary": "#ffffff",
-                        "outline-variant": "#bdc9c8",
-                        "outline": "#6e7979",
-                        "error": "#ba1a1a",
-                        "error-container": "#ffdad6",
-                        "on-error-container": "#93000a",
-                        "primary": "#006565",
-                        "primary-fixed-dim": "#76d6d5",
-                        "surface": "#fbf9f8",
-                        "surface-container-low": "#f5f3f3"
-                    },
-                    "fontFamily": {
-                        "headline-lg": ["Inter"],
-                        "body-md": ["Inter"],
-                        "label-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "headline-md": ["Inter"]
-                    },
-                    "boxShadow": {
-                        'neomorphic': '8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF',
-                        'inner-neomorphic': 'inset 4px 4px 8px rgba(0,0,0,0.03), inset -4px -4px 8px #FFFFFF',
-                    }
-                }
-            }
-        }
-    </script>
+{% include "kanview/_tailwind_config.html" %}
 <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
     </style>
@@ -56,8 +19,8 @@
 <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">chair</span>
 <h1 class="text-2xl text-primary font-bold tracking-tight">Kanview</h1>
 </div>
-<h2 class="text-2xl md:text-[32px] md:leading-[40px] font-semibold text-on-surface">Crea tu cuenta</h2>
-<p class="text-on-surface-variant mt-2">Regístrate para acceder al panel de manufactura artesanal.</p>
+<h2 class="text-2xl md:text-[32px] md:leading-[40px] font-semibold text-on-surface">Crear cuenta de acceso</h2>
+<p class="text-on-surface-variant mt-2">Pantalla del personal autorizado: el administrador o la secretaría crean aquí las cuentas de acceso con su rol. El taller no tiene registro público.</p>
 </div>
 {% if messages %}
 <div class="flex flex-col gap-2">
@@ -101,7 +64,7 @@
 </div>
 </div>
 <button class="mt-2 w-full bg-primary hover:bg-primary-fixed-dim text-on-primary text-sm font-medium py-3.5 rounded-2xl shadow-[0_12px_24px_rgba(0,128,128,0.2)] transition-all duration-300 active:scale-[0.98] flex justify-center items-center gap-2" type="submit">
-Crear cuenta
+Crear cuenta de acceso
 <span class="material-symbols-outlined text-[20px]">person_add</span>
 </button>
 </form>
@@ -117,7 +80,7 @@ Crear cuenta
 <div class="relative z-10 flex flex-col items-center justify-center p-12 backdrop-blur-sm bg-surface/20 rounded-[3rem] border border-white/20 shadow-[0_32px_64px_rgba(0,0,0,0.1)]">
 <div class="text-center max-w-sm">
 <h3 class="text-2xl text-on-surface-variant font-bold tracking-wide">Artesanía Digital</h3>
-<p class="text-on-surface-variant/80 mt-4 leading-relaxed">Únete y gestiona tu taller con la misma dedicación de la artesanía.</p>
+<p class="text-on-surface-variant/80 mt-4 leading-relaxed">Crea el acceso de tu equipo y gestiona el taller con la misma dedicación de la artesanía.</p>
 </div>
 </div>
 </aside>

@@ -1,6 +1,6 @@
 """Pantalla de Calendario conectada a datos reales.
 
-Convención del proyecto: cada vista es una función con ``@login_required`` y usa el
+Convención del proyecto: cada vista es una función con ``@seccion_requerida`` y usa el
 helper ``_render`` de ``views_site`` (que inyecta ``nav_items`` y ``active``).
 
 Fuente de los eventos (nunca datos inventados):
@@ -11,17 +11,21 @@ Fuente de los eventos (nunca datos inventados):
 import calendar
 from datetime import date
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.formats import date_format
 
+from . import busqueda
 from .models import Calendario, Pedido
+from .permisos import seccion_requerida
 from .views_site import _render
 
 # El diseño de Stitch empieza la semana en domingo (SUN..SAT).
 PRIMER_DIA_SEMANA = 6
 ANIO_MINIMO = 1900
+
+#: Texto que se muestra cuando el pedido no tiene fecha límite de entrega.
+SIN_FECHA_LIMITE = "Sin fecha límite"
 
 
 # ---- Helpers ---------------------------------------------------------------
@@ -66,29 +70,40 @@ def _mes_vecino(anio, mes, salto):
 
 
 def _registros_calendario(anio, mes):
-    """Filas de ``Calendario`` del mes, con el pedido ya precargado."""
+    """Filas vigentes de ``Calendario`` del mes, con el pedido ya precargado."""
     return list(
-        Calendario.objects.select_related("id_pedido", "id_pedido__id_producto")
+        Calendario.objects.filter(activo=True)
+        .select_related("id_pedido", "id_pedido__id_producto", "id_pedido__id_cliente")
         .filter(Q(fecha__year=anio, fecha__month=mes) | Q(anio=anio, mes=mes))
         .order_by("fecha", "id")
     )
 
 
 def _pedidos_del_mes(anio, mes):
-    """Pedidos creados en el mes (fuente alterna cuando ``Calendario`` está vacío)."""
+    """Pedidos vigentes creados en el mes (fuente alterna si ``Calendario`` está vacío)."""
     return list(
-        Pedido.objects.select_related("id_producto")
+        Pedido.objects.filter(activo=True)
+        .select_related("id_producto", "id_cliente")
         .filter(fecha_creacion__year=anio, fecha_creacion__month=mes)
         .order_by("fecha_creacion", "codigo_pedido")
     )
 
 
 def _evento(fecha, pedido, nombre_dia="", nombre_mes="", registro=None):
-    """Evento listo para el template (equivale a una 'tarea' de una celda)."""
+    """Evento listo para el template (equivale a una 'tarea' de una celda).
+
+    Cada evento trae dos fechas distintas y bien separadas:
+
+    - ``fecha``: la del registro de calendario (el día en el que se pinta).
+    - ``fecha_limite`` / ``entrega``: la fecha límite de entrega del pedido
+      (``Pedido.fecha_limite``), o «Sin fecha límite» si el pedido no la tiene.
+    """
+    limite = getattr(pedido, "fecha_limite", None) if pedido is not None else None
     return {
         "id": registro.pk if registro is not None else None,
         "registro": registro,
         "fecha": fecha,
+        "fecha_texto": fecha.strftime("%d/%m/%Y") if fecha else "",
         "dia": fecha.day,
         "nombre_dia": nombre_dia or date_format(fecha, "l").capitalize(),
         "nombre_mes": nombre_mes or date_format(fecha, "F").capitalize(),
@@ -99,6 +114,9 @@ def _evento(fecha, pedido, nombre_dia="", nombre_mes="", registro=None):
         "estado": pedido.estado if pedido else "",
         "estado_display": pedido.get_estado_display() if pedido else "",
         "activo": bool(pedido and pedido.estado == "activo"),
+        "fecha_limite": limite,
+        "entrega": limite.strftime("%d/%m/%Y") if limite else SIN_FECHA_LIMITE,
+        "cliente": pedido.id_cliente.nombre if pedido else "",
     }
 
 
@@ -143,13 +161,28 @@ def _grilla(anio, mes, eventos, hoy):
 
 # ---- Vista -----------------------------------------------------------------
 
-@login_required
+@seccion_requerida("calendario")
 def calendario(request):
-    """Calendario de producción con los eventos reales del mes solicitado."""
+    """Calendario de producción con los eventos reales del mes solicitado.
+
+    El mes se pide con ``?mes=`` y el buscador del header filtra además con
+    ``?q=`` por código de pedido, descripción, cliente o producto.
+    """
     anio, mes = _mes_solicitado(request)
     hoy = timezone.localdate()
+    q = busqueda.texto(request)
 
     eventos, origen = _eventos_del_mes(anio, mes)
+    eventos = [
+        evento for evento in eventos
+        if busqueda.coincide(
+            q,
+            evento["codigo"],
+            evento["descripcion"],
+            evento["cliente"],
+            evento["producto"],
+        )
+    ]
     eventos.sort(key=lambda e: (e["fecha"], e["codigo"]))
     dias, semanas = _grilla(anio, mes, eventos, hoy)
 
@@ -184,4 +217,5 @@ def calendario(request):
         origen=origen,
         mes_anterior=_mes_vecino(anio, mes, -1),
         mes_siguiente=_mes_vecino(anio, mes, 1),
+        **busqueda.contexto(request, "Buscar en el calendario...", "calendario"),
     )

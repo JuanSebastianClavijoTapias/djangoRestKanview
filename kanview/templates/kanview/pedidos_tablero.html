@@ -1,110 +1,11 @@
 <!DOCTYPE html><html lang="es"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
-<title>Kanview - Tablero Principal</title>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com" rel="preconnect">
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
-<!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<!-- Tailwind CSS -->
+<title>Kanview - Procesos</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<!-- Tailwind Config -->
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "on-primary-fixed": "#002020",
-                        "background": "#fbf9f8",
-                        "tertiary-fixed-dim": "#ffb692",
-                        "on-tertiary-fixed": "#341100",
-                        "secondary-container": "#dcdddd",
-                        "on-surface": "#1b1c1c",
-                        "surface-variant": "#e4e2e2",
-                        "inverse-on-surface": "#f2f0f0",
-                        "on-secondary": "#ffffff",
-                        "surface-container-lowest": "#ffffff",
-                        "on-primary-fixed-variant": "#004f4f",
-                        "surface-container": "#efeded",
-                        "on-primary": "#ffffff",
-                        "outline-variant": "#bdc9c8",
-                        "on-primary-container": "#e3fffe",
-                        "tertiary-container": "#a96039",
-                        "on-error": "#ffffff",
-                        "surface": "#fbf9f8",
-                        "on-error-container": "#93000a",
-                        "error": "#ba1a1a",
-                        "secondary-fixed-dim": "#c6c6c7",
-                        "on-secondary-fixed-variant": "#454747",
-                        "surface-dim": "#dbdad9",
-                        "on-secondary-fixed": "#1a1c1c",
-                        "error-container": "#ffdad6",
-                        "secondary-fixed": "#e2e2e2",
-                        "surface-tint": "#006a6a",
-                        "primary-fixed": "#93f2f2",
-                        "surface-bright": "#fbf9f8",
-                        "outline": "#6e7979",
-                        "on-background": "#1b1c1c",
-                        "tertiary-fixed": "#ffdbcb",
-                        "surface-container-high": "#eae8e7",
-                        "on-tertiary": "#ffffff",
-                        "on-surface-variant": "#3e4949",
-                        "secondary": "#5d5f5f",
-                        "on-tertiary-fixed-variant": "#733512",
-                        "primary-fixed-dim": "#76d6d5",
-                        "inverse-surface": "#303030",
-                        "on-secondary-container": "#5f6161",
-                        "on-tertiary-container": "#fff9f7",
-                        "primary": "#006565",
-                        "surface-container-highest": "#e4e2e2",
-                        "tertiary": "#8b4823",
-                        "surface-container-low": "#f5f3f3",
-                        "inverse-primary": "#76d6d5",
-                        "primary-container": "#008080"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "2xl": "1.5rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "container-padding-desktop": "40px",
-                        "card-gap": "24px",
-                        "container-padding-mobile": "20px",
-                        "gutter": "24px",
-                        "base": "8px",
-                        "section-margin": "64px"
-                    },
-                    "fontFamily": {
-                        "headline-lg": ["Inter"],
-                        "body-md": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "label-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "headline-md": ["Inter"],
-                        "display": ["Inter"],
-                        "body-lg": ["Inter"]
-                    },
-                    "fontSize": {
-                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
-                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
-                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
-                    }
-                }
-            }
-        }
-    </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+{% include "kanview/_tailwind_config.html" %}
 <style>
         .neo-shadow {
             box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
@@ -112,191 +13,293 @@
         .fab-shadow {
             box-shadow: 0 12px 24px rgba(0, 128, 128, 0.2);
         }
-        .inner-shadow {
-            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px #FFFFFF;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-        }
         .kanban-col-bg {
             background-color: #F5F5F5;
         }
+        .linea-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
-<style>html,body{background-color:#F5F5F5 !important;}</style>
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
-<!-- App Container -->
 <div class="flex min-h-screen w-full relative">
-<!-- SideNavBar -->
 {% include "kanview/_sidebar.html" %}
-<!-- Main Content Area Wrapper (to account for sidebar) -->
-<div class="flex-1 ml-64 flex flex-col min-h-screen relative">
-<!-- TopNavBar -->
-<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-desktop">
-<!-- Search (Inner Shadow style) -->
-<div class="flex items-center bg-surface-container-low rounded-full px-4 py-2 w-96 inner-shadow focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
-<input class="bg-transparent border-none focus:outline-none focus:ring-0 text-on-surface font-body-md text-body-md w-full placeholder:text-outline-variant" placeholder="Buscar pedidos, clientes..." type="text">
+<div class="flex-1 lg:ml-64 min-w-0 flex flex-col min-h-screen relative">
+{% include "kanview/_header.html" %}
+<main class="flex-1 pt-24 px-container-padding-mobile lg:px-container-padding-desktop pb-section-margin flex flex-col relative min-w-0">
+{% if messages %}
+<div class="mb-6 flex flex-col gap-2">
+{% for message in messages %}
+<div class="px-4 py-3 rounded-xl bg-[#e3fffe] text-[#004f4f] text-sm font-medium break-words">{{ message }}</div>
+{% endfor %}
 </div>
-<!-- Actions -->
-<div class="flex items-center gap-2">
-<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center h-10 w-10">
-<span class="material-symbols-outlined">notifications</span>
+{% endif %}
+<!-- Encabezado del tablero -->
+<div class="mb-8 flex flex-wrap justify-between items-end gap-4">
+<div class="min-w-0">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">Procesos</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Seguimiento de cada pedido y de las actividades de cada trabajador.</p>
+</div>
+<!-- Alternadores de vista: enlaces GET (sin JavaScript y con estado enlazable).
+     Conservan `q` y el resto de la query; el queryset es el mismo que el tablero. -->
+<div aria-label="Vista de los procesos" class="flex bg-surface-container-low rounded-lg p-1 neo-shadow" role="group">
+<a aria-pressed="{% if vista == 'kanban' %}true{% else %}false{% endif %}" class="px-4 py-2 rounded font-label-md text-label-md transition-colors{% if vista == 'kanban' %} bg-surface shadow-sm text-primary font-bold{% else %} text-on-surface-variant hover:text-on-surface{% endif %}" href="{{ url_kanban }}" id="vista-kanban">Kanban</a>
+<a aria-pressed="{% if vista == 'lista' %}true{% else %}false{% endif %}" class="px-4 py-2 rounded font-label-md text-label-md transition-colors{% if vista == 'lista' %} bg-surface shadow-sm text-primary font-bold{% else %} text-on-surface-variant hover:text-on-surface{% endif %}" href="{{ url_lista }}" id="vista-lista">Lista</a>
+</div>
+</div>
+{% if vista == "kanban" %}
+<!-- Tablero: una columna por estado calculado del pedido -->
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start min-w-0" id="tablero-procesos">
+{% for columna in columnas %}
+<section class="kanban-col-bg rounded-2xl p-4 lg:p-card-gap flex flex-col min-w-0" data-columna="{{ columna.clave }}">
+<div class="flex justify-between items-center gap-2 mb-4">
+<h3 class="font-headline-md text-headline-md text-on-surface text-[18px] min-w-0 break-words">{{ columna.titulo }}</h3>
+<span class="shrink-0 bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm" data-contador="{{ columna.clave }}">{{ columna.pedidos|length }}</span>
+</div>
+<div class="flex flex-col gap-4 min-w-0">
+{% for pedido in columna.pedidos %}
+<!-- Tarjeta = un pedido -->
+<article class="bg-surface-container-lowest rounded-xl p-4 lg:p-5 neo-shadow min-w-0" data-pedido="{{ pedido.pk }}">
+<div class="flex flex-wrap justify-between items-start gap-2 mb-3">
+<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded max-w-full break-words">{{ pedido.estado_etiqueta }}</span>
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">{{ pedido.codigo }}</a>
+</div>
+<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface break-words">{{ pedido.producto }}</h4>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-3 break-words">Cliente: {{ pedido.cliente }}</p>
+<div class="flex flex-wrap items-center gap-2 mb-2 text-[12px]">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
+<span class="{% if pedido.vencida %}text-error font-semibold{% else %}text-on-surface-variant{% endif %} break-words">
+                            Límite: {{ pedido.fecha_limite }}{% if pedido.vencida %} (vencida){% endif %}
+                        </span>
+</div>
+<!-- Avance: actividades completadas / total -->
+<div class="w-full bg-surface-variant rounded-full h-1.5 mb-1">
+<div class="bg-surface-tint h-1.5 rounded-full" style="width: {{ pedido.avance }}%"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-3" data-avance="{{ pedido.pk }}">{{ pedido.completadas }}/{{ pedido.total }} actividades completadas</p>
+{% if pedido.sin_actividades %}
+<p class="font-label-sm text-label-sm text-outline mb-3">Sin actividades cargadas</p>
+{% else %}
+<div class="flex flex-col gap-3 mb-3">
+{% for grupo in pedido.grupos %}
+<div class="bg-surface-container-low rounded-xl p-3 min-w-0" data-trabajador="{{ grupo.trabajador }}">
+<div class="flex items-center gap-2 mb-2 min-w-0">
+<span class="w-7 h-7 shrink-0 rounded-full bg-secondary-container text-on-secondary-container font-bold text-[12px] flex items-center justify-center">{{ grupo.iniciales }}</span>
+<div class="min-w-0">
+<p class="font-label-md text-label-md text-on-surface break-words">{{ grupo.trabajador }}</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant break-words">{{ grupo.cargo }}</p>
+</div>
+</div>
+<ul class="flex flex-col gap-1.5">
+{% for actividad in grupo.actividades %}
+<li class="min-w-0">
+<button aria-haspopup="dialog" aria-label="Ver el detalle de la actividad «{{ actividad.nombre }}»" class="w-full text-left flex flex-wrap items-center justify-between gap-1 px-2 py-1 rounded-lg bg-surface-container-lowest hover:bg-surface-container transition-colors" data-detalle="{{ actividad.detalle_id }}" onclick="abrirDetalle(event, this)" onkeydown="teclaDetalle(event, this)" type="button">
+<span class="font-label-sm text-label-sm text-on-surface break-words min-w-0">{{ actividad.nombre }}</span>
+<span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] {% if actividad.codigo == 'completado' %}bg-primary/10 text-primary{% elif actividad.codigo == 'en progreso' %}bg-tertiary-container/20 text-tertiary{% else %}bg-surface-variant text-on-surface-variant{% endif %}">{{ actividad.estado }}</span>
 </button>
-<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center h-10 w-10">
-<span class="material-symbols-outlined">chat_bubble</span>
-</button>
-<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center h-10 w-10">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_circle</span>
-</button>
+</li>
+{% endfor %}
+</ul>
 </div>
-</header>
-<!-- Main Workspace Canvas -->
-<main class="flex-1 pt-24 px-container-padding-desktop pb-section-margin flex flex-col h-full relative">
-<!-- Page Header -->
-<div class="mb-8 flex justify-between items-end">
-<div>
-<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">Tablero Principal</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mt-1">Gestión de flujo de trabajo artesanal</p>
+{% endfor %}
 </div>
-<!-- View Toggles (Optional enhancement for realism) -->
-<div class="flex bg-surface-container-low rounded-lg p-1 neo-shadow">
-<button class="px-4 py-2 bg-surface rounded shadow-sm font-label-md text-label-md text-primary font-bold">Kanban</button>
-<button class="px-4 py-2 text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors">Lista</button>
+{% endif %}
+<div class="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-outline-variant/20">
+<a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">Ver pedido</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:underline" href="{{ pedido.url_actividades }}">Cargar actividades</a>
 </div>
-</div>
-<!-- Kanban Board Area -->
-<div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-gutter h-full items-start">
-<!-- Column: Pendiente -->
-<div class="kanban-col-bg rounded-2xl p-card-gap flex flex-col h-[calc(100vh-220px)] relative">
-<div class="flex justify-between items-center mb-6">
-<h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">Pendiente</h3>
-<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">{{ pedidos_pendientes|length }}</span>
-</div>
-<!-- Cards Container -->
-<div class="flex flex-col gap-4 overflow-y-auto pr-2 pb-10">
-{% for pedido in pedidos_pendientes %}
-<!-- Card -->
-<a class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200 block" href="{% url 'kanview:pedido-detalle' pedido.pk %}">
-<div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded">{{ pedido.get_estado_display }}</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#{{ pedido.codigo_pedido }}</span>
-</div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">{{ pedido.id_producto.nombre }}</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: {{ pedido.id_cliente.nombre }}</p>
-<div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
-<div class="bg-surface-tint h-1.5 rounded-full" style="width: 0%"></div>
-</div>
-<div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
-<div class="flex items-center text-outline text-[12px] gap-1">
-<span class="material-symbols-outlined text-[16px]">calendar_today</span>
-                                    {{ pedido.fecha_creacion|date:"d M" }}
-                                </div>
-<div class="flex items-center gap-2">
-{% if pedido.evidencias %}<span class="material-symbols-outlined text-outline text-[18px]">attach_file</span>{% endif %}
-</div>
-</div>
-</a>
+</article>
 {% empty %}
 <div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center">
-<span class="material-symbols-outlined text-outline-variant text-[28px]">inbox</span>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1">Sin pedidos pendientes.</p>
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">inbox</span>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1 break-words">{% if q %}Ningún pedido coincide con «{{ q }}» en esta columna.{% else %}Sin pedidos en esta columna.{% endif %}</p>
 </div>
 {% endfor %}
 </div>
-</div>
-<!-- Column: En Proceso -->
-<div class="kanban-col-bg rounded-2xl p-card-gap flex flex-col h-[calc(100vh-220px)] relative">
-<div class="flex justify-between items-center mb-6">
-<h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">En proceso</h3>
-<span class="bg-primary-container text-on-primary-container px-2 py-1 rounded-full font-label-sm text-label-sm">{{ pedidos_en_proceso|length }}</span>
-</div>
-<div class="flex flex-col gap-4 overflow-y-auto pr-2 pb-10">
-{% for pedido in pedidos_en_proceso %}
-<!-- Card -->
-<a class="bg-surface-container-lowest rounded-xl p-5 neo-shadow cursor-pointer hover:-translate-y-1 transition-transform duration-200 block" href="{% url 'kanview:pedido-detalle' pedido.pk %}">
-<div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded">{{ pedido.get_estado_display }}</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#{{ pedido.codigo_pedido }}</span>
-</div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">{{ pedido.id_producto.nombre }}</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: {{ pedido.id_cliente.nombre }}</p>
-<div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
-<div class="bg-surface-tint h-1.5 rounded-full" style="width: 65%"></div>
-</div>
-<span class="font-label-sm text-label-sm text-primary flex justify-end">{{ pedido.id_empleado.get_cargo_display }}</span>
-<div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
-<div class="flex items-center text-outline text-[12px] gap-1">
-<span class="material-symbols-outlined text-[16px]">calendar_today</span>
-                                    {{ pedido.fecha_creacion|date:"d M" }}
-                                </div>
-<div class="flex items-center gap-2 text-primary">
-<span class="material-symbols-outlined text-[18px]">engineering</span>
-</div>
-</div>
-</a>
-{% empty %}
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center">
-<span class="material-symbols-outlined text-outline-variant text-[28px]">work</span>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1">Sin pedidos en proceso.</p>
-</div>
+</section>
 {% endfor %}
-</div>
-</div>
-<!-- Column: Hecho -->
-<div class="kanban-col-bg rounded-2xl p-card-gap flex flex-col h-[calc(100vh-220px)] relative overflow-hidden">
-<!-- Wax Seal Watermark specific to completed column or general area as requested -->
-<img alt="" class="absolute -bottom-12 -right-12 w-64 h-64 opacity-5 pointer-events-none mix-blend-multiply" data-alt="A macro, highly detailed photograph of a stylized circular wax seal emblem, molded in a deep, rich teal color. The seal features elegant, modern neomorphic raised typography and minimalist iconography relating to artisanal craftsmanship. The lighting is soft and studio-quality, creating subtle highlights on the glossy wax texture, casting a realistic ambient shadow on an off-white, slightly textured paper background. The overall aesthetic is premium, flat modern, and meticulously clean." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9DWS7V6XBDwqXiGkMlitu2tPJQth16OR7LRrY0Nvt87cIX36Vfa1tsQHpsJZMEKCAhvHizJvNyPlu-vVdlapT_lyw_jNk5k1matTxqI_IIsBqXb_4IIYy5jWdE3wiF5rl8-jv_NmU_HHu1bJnCRhX98OS32DLZXBloowUKPlQK40F2npciWb2wk6y4KVXn4pYJGW0_i0bgrCIYYWsohkZoWde_zmHw_-5_oA9gjMkgbRm91_7A2UCLw">
-<div class="flex justify-between items-center mb-6 relative z-10">
-<h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">Hecho</h3>
-<span class="bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm">{{ pedidos_hechos|length }}</span>
-</div>
-<div class="flex flex-col gap-4 overflow-y-auto pr-2 pb-10 relative z-10">
-{% for pedido in pedidos_hechos %}
-<!-- Card -->
-<a class="bg-surface-container-lowest rounded-xl p-5 neo-shadow opacity-75 grayscale-[20%] block cursor-pointer" href="{% url 'kanview:pedido-detalle' pedido.pk %}">
-<div class="flex justify-between items-start mb-3">
-<span class="font-label-sm text-label-sm text-surface-tint bg-primary-fixed/30 px-2 py-1 rounded">{{ pedido.get_estado_display }}</span>
-<span class="font-label-sm text-label-sm text-outline-variant">#{{ pedido.codigo_pedido }}</span>
-</div>
-<h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface">{{ pedido.id_producto.nombre }}</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-4">Cliente: {{ pedido.id_cliente.nombre }}</p>
-<div class="w-full bg-surface-variant rounded-full h-1.5 mb-2">
-<div class="bg-surface-tint h-1.5 rounded-full" style="width: 100%"></div>
-</div>
-<div class="flex justify-between items-center mt-4 pt-4 border-t border-outline-variant/20">
-<div class="flex items-center text-outline text-[12px] gap-1">
-<span class="material-symbols-outlined text-[16px]">check_circle</span>
-                                    {{ pedido.fecha_creacion|date:"d M" }}
-                                </div>
-</div>
-</a>
-{% empty %}
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center relative z-10">
-<span class="material-symbols-outlined text-outline-variant text-[28px]">task_alt</span>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1">Todavía no hay pedidos finalizados.</p>
-</div>
-{% endfor %}
-</div>
-</div>
 </div>
 {% if not total_pedidos %}
-<div class="mt-6 bg-surface-container-lowest rounded-2xl p-6 neo-shadow flex items-center gap-4">
+<div class="mt-6 bg-surface-container-lowest rounded-2xl p-6 neo-shadow flex flex-wrap items-center gap-4">
 <span class="material-symbols-outlined text-outline text-[32px]">shopping_cart</span>
-<div>
-<p class="font-headline-md text-headline-md text-[16px] text-on-surface">Aún no hay pedidos registrados</p>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant">Crea el primer pedido con el botón «+» para verlo en el tablero.</p>
+<div class="min-w-0">
+<p class="font-headline-md text-headline-md text-[16px] text-on-surface">Aún no hay procesos registrados</p>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant">Crea el primer pedido para verlo en el tablero.</p>
 </div>
 <a class="ml-auto bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors" href="{% url 'kanview:pedido-crear' %}">Nuevo pedido</a>
 </div>
 {% endif %}
+{% else %}
+<!-- Vista de lista: la misma información del tablero en una tabla. -->
+<div class="bg-surface-container-lowest rounded-2xl neo-shadow overflow-hidden min-w-0" id="tabla-pedidos">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/30 text-on-surface-variant">
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider" scope="col">Código</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider" scope="col">Cliente</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider" scope="col">Producto</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider" scope="col">Estado</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider" scope="col">Fecha límite</th>
+<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider" scope="col">Avance</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+{% for fila in filas_pedidos %}
+<tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/50">
+<td class="py-3 px-4"><a class="text-primary font-semibold hover:underline" href="{{ fila.url }}">{{ fila.codigo }}</a></td>
+<td class="py-3 px-4">{{ fila.cliente }}</td>
+<td class="py-3 px-4">{{ fila.producto }}</td>
+<td class="py-3 px-4">{{ fila.estado }}</td>
+<td class="py-3 px-4">{{ fila.fecha_limite }}</td>
+<td class="py-3 px-4 text-on-surface-variant">{{ fila.avance }}</td>
+</tr>
+{% empty %}
+<tr>
+<td class="py-8 px-4 text-center text-on-surface-variant" colspan="6">{% if q %}Ningún pedido coincide con «{{ q }}».{% else %}Todavía no hay procesos registrados.{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
 </main>
-<!-- Floating Action Button (FAB) -->
+<!-- Botón flotante: nuevo pedido -->
 <a class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center fab-shadow hover:scale-105 active:scale-95 transition-transform duration-200 z-50 group" href="{% url 'kanview:pedido-crear' %}" title="Crear nuevo pedido">
 <span class="material-symbols-outlined text-[28px] group-hover:rotate-90 transition-transform duration-300">add</span>
 </a>
 </div>
 </div>
 
+<!-- Modal de detalle de una actividad: lo abre cada actividad de las tarjetas. -->
+<div aria-labelledby="modal-detalle-titulo" class="fixed inset-0 z-[60] hidden items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4" id="modal-detalle" onclick="if (event.target === this) cerrarDetalle();" role="dialog" aria-modal="true">
+<div class="bg-surface rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-[0_24px_48px_rgba(0,0,0,0.1)] neo-shadow relative">
+<div class="flex justify-between items-start gap-4 mb-4">
+<div class="min-w-0">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" id="modal-detalle-tipo"></p>
+<h3 class="font-headline-md text-headline-md text-on-background break-words" id="modal-detalle-titulo"></h3>
+</div>
+<button aria-label="Cerrar el detalle" class="w-10 h-10 shrink-0 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant" id="modal-detalle-cerrar" onclick="cerrarDetalle()" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6 break-words" id="modal-detalle-descripcion"></p>
+<dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm">
+<div>
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Estado</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-estado"></dd>
+</div>
+<div>
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Pedido</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-pedido"></dd>
+</div>
+<div>
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Cliente</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-cliente"></dd>
+</div>
+<div>
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Trabajador</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-empleado"></dd>
+</div>
+<div>
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Fecha de inicio</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-inicio"></dd>
+</div>
+<div>
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Fecha de fin</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-fin"></dd>
+</div>
+<div class="hidden" id="modal-detalle-tarea-bloque">
+<dt class="font-label-sm text-label-sm text-on-surface-variant">Tarea</dt>
+<dd class="font-medium text-on-surface" id="modal-detalle-tarea"></dd>
+</div>
+</dl>
+<!-- Cambio de estado: POST a la vista FBV que solo actualiza `estado`. -->
+<form class="flex flex-wrap items-end gap-3 border-t border-outline-variant/20 pt-4" id="form-estado-actividad" method="post">
+{% csrf_token %}
+<div class="flex flex-col gap-1 min-w-0 flex-1">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="modal-detalle-nuevo-estado">Cambiar estado</label>
+<select class="w-full rounded-lg border border-outline-variant/50 bg-surface-container-low px-3 py-2 text-sm text-on-surface" id="modal-detalle-nuevo-estado" name="estado">
+<option value="pendiente">Pendiente</option>
+<option value="en progreso">En progreso</option>
+<option value="completado">Completado</option>
+</select>
+</div>
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors" type="submit">Guardar estado</button>
+</form>
+</div>
+</div>
+{{ detalle_modales|json_script:"datos-detalle" }}
+<script>
+    // Detalle de cada actividad, servido por la vista y leído por este script.
+    const DETALLES = JSON.parse(document.getElementById('datos-detalle').textContent);
+    const MODAL_DETALLE = document.getElementById('modal-detalle');
+    const FORM_ESTADO = document.getElementById('form-estado-actividad');
+    const SELECTOR_ESTADO = document.getElementById('modal-detalle-nuevo-estado');
+    let disparadorDetalle = null;
+
+    function ponerTexto(id, valor) {
+        document.getElementById(id).textContent = valor;
+    }
+
+    function abrirDetalle(evento, elemento) {
+        if (evento && typeof evento.stopPropagation === 'function') {
+            evento.stopPropagation();
+        }
+        const datos = DETALLES[elemento.dataset.detalle];
+        if (!datos) {
+            return;
+        }
+        ponerTexto('modal-detalle-tipo', datos.tipo);
+        ponerTexto('modal-detalle-titulo', datos.nombre);
+        ponerTexto('modal-detalle-descripcion', datos.descripcion);
+        ponerTexto('modal-detalle-estado', datos.estado);
+        ponerTexto('modal-detalle-pedido', datos.pedido);
+        ponerTexto('modal-detalle-cliente', datos.cliente);
+        ponerTexto('modal-detalle-empleado', datos.empleado);
+        ponerTexto('modal-detalle-inicio', datos.fecha_inicio);
+        ponerTexto('modal-detalle-fin', datos.fecha_fin);
+        document.getElementById('modal-detalle-tarea-bloque').classList.toggle('hidden', !datos.tarea);
+        ponerTexto('modal-detalle-tarea', datos.tarea);
+        // El formulario de estado apunta a la actividad abierta y conserva la
+        // query del tablero (para volver al mismo filtro).
+        FORM_ESTADO.action = datos.url_estado + window.location.search;
+        SELECTOR_ESTADO.value = datos.codigo;
+        disparadorDetalle = elemento;
+        MODAL_DETALLE.classList.remove('hidden');
+        MODAL_DETALLE.classList.add('flex');
+        document.getElementById('modal-detalle-cerrar').focus();
+    }
+
+    function cerrarDetalle() {
+        if (MODAL_DETALLE.classList.contains('hidden')) {
+            return;
+        }
+        MODAL_DETALLE.classList.add('hidden');
+        MODAL_DETALLE.classList.remove('flex');
+        if (disparadorDetalle) {
+            // El foco vuelve a la actividad que abrió el modal.
+            disparadorDetalle.focus();
+            disparadorDetalle = null;
+        }
+    }
+
+    function teclaDetalle(evento, elemento) {
+        if (evento.key === 'Enter' || evento.key === ' ') {
+            evento.preventDefault();
+            abrirDetalle(evento, elemento);
+        }
+    }
+
+    document.addEventListener('keydown', function (evento) {
+        if (evento.key === 'Escape') {
+            cerrarDetalle();
+        }
+    });
+</script>
 
 </body></html>

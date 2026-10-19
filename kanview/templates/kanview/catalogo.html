@@ -8,98 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface-container-lowest": "#ffffff",
-                        "on-error": "#ffffff",
-                        "surface-bright": "#fbf9f8",
-                        "on-tertiary-fixed": "#341100",
-                        "on-secondary-container": "#5f6161",
-                        "secondary": "#5d5f5f",
-                        "outline-variant": "#bdc9c8",
-                        "on-primary-fixed": "#002020",
-                        "surface-container-high": "#eae8e7",
-                        "on-secondary-fixed": "#1a1c1c",
-                        "inverse-primary": "#76d6d5",
-                        "primary-fixed-dim": "#76d6d5",
-                        "primary-fixed": "#93f2f2",
-                        "primary": "#006565",
-                        "error": "#ba1a1a",
-                        "on-secondary": "#ffffff",
-                        "tertiary-fixed-dim": "#ffb692",
-                        "on-background": "#1b1c1c",
-                        "on-surface": "#1b1c1c",
-                        "on-tertiary-fixed-variant": "#733512",
-                        "on-tertiary-container": "#fff9f7",
-                        "background": "#fbf9f8",
-                        "on-tertiary": "#ffffff",
-                        "surface-container-low": "#f5f3f3",
-                        "secondary-fixed": "#e2e2e2",
-                        "on-primary-container": "#e3fffe",
-                        "surface-dim": "#dbdad9",
-                        "outline": "#6e7979",
-                        "on-surface-variant": "#3e4949",
-                        "error-container": "#ffdad6",
-                        "tertiary-fixed": "#ffdbcb",
-                        "inverse-on-surface": "#f2f0f0",
-                        "surface-variant": "#e4e2e2",
-                        "on-primary": "#ffffff",
-                        "inverse-surface": "#303030",
-                        "surface": "#fbf9f8",
-                        "on-error-container": "#93000a",
-                        "surface-container-highest": "#e4e2e2",
-                        "primary-container": "#008080",
-                        "on-primary-fixed-variant": "#004f4f",
-                        "tertiary-container": "#a96039",
-                        "surface-tint": "#006a6a",
-                        "secondary-container": "#dcdddd",
-                        "on-secondary-fixed-variant": "#454747",
-                        "secondary-fixed-dim": "#c6c6c7",
-                        "tertiary": "#8b4823",
-                        "surface-container": "#efeded"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "base": "8px",
-                        "card-gap": "24px",
-                        "section-margin": "64px",
-                        "gutter": "24px",
-                        "container-padding-mobile": "20px",
-                        "container-padding-desktop": "40px"
-                    },
-                    "fontFamily": {
-                        "headline-md": ["Inter"],
-                        "body-md": ["Inter"],
-                        "display": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "body-lg": ["Inter"],
-                        "headline-lg": ["Inter"],
-                        "label-md": ["Inter"]
-                    },
-                    "fontSize": {
-                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
-                        "display": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
-                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
-                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
-                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
-                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }]
-                    }
-                }
-            }
-        }
-    </script>
+{% include "kanview/_tailwind_config.html" %}
 <style>
         .neomorphic-card {
             box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
@@ -118,38 +27,19 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #dbdad9; border-radius: 10px; }
     </style>
-<style>html,body{background-color:#F5F5F5 !important;}</style>
 </head>
 <body class="bg-surface text-on-surface font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
 <!-- SideNavBar -->
 {% include "kanview/_sidebar.html" %}
 <!-- TopNavBar -->
-<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-desktop">
-<!-- Search Bar -->
-<div class="relative w-96">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-body-md focus:ring-2 focus:ring-primary/20 neomorphic-inner transition-shadow placeholder:text-outline/70" placeholder="Buscar en catálogo..." type="text"/>
-</div>
-<!-- Trailing Actions -->
-<div class="flex items-center gap-2">
-<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center w-10 h-10">
-<span class="material-symbols-outlined">notifications</span>
-</button>
-<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-all flex items-center justify-center w-10 h-10">
-<span class="material-symbols-outlined">chat_bubble</span>
-</button>
-<div class="w-10 h-10 rounded-full bg-primary-fixed ml-2 overflow-hidden border border-outline-variant cursor-pointer">
-<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a well-dressed manager in a warmly lit office setting, light mode aesthetic, realistic and high quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4KeefgzIIk-V3a3Pmq3vhrjP6Fc1BrXW55Jg-mg3OWr55vlRjkmjuuYPuZ-QFlyW4EPX16y3gHEOiFCt_yNCH1lc1ncsABygkNN2NjQI_9bDdSHrzKTs_IdyYIdtlv_TcsNa7xhpegYkTGh78Di_dgjrG-xFTO0KvY3Qmyu0sEHRcPZMM1m2jtSc4_DpCUc8BV_ZWXZgvuV4CqA-qipbfd59I75xOGLCIxNVPnTZBMXssN1GmxTgQS9dBAWIg-KLavbnmOM29wu0"/>
-</div>
-</div>
-</header>
+{% include "kanview/_header.html" %}
 <!-- Main Content Canvas -->
-<main class="ml-64 mt-16 p-container-padding-desktop min-h-screen">
+<main class="lg:ml-64 mt-16 p-container-padding-mobile lg:p-container-padding-desktop min-h-screen">
 <!-- Main Header & Controls -->
 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
 <div>
 <h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">Catálogo de Productos</h2>
-<!-- Category Filter Chips -->
+<!-- Chips de filtro por categoría -->
 <div class="flex flex-wrap items-center gap-3">
 {% if categoria_activa %}
 <a class="inline-block bg-surface-container-lowest border border-outline-variant/50 text-on-surface-variant hover:bg-surface-container-low px-5 py-2 rounded-full font-label-md text-label-md transition-all" href="{% url 'kanview:catalogo' %}">Todos</a>
@@ -165,10 +55,7 @@
 {% endfor %}
 </div>
 </div>
-<a class="bg-primary text-on-primary px-6 py-3 rounded-xl font-label-md text-label-md flex items-center gap-2 hover:bg-primary/90 shadow-[0_4px_12px_rgba(0,128,128,0.2)] transition-all active:scale-95 group" href="{% url 'kanview:catalogo-crear' %}">
-<span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
-                Nuevo catálogo
-            </a>
+<!-- El catálogo ya no se crea a mano: se genera al crear o editar el producto. -->
 </div>
 <!-- Cuadrícula de Catálogo -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-card-gap">
@@ -203,7 +90,7 @@
 </div>
 </div>
 <h3 class="font-headline-md text-headline-md text-on-surface mb-2">{{ producto_destacado.nombre }}</h3>
-<p class="font-label-md text-label-md text-primary mb-4 uppercase tracking-widest">{% if catalogo_destacado %}{{ catalogo_destacado.categorias }}{% else %}{{ producto_destacado.categoria }}{% endif %}</p>
+<p class="font-label-md text-label-md text-primary mb-4 uppercase tracking-widest">{% if producto_destacado %}{{ producto_destacado.get_categoria_display }}{% endif %}</p>
 <p class="font-body-md text-body-md text-on-surface-variant mb-6 text-truncate-2">
                             {{ producto_destacado.descripcion }}
                         </p>
@@ -259,7 +146,7 @@
 <span class="material-symbols-outlined text-outline text-[40px]">menu_book</span>
 <p class="font-headline-md text-headline-md text-on-surface">Sin productos en el catálogo</p>
 <p class="font-body-md text-body-md text-on-surface-variant">
-{% if categoria_activa %}No hay productos registrados en la categoría «{{ categoria_activa }}».{% else %}Todavía no hay productos registrados.{% endif %}
+{% if q %}Ningún producto coincide con «{{ q }}».{% elif categoria_activa %}No hay productos registrados en la categoría «{{ categoria_activa }}».{% else %}Todavía no hay productos registrados.{% endif %}
 </p>
 <a class="text-primary font-label-md text-label-md hover:underline" href="{% url 'kanview:producto-crear' %}">Crear el primer producto</a>
 </article>

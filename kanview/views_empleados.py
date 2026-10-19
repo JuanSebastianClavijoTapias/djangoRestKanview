@@ -9,10 +9,11 @@ omitieron; en su lugar la plantilla muestra datos reales (cargo, salario,
 tareas realizadas) sin alterar la estructura Tailwind/Stitch.
 """
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Max, Sum
 
+from . import busqueda
 from .models import Empleado
+from .permisos import seccion_requerida
 from .views_site import _render
 
 # Etiquetas en plural para las píldoras de conteo por cargo del encabezado.
@@ -40,7 +41,7 @@ def _resumen_cargos(conteos):
     ]
 
 
-@login_required
+@seccion_requerida("usuarios")
 def empleados(request):
     """Lista los empleados reales y los indicadores del encabezado.
 
@@ -49,9 +50,16 @@ def empleados(request):
     medido contra el mejor del equipo (el que más tareas realizó equivale al
     100%).
     """
-    empleados = Empleado.objects.all()
+    q = busqueda.texto(request)
+    # El buscador del header (nombre, documento o celular) manda también en los
+    # indicadores: los números que se ven corresponden a la lista filtrada.
+    empleados = busqueda.filtrar(
+        Empleado.objects.filter(activo=True),
+        q,
+        ("nombre", "documento", "celular"),
+    )
 
-    metricas = Empleado.objects.aggregate(
+    metricas = empleados.aggregate(
         total=Count("id"),
         tareas=Sum("tareas_realizadas"),
         maximo=Max("tareas_realizadas"),
@@ -63,7 +71,7 @@ def empleados(request):
     productividad = round(promedio_tareas / max_tareas * 100) if max_tareas else 0
 
     conteos = dict(
-        Empleado.objects.values("cargo")
+        empleados.values("cargo")
         .annotate(n=Count("id"))
         .values_list("cargo", "n")
     )
@@ -79,4 +87,5 @@ def empleados(request):
         promedio_tareas=promedio_tareas,
         max_tareas=max_tareas,
         productividad=productividad,
+        **busqueda.contexto(request, "Buscar empleados...", "empleados"),
     )

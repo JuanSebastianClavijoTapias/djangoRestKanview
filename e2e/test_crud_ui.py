@@ -1,7 +1,19 @@
 """Prueba E2E con Playwright de los formularios CRUD de Kanview.
 
+Verifica la nueva interfaz:
+
+- Las listas muestran la columna "Estado" (píldora Activo/Inactivo).
+- Nada se borra: el botón de la papelera pasó a ser "Desactivar" y existe
+  "Reactivar".
+- El producto se crea con el formulario construido en la VISTA
+  (no hay forms.py) y su stock queda en ``Producto.cantidad``.
+- La pantalla de existencias (/inventario/) lee esos mismos productos.
+- Los CRUD de Inventario y Catálogo ya no existen.
+
 Requisitos:
-- Servidor corriendo: `python manage.py runserver` (default http://127.0.0.1:8000)
+- Servidor corriendo en el puerto del agente, p. ej.
+  `python manage.py runserver 127.0.0.1:8020 --noreload`
+  y `KANVIEW_BASE_URL=http://127.0.0.1:8020 python e2e/test_crud_ui.py`
 - `pip install playwright`
 - Navegador: usa el Chrome del sistema (channel="chrome"), no requiere `playwright install`.
 
@@ -25,7 +37,7 @@ from django.contrib.auth.models import User  # noqa: E402
 from django.urls import reverse  # noqa: E402
 from playwright.sync_api import sync_playwright  # noqa: E402
 
-from kanview.models import Inventario, Producto  # noqa: E402
+from kanview.models import Producto  # noqa: E402
 
 BASE_URL = os.environ.get("KANVIEW_BASE_URL", "http://127.0.0.1:8000")
 USERNAME = "e2e@kanview.com"
@@ -33,15 +45,19 @@ PASSWORD = "E2ePass123!"
 
 MODULES = [
     ("analisis-financiero", "Análisis financiero"),
-    ("inventario", "Inventario"),
-    ("catalogo", "Catálogo"),
+    ("producto", "Productos"),
     ("tarea", "Tareas"),
     ("actividad", "Actividades"),
     ("historial", "Historial"),
     ("calendario", "Calendario"),
 ]
 
+CODIGO_AUTO = "E2ECAT"
+
 failures = []
+
+#: pks que siembra esta prueba, para poder borrar exactamente esos registros.
+PKS_PRODUCTO = set()
 
 
 def check(cond, msg):
@@ -50,10 +66,15 @@ def check(cond, msg):
         failures.append(msg)
 
 
+def limpiar():
+    """Borra SOLO los productos que sembró esta prueba, identificados por su pk."""
+    for pk in PKS_PRODUCTO:
+        Producto.objects.filter(pk=pk).delete()
+    PKS_PRODUCTO.clear()
+
+
 def seed():
-    # Limpiar residuos de corridas anteriores de esta prueba.
-    Inventario.objects.filter(cantidad__in=[42, 99]).delete()
-    user, created = User.objects.get_or_create(
+    user, _ = User.objects.get_or_create(
         username=USERNAME, defaults={"is_staff": True, "is_superuser": True}
     )
     if not user.check_password(PASSWORD):
@@ -63,17 +84,18 @@ def seed():
         codigo_producto="E2E01",
         defaults={
             "nombre": "Silla E2E",
-            "categoria": "Muebles",
+            "categoria": "tela",
             "cantidad": 5,
             "precio": 100,
             "descripcion": "e2e",
         },
     )
+    PKS_PRODUCTO.add(producto.pk)
     return producto
 
 
 def main():
-    producto = seed()
+    seed()
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, channel="chrome")
         page = browser.new_page()
@@ -94,42 +116,88 @@ def main():
         page.wait_for_load_state("domcontentloaded")
         check(page.url.rstrip("/") == BASE_URL, "login ok y redirige al dashboard")
 
-        # Listas y formularios de crear renderizan
+        # Listas de los módulos que siguen existiendo y formularios de crear
         for name, title in MODULES:
             list_url = f"{BASE_URL}{reverse(f'kanview:{name}-lista')}"
             page.goto(list_url)
             page.wait_for_load_state("domcontentloaded")
-            check(title in page.content(), f"lista {name} renderiza ({title})")
+            html = page.content()
+            check(title in html, f"lista {name} renderiza ({title})")
+            check("Estado" in html, f"lista {name} tiene columna Estado")
 
+        for name, _title in MODULES:
             create_url = f"{BASE_URL}{reverse(f'kanview:{name}-crear')}"
             page.goto(create_url)
             page.wait_for_load_state("domcontentloaded")
             check("Guardar" in page.content(), f"form crear {name} renderiza")
 
-        # Flujo completo crear -> editar -> eliminar sobre Inventario
-        page.goto(f"{BASE_URL}{reverse('kanview:inventario-crear')}")
+        # --- Flujo completo crear -> editar -> desactivar -> reactivar (Producto) ---
+        page.goto(f"{BASE_URL}{reverse('kanview:producto-crear')}")
+        page.fill("#id_nombre", "Producto flujo E2E")
+        page.select_option("#id_categoria", "madera")
+        page.fill("#id_codigo_producto", "E2EFLJ")
         page.fill("#id_cantidad", "42")
-        page.select_option("#id_id_producto", str(producto.pk))
+        page.fill("#id_precio", "50000")
+        page.fill("#id_descripcion", "creado por la prueba e2e")
         page.get_by_role("button", name="Guardar").click()
         page.wait_for_load_state("domcontentloaded")
-        check("42" in page.content(), "inventario creado y visible en lista")
+        check("42" in page.content(), "producto creado y visible en la lista")
 
-        obj = Inventario.objects.filter(cantidad=42).order_by("-pk").first()
-        check(obj is not None, "inventario persistido en BD")
+        producto = Producto.objects.filter(codigo_producto="E2EFLJ").order_by("-pk").first()
+        check(producto is not None, "producto persistido en BD")
+        if producto is not None:
+            PKS_PRODUCTO.add(producto.pk)
 
-        page.goto(f"{BASE_URL}{reverse('kanview:inventario-editar', args=[obj.pk])}")
+        page.goto(f"{BASE_URL}{reverse('kanview:producto-editar', args=[producto.pk])}")
         page.fill("#id_cantidad", "99")
         page.get_by_role("button", name="Guardar").click()
         page.wait_for_load_state("domcontentloaded")
-        obj.refresh_from_db()
-        check(obj.cantidad == 99, "inventario editado (cantidad 42 -> 99)")
+        producto.refresh_from_db()
+        check(producto.cantidad == 99, "producto editado (cantidad 42 -> 99)")
 
-        page.goto(f"{BASE_URL}{reverse('kanview:inventario-eliminar', args=[obj.pk])}")
-        page.get_by_role("button", name="Eliminar").click()
+        # Desactivar: ya no dice "Eliminar" y NO borra
+        page.goto(f"{BASE_URL}{reverse('kanview:producto-eliminar', args=[producto.pk])}")
         page.wait_for_load_state("domcontentloaded")
-        check(not Inventario.objects.filter(pk=obj.pk).exists(), "inventario eliminado")
+        check("Desactivar" in page.content(), "la confirmación dice Desactivar (no Eliminar)")
+        page.get_by_role("button", name="Desactivar").click()
+        page.wait_for_load_state("domcontentloaded")
+        producto.refresh_from_db()
+        check(Producto.objects.filter(pk=producto.pk).exists(), "el producto sigue en la base (no se borró)")
+        check(producto.activo is False, "el producto quedó inactivo (activo=False)")
+        check("Inactivo" in page.content(), "la lista muestra la píldora Inactivo")
+
+        # Reactivar desde la propia lista
+        fila = page.locator("tr", has_text="99").first
+        fila.get_by_role("button", name="Reactivar").click()
+        page.wait_for_load_state("domcontentloaded")
+        producto.refresh_from_db()
+        check(producto.activo is True, "el producto se reactivó (activo=True)")
+        check("Activo" in page.content(), "la lista muestra la píldora Activo")
+
+        # --- La pantalla de existencias lee del mismo Producto ---
+        page.goto(f"{BASE_URL}{reverse('kanview:inventario')}")
+        page.wait_for_load_state("domcontentloaded")
+        html = page.content()
+        check("Producto flujo E2E" in html, "la pantalla de existencias muestra el producto")
+        check(">99<" in html or "99" in html, "la pantalla de existencias muestra su stock")
+
+        # --- Los CRUD de Inventario y Catálogo ya no existen ---
+        for ruta in ("/crud/inventario/", "/crud/catalogo/"):
+            resp = page.request.get(f"{BASE_URL}{ruta}")
+            check(resp.status == 404, f"{ruta} ya no existe (404)")
+
+        # --- Pedido: la fecha límite se captura desde el formulario ---
+        page.goto(f"{BASE_URL}{reverse('kanview:pedido-crear')}")
+        page.wait_for_load_state("domcontentloaded")
+        check(
+            page.locator("#id_fecha_limite").count() == 1,
+            "el formulario del pedido tiene el campo «Fecha límite de entrega»",
+        )
 
         browser.close()
+
+    # Deja la base como estaba: la prueba limpia lo que sembró.
+    limpiar()
 
     print()
     if failures:

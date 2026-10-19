@@ -1,16 +1,17 @@
 {% extends "kanview/crud_base.html" %}
 {% block title %}Kanview - {{ title }}{% endblock %}
-{% block header_title %}{{ title }}{% endblock %}
 {% block content %}
 <div class="flex justify-between items-center mb-6">
 <div>
 <h2 class="text-2xl font-bold">{{ title }}</h2>
 <p class="text-sm text-gray-500 mt-1">{{ filas|length }} registro{{ filas|length|pluralize }}</p>
 </div>
+{% if crear_url %}
 <a class="bg-[#006565] hover:bg-[#004f4f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors" href="{{ crear_url }}">
 <span class="material-symbols-outlined text-[18px]">add</span>
     Nuevo
 </a>
+{% endif %}
 </div>
 <div class="bg-white rounded-2xl shadow-neomorphic-lift overflow-hidden overflow-x-auto">
 <table class="w-full text-left border-collapse">
@@ -19,6 +20,7 @@
 {% for col in columnas %}
 <th class="py-3 px-6 font-semibold">{{ col }}</th>
 {% endfor %}
+<th class="py-3 px-6 font-semibold">Estado</th>
 <th class="py-3 px-6 font-semibold text-right">Acciones</th>
 </tr>
 </thead>
@@ -28,13 +30,38 @@
 {% for valor in fila.valores %}
 <td class="py-3 px-6">{{ valor }}</td>
 {% endfor %}
+<td class="py-3 px-6">
+{% if fila.activo == False %}
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>Inactivo
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#e3fffe] text-[#004f4f]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#006565]"></span>Activo
+</span>
+{% endif %}
+</td>
 <td class="py-3 px-6 text-right whitespace-nowrap">
+{% if editar_url %}
 <a class="text-[#006565] hover:underline font-medium mr-4" href="{% url editar_url fila.pk %}">Editar</a>
-<a class="text-red-600 hover:underline font-medium" href="{% url eliminar_url fila.pk %}">Eliminar</a>
+{% endif %}
+{% if fila.activo == False %}
+{% if reactivar_url %}
+<form class="inline" method="post" action="{% url reactivar_url fila.pk %}">
+{% csrf_token %}
+<button class="text-[#006565] hover:underline font-medium" type="submit">Reactivar</button>
+</form>
+{% endif %}
+{% elif eliminar_url %}
+<form class="inline" method="post" action="{% url eliminar_url fila.pk %}">
+{% csrf_token %}
+<button class="text-red-600 hover:underline font-medium" type="submit">Desactivar</button>
+</form>
+{% endif %}
 </td>
 </tr>
 {% empty %}
-<tr><td class="py-8 px-6 text-center text-gray-400" colspan="{{ columnas|length|add:1 }}">No hay registros todavía.</td></tr>
+<tr><td class="py-8 px-6 text-center text-gray-500" colspan="{{ columnas|length|add:2 }}">{% if q %}No hay registros que coincidan con «{{ q }}».{% else %}No hay registros todavía.{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table>

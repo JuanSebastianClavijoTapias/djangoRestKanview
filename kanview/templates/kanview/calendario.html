@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head>
+<!DOCTYPE html><html lang="es"><head>
 <meta charset="utf-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Kanview - Calendario</title>
@@ -6,98 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "secondary-fixed-dim": "#c6c6c7",
-                        "primary-fixed": "#93f2f2",
-                        "tertiary-fixed": "#ffdbcb",
-                        "surface-container-low": "#f5f3f3",
-                        "on-error": "#ffffff",
-                        "on-tertiary-container": "#fff9f7",
-                        "background": "#fbf9f8",
-                        "surface-container-highest": "#e4e2e2",
-                        "on-primary-container": "#e3fffe",
-                        "on-secondary": "#ffffff",
-                        "on-error-container": "#93000a",
-                        "surface-variant": "#e4e2e2",
-                        "surface": "#fbf9f8",
-                        "on-tertiary-fixed-variant": "#733512",
-                        "surface-bright": "#fbf9f8",
-                        "on-tertiary-fixed": "#341100",
-                        "outline-variant": "#bdc9c8",
-                        "inverse-surface": "#303030",
-                        "surface-tint": "#006a6a",
-                        "on-tertiary": "#ffffff",
-                        "tertiary": "#8b4823",
-                        "primary-container": "#008080",
-                        "surface-container-lowest": "#ffffff",
-                        "tertiary-container": "#a96039",
-                        "secondary-container": "#dcdddd",
-                        "surface-dim": "#dbdad9",
-                        "outline": "#6e7979",
-                        "inverse-primary": "#76d6d5",
-                        "secondary-fixed": "#e2e2e2",
-                        "on-primary-fixed-variant": "#004f4f",
-                        "on-primary": "#ffffff",
-                        "tertiary-fixed-dim": "#ffb692",
-                        "on-secondary-container": "#5f6161",
-                        "primary-fixed-dim": "#76d6d5",
-                        "on-secondary-fixed": "#1a1c1c",
-                        "on-primary-fixed": "#002020",
-                        "primary": "#006565",
-                        "inverse-on-surface": "#f2f0f0",
-                        "on-surface-variant": "#3e4949",
-                        "on-background": "#1b1c1c",
-                        "on-secondary-fixed-variant": "#454747",
-                        "on-surface": "#1b1c1c",
-                        "error": "#ba1a1a",
-                        "surface-container": "#efeded",
-                        "error-container": "#ffdad6",
-                        "surface-container-high": "#eae8e7",
-                        "secondary": "#5d5f5f"
-                    },
-                    borderRadius: {
-                        DEFAULT: "0.25rem",
-                        lg: "0.5rem",
-                        xl: "0.75rem",
-                        full: "9999px"
-                    },
-                    spacing: {
-                        "container-padding-mobile": "20px",
-                        "card-gap": "24px",
-                        "base": "8px",
-                        "section-margin": "64px",
-                        "container-padding-desktop": "40px",
-                        "gutter": "24px"
-                    },
-                    fontFamily: {
-                        "headline-lg": ["Inter"],
-                        "display": ["Inter"],
-                        "body-lg": ["Inter"],
-                        "body-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "headline-md": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "label-md": ["Inter"]
-                    },
-                    fontSize: {
-                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
-                        "display": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
-                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }],
-                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
-                        "label-sm": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
-                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
-                        "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "600" }],
-                        "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "500" }]
-                    }
-                }
-            }
-        }
-    </script>
+{% include "kanview/_tailwind_config.html" %}
 <style>
         .neomorphic-card {
             background-color: #ffffff;
@@ -107,65 +16,48 @@
             box-shadow: inset 4px 4px 8px rgba(0,0,0,0.05), inset -4px -4px 8px #FFFFFF;
         }
     </style>
-<style>html,body{background-color:#F5F5F5 !important;}</style>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen">
 <!-- TopNavBar -->
-<nav class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 border-b border-outline-variant/30 bg-background/80 backdrop-blur-md hidden md:flex justify-between items-center px-container-padding-desktop">
-<div class="flex items-center gap-4">
-<span class="font-headline-md text-headline-md text-primary font-bold">Kanview</span>
-</div>
-<div class="flex items-center gap-4">
-<div class="relative focus-within:ring-2 focus-within:ring-primary/20 rounded-full transition-all">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">search</span>
-<input class="pl-10 pr-4 py-2 bg-surface-container-low rounded-full text-on-surface-variant font-label-md text-label-md border-none focus:ring-0 w-64 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" placeholder="Search..." type="text">
-</div>
-<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-all text-on-surface-variant">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
-</button>
-<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-all text-on-surface-variant">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">chat_bubble</span>
-</button>
-<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-container-low transition-all text-on-surface-variant">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
-</button>
-</div>
-</nav>
+{% include "kanview/_header.html" %}
 <!-- SideNavBar -->
 {% include "kanview/_sidebar.html" %}
 <!-- Main Content -->
-<main class="md:ml-64 pt-20 px-container-padding-mobile md:px-container-padding-desktop pb-24 min-h-screen">
+<main class="lg:ml-64 pt-20 px-container-padding-mobile lg:px-container-padding-desktop pb-24 min-h-screen">
 <!-- Header -->
-<div class="flex justify-between items-center mb-8">
+<div class="flex flex-wrap justify-between items-center gap-4 mb-8">
 <div>
 <h2 class="font-headline-lg text-headline-lg text-on-background mb-2">{{ mes_titulo }}</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Manage your production schedule and deadlines.</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Gestiona el calendario de producción y las fechas límite.</p>
 </div>
 <div class="flex gap-4">
 <button class="flex items-center gap-2 px-6 py-3 bg-surface-container-highest rounded-full text-on-surface hover:bg-surface-dim transition-colors neomorphic-card">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">filter_list</span>
-<span class="font-label-md text-label-md">Filter</span>
+<span class="font-label-md text-label-md">Filtrar</span>
 </button>
 <a class="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors shadow-sm" href="{% url 'kanview:calendario-crear' %}">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
-<span class="font-label-md text-label-md">New Task</span>
+<span class="font-label-md text-label-md">Nueva tarea</span>
 </a>
 </div>
 </div>
+{% if q and not total_eventos %}
+<div class="mb-4 rounded-xl bg-surface-container-low px-4 py-3 font-body-md text-body-md text-on-surface-variant">No hay eventos en {{ mes_titulo }} que coincidan con «{{ q }}».</div>
+{% endif %}
 <!-- Cuadrícula de Calendario -->
 <div class="bg-surface-container-low p-6 rounded-2xl">
-<!-- Days of Week Header -->
-<div class="grid grid-cols-7 gap-4 mb-4">
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Sun</div>
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Mon</div>
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Tue</div>
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Wed</div>
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Thu</div>
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Fri</div>
-<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Sat</div>
+<!-- Cabecera de los días de la semana -->
+<div class="grid grid-cols-7 gap-1 lg:gap-4 mb-4">
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Dom</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Lun</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Mar</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Mié</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Jue</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Vie</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant uppercase">Sáb</div>
 </div>
 <!-- Días del Calendario -->
-<div class="grid grid-cols-7 gap-4">
+<div class="grid grid-cols-7 gap-1 lg:gap-4">
 <!-- Dias del mes (eventos reales de la tabla Calendario / Pedido) -->
 {% for dia in dias %}
 {% if dia.del_mes %}
@@ -173,13 +65,15 @@
 <span class="font-label-md text-label-md text-on-background self-end mb-2{% if dia.eventos %} relative z-10{% endif %}">{{ dia.dia }}</span>
 {% for evento in dia.eventos %}
 {% if evento.activo %}
-<div class="bg-primary/10 border-l-4 border-primary p-2 rounded text-xs text-primary-container font-medium mb-1 truncate relative z-10" title="{{ evento.nombre_dia }} {{ evento.dia }} {{ evento.nombre_mes }} - Pedido {{ evento.codigo }} ({{ evento.estado_display }})">
-                        Order #{{ evento.codigo }} - {{ evento.producto }}
-                    </div>
+<div class="bg-primary/10 border-l-4 border-primary p-2 rounded text-xs text-primary-container font-medium mb-1 relative z-10" title="Registro del calendario: {{ evento.nombre_dia }} {{ evento.dia }} de {{ evento.nombre_mes }} ({{ evento.fecha_texto }}) · Pedido {{ evento.codigo }} ({{ evento.estado_display }}) · Entrega del pedido: {{ evento.entrega }}">
+<span class="block truncate">Pedido #{{ evento.codigo }} - {{ evento.producto }}</span>
+<span class="block truncate text-[10px] font-semibold text-primary">Entrega: {{ evento.entrega }}</span>
+</div>
 {% else %}
-<div class="bg-tertiary-container/20 border-l-4 border-tertiary-container p-2 rounded text-xs text-tertiary-fixed-variant font-medium truncate relative z-10" title="{{ evento.nombre_dia }} {{ evento.dia }} {{ evento.nombre_mes }} - Pedido {{ evento.codigo }} ({{ evento.estado_display }})">
-                        Order #{{ evento.codigo }} - {{ evento.producto }}
-                    </div>
+<div class="bg-tertiary-container/20 border-l-4 border-tertiary-container p-2 rounded text-xs text-tertiary-fixed-variant font-medium mb-1 relative z-10" title="Registro del calendario: {{ evento.nombre_dia }} {{ evento.dia }} de {{ evento.nombre_mes }} ({{ evento.fecha_texto }}) · Pedido {{ evento.codigo }} ({{ evento.estado_display }}) · Entrega del pedido: {{ evento.entrega }}">
+<span class="block truncate">Pedido #{{ evento.codigo }} - {{ evento.producto }}</span>
+<span class="block truncate text-[10px] font-semibold text-tertiary-container">Entrega: {{ evento.entrega }}</span>
+</div>
 {% endif %}
 {% endfor %}
 </div>
@@ -209,23 +103,23 @@
 </svg>
 </div>
 <div class="flex justify-between items-center mb-6 relative z-10">
-<h3 class="font-headline-md text-headline-md text-on-background">Assign Deadline</h3>
+<h3 class="font-headline-md text-headline-md text-on-background">Asignar fecha límite</h3>
 <button class="text-on-surface-variant hover:text-on-background transition-colors" onclick="closeAssignModal()">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">close</span>
 </button>
 </div>
 <form class="space-y-6 relative z-10">
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Selected Date</label>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Fecha seleccionada</label>
 <div class="px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" id="modalDateDisplay">
-                        {{ nombre_mes }} 1, {{ anio }}
+                        {{ nombre_mes }} · {{ anio }}
                     </div>
 </div>
 <div>
-<label class="block font-label-md text-label-md text-on-surface-variant mb-2">Task or Order</label>
-<select class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] appearance-none">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_modal_pedido">Tarea o pedido</label>
+<select aria-label="Tarea o pedido" class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] appearance-none" id="id_modal_pedido">
 {% for pedido in pedidos_mes %}
-<option>Order #{{ pedido.codigo_pedido }} - {{ pedido.descripcion|truncatechars:40 }}</option>
+<option>Pedido #{{ pedido.codigo_pedido }} - {{ pedido.descripcion|truncatechars:40 }}</option>
 {% empty %}
 <option>Sin pedidos con eventos en este mes</option>
 {% endfor %}
@@ -233,10 +127,10 @@
 </div>
 <div class="flex gap-4 pt-4">
 <button class="flex-1 px-6 py-3 bg-surface-container-highest rounded-lg text-on-surface hover:bg-surface-dim transition-colors font-label-md text-label-md neomorphic-card" onclick="closeAssignModal()" type="button">
-                        Cancel
+                        Cancelar
                     </button>
 <button class="flex-1 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors font-label-md text-label-md shadow-sm" type="button">
-                        Assign
+                        Asignar
                     </button>
 </div>
 </form>
@@ -249,7 +143,7 @@
         function openAssignModal(day) {
             const modal = document.getElementById('assignModal');
             const display = document.getElementById('modalDateDisplay');
-            display.textContent = `${MES_ACTUAL} ${day}, ${ANIO_ACTUAL}`;
+            display.textContent = `${day} de ${MES_ACTUAL} de ${ANIO_ACTUAL}`;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }

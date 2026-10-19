@@ -1,10 +1,9 @@
 {% extends "kanview/crud_base.html" %}
 {% block title %}Kanview - {{ title }}{% endblock %}
-{% block header_title %}{{ title }}{% endblock %}
 {% block content %}
 <div class="max-w-2xl">
 <h2 class="text-2xl font-bold mb-6">{{ title }}</h2>
-<form class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-5" method="post">
+<form class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-5" method="post"{% if permite_imagenes %} enctype="multipart/form-data"{% endif %}>
 {% csrf_token %}
 {% if form.non_field_errors %}
 <div class="px-4 py-3 rounded-xl bg-red-50 text-red-700 text-sm">{{ form.non_field_errors }}</div>
@@ -17,14 +16,109 @@
 <span class="text-xs text-red-600">{{ field.errors|join:", " }}</span>
 {% endif %}
 {% if field.help_text %}
-<span class="text-xs text-gray-400">{{ field.help_text }}</span>
+<span class="text-xs text-gray-500">{{ field.help_text }}</span>
 {% endif %}
 </div>
 {% endfor %}
+{% if permite_imagenes %}
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700" for="id_imagenes">Imágenes del pedido</label>
+<input accept="image/*" id="id_imagenes" multiple="multiple" name="imagenes" type="file"/>
+<span class="text-xs text-gray-500">
+{% if aviso_imagenes %}{{ aviso_imagenes }}{% else %}Puedes seleccionar varias imágenes a la vez (JPG, PNG o WEBP).{% endif %}
+</span>
+</div>
+{% endif %}
 <div class="flex items-center gap-3 mt-4">
 <button class="bg-[#006565] hover:bg-[#004f4f] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Guardar</button>
 <a class="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors" href="{{ cancel_url }}">Cancelar</a>
 </div>
 </form>
 </div>
+<script>
+    // Dinero con separador de miles (250.000) mientras se escribe, y número
+    // limpio (250000) al enviar. Se aplica por el `name` del input, así que sirve
+    // para los cuatro campos de dinero: precio, salario, gastos y fuentes de ingresos.
+    // Sin JavaScript el formulario sigue funcionando: la vista normaliza el valor.
+    (function () {
+        const CAMPOS_DINERO = ["precio", "salario", "gastos", "fuentes_ingresos"];
+
+        function soloPermitidos(texto) {
+            let limpio = texto.replace(/[^\d.,]/g, "");
+            const comas = limpio.split(",");
+            if (comas.length > 2) {
+                limpio = comas[0] + "," + comas.slice(1).join("");
+            }
+            return limpio;
+        }
+
+        function conPuntosDeMiles(enteros) {
+            return enteros.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Valor que se ve mientras se escribe: 250000 -> 250.000
+        function formatear(texto) {
+            const limpio = soloPermitidos(texto);
+            const partes = limpio.split(",");
+            const enteros = conPuntosDeMiles(partes[0].replace(/\./g, ""));
+            if (partes.length === 1) {
+                return enteros;
+            }
+            return enteros + "," + partes.slice(1).join("").replace(/\./g, "").slice(0, 2);
+        }
+
+        // Valor que trae el servidor (250000.00) -> 250.000
+        function desdeServidor(valor) {
+            const limpio = (valor || "").trim().replace(",", ".");
+            if (!/^\d+(\.\d+)?$/.test(limpio)) {
+                return formatear(valor);
+            }
+            const partes = limpio.split(".");
+            const decimales = partes.length > 1 ? partes[1] : "";
+            const enteros = conPuntosDeMiles(partes[0]);
+            return /[1-9]/.test(decimales) ? enteros + "," + decimales : enteros;
+        }
+
+        // Valor que viaja al servidor: 250.000,50 -> 250000.50
+        function limpiar(texto) {
+            return texto.replace(/\./g, "").replace(",", ".").trim();
+        }
+
+        function formatearAlEscribir(evento) {
+            const input = evento.target;
+            const formateado = formatear(input.value);
+            if (input.value === formateado) {
+                return;
+            }
+            input.value = formateado;
+            // El cursor se queda al final, para no reescribir el número en medio.
+            const fin = input.value.length;
+            try {
+                input.setSelectionRange(fin, fin);
+            } catch (error) {
+                // Los input sin selección (type=number) lanzan; aquí no importa.
+            }
+        }
+
+        CAMPOS_DINERO.forEach(function (nombre) {
+            const input = document.querySelector('form input[name="' + nombre + '"]');
+            if (!input) {
+                return;
+            }
+            input.value = desdeServidor(input.value);
+            input.addEventListener("input", formatearAlEscribir);
+        });
+
+        document.querySelectorAll("form").forEach(function (formulario) {
+            formulario.addEventListener("submit", function () {
+                CAMPOS_DINERO.forEach(function (nombre) {
+                    const input = formulario.elements[nombre];
+                    if (input) {
+                        input.value = limpiar(input.value);
+                    }
+                });
+            });
+        });
+    })();
+</script>
 {% endblock %}

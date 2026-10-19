@@ -1,0 +1,24 @@
+{% comment %}
+Control para cambiar el estado de una tarea sin salir del tablero.
+
+Va en la cabecera de la tarjeta, donde antes estaba la píldora de estado (así
+la tarjeta no cambia de alto y el clic en el centro sigue abriendo el modal).
+
+- POST a `kanview:tarea-estado` con `{% csrf_token %}` (la vista es POST-only).
+- Conserva la query del tablero (q, etc.) en el action.
+- `stopPropagation`: usar el control NO abre el modal de la tarjeta.
+- Sin JavaScript sigue funcionando: el botón «check» envía el formulario.
+{% endcomment %}
+<div class="shrink-0" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
+<form action="{% url 'kanview:tarea-estado' tarea.pk %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="flex items-center gap-1" method="post">
+{% csrf_token %}
+<select aria-label="Cambiar el estado de la tarea «{{ tarea.nombre }}»" class="text-[11px] font-semibold rounded-full border border-outline-variant/40 bg-surface-container-low px-2 py-1 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20" id="estado-tarea-{{ tarea.pk }}" name="estado" onchange="this.form.submit()">
+{% for valor, etiqueta in estados_kanban %}
+<option value="{{ valor }}"{% if tarea.estado == valor %} selected{% endif %}>{{ etiqueta }}</option>
+{% endfor %}
+</select>
+<button aria-label="Guardar el estado de la tarea «{{ tarea.nombre }}»" class="shrink-0 w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center hover:brightness-110" type="submit">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</button>
+</form>
+</div>

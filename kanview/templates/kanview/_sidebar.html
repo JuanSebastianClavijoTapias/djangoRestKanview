@@ -1,15 +1,26 @@
-<!-- Shared sidebar. Requires "nav_items" (list of (icon,label,url_name)) and "active" (label string) in context. -->
-<aside class="w-64 h-screen fixed left-0 top-0 bg-surface shadow-[8px_8px_16px_rgba(0,0,0,0.03),-8px_-8px_16px_#FFFFFF] z-50 flex flex-col py-base px-4">
+<!-- Sidebar compartido. Requiere "nav_items" (4-tuplas (icono, etiqueta, nombre_url, seccion)
+     ya filtradas por rol) y "active" (etiqueta activa) en el contexto.
+     En móvil está oculto (hidden) y aparece a partir de `lg`: el contenido se
+     escala con `lg:ml-64`, no se rediseña.
+     El botón hamburguesa del header (kanview/_header.html) le añade la clase
+     «abierto» para mostrarlo como panel deslizante; el fondo oscuro
+     (#sidebar-fondo) cierra el menú con un clic. -->
+{% load static %}
+<aside aria-label="Menú principal" class="hidden lg:flex w-64 h-screen fixed left-0 top-0 bg-surface shadow-[8px_8px_16px_rgba(0,0,0,0.03),-8px_-8px_16px_#FFFFFF] z-50 flex-col py-base px-4" id="sidebar">
 <div class="flex items-center gap-3 px-4 py-6 mb-4 border-b border-outline-variant/30">
-<img alt="Kanview Wax Seal" class="w-10 h-10 rounded-full bg-primary-container p-1 shadow-neomorphic-lift object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Ulyqy4-sPg7ZnTCSOLj7aqAUrUSub_oTco3mECr72BynWBt1O-3i_W393DoGeu8yD8WtIvGpqeppGBYueBcDlGsMMQDVKUAyNcOQQvRShbWia99WKRUp_v32wQz1qw9QE52BVn8IzZCisYlWWrdchFAVS89TCMOW6P5rnnL3cMls8lG7XzWS37c3-htsgdgsO7_Q0CYB8PB_7aeKP43RKge9DoUhLzEdToKhd0RyvpLYjXt8-zOF3Ei4c"/>
+<img alt="Sello de Kanview" class="w-10 h-10 rounded-full bg-primary-container p-1 shadow-neomorphic-lift object-cover" src="{% static 'kanview/img/sello-kanview.svg' %}"/>
 <div class="flex flex-col">
 <span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">Kanview</span>
-<span class="font-label-sm text-label-sm text-on-surface-variant">Manufacturing Pro</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Gestión de taller</span>
 </div>
+<button aria-label="Cerrar el menú" class="lg:hidden ml-auto w-9 h-9 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high transition-colors shrink-0" id="btn-cerrar-menu" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
 </div>
 <ul class="flex flex-col gap-1 overflow-y-auto flex-1 pb-6 no-scrollbar">
-{% for icon, label, url_name in nav_items %}
-<li>
+{% for item in nav_items %}
+{% with icon=item.0 label=item.1 url_name=item.2 seccion=item.3 %}
+<li data-seccion="{{ seccion }}">
 {% if active == label %}
 <a class="flex items-center gap-3 px-4 py-3 rounded-r-xl border-l-4 border-primary bg-primary-container text-on-primary-container font-bold font-label-md text-label-md scale-95 transition-transform shadow-neomorphic-active" href="{% url url_name %}">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">{{ icon }}</span>
@@ -22,13 +33,8 @@
 </a>
 {% endif %}
 </li>
+{% endwith %}
 {% endfor %}
-<li>
-<a class="flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors duration-200 scale-95 active:scale-90 transition-transform" href="/admin/">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
-<span class="font-label-md text-label-md">Configuración</span>
-</a>
-</li>
 <li>
 <form action="{% url 'kanview:logout' %}" method="post">
 {% csrf_token %}
@@ -40,3 +46,5 @@
 </li>
 </ul>
 </aside>
+<!-- Fondo oscuro del menú móvil: se muestra solo mientras el sidebar está abierto. -->
+<div aria-hidden="true" class="hidden fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-40 lg:hidden" id="sidebar-fondo"></div>

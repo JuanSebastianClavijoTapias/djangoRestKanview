@@ -6,25 +6,20 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+{% include "kanview/_tailwind_config.html" %}
 <style>
-    html,body{background-color:#F5F5F5 !important;}
-    body{font-family:'Inter',sans-serif;}
-    .material-symbols-outlined{font-variation-settings:'FILL' 0;font-size:20px;vertical-align:middle;}
-    .shadow-neomorphic-lift{box-shadow:4px 4px 8px rgba(0,0,0,0.02), -4px -4px 8px #FFFFFF;}
+    .material-symbols-outlined{font-variation-settings:'FILL' 0;}
     form input, form select, form textarea{width:100%;background:#fff;border:1px solid #d1d5db;border-radius:0.75rem;padding:0.625rem 1rem;font-size:0.875rem;outline:none;}
     form input:focus, form select:focus, form textarea:focus{border-color:#008080;box-shadow:0 0 0 2px rgba(0,128,128,0.2);}
 </style>
 </head>
-<body class="text-[#1b1c1c] antialiased overflow-x-hidden">
+<body class="bg-surface font-body-md text-on-surface antialiased overflow-x-hidden">
 {% include "kanview/_sidebar.html" %}
-<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 flex justify-between items-center px-10">
-<h1 class="font-semibold text-lg">{% block header_title %}{% endblock %}</h1>
-<div class="flex items-center gap-2 text-sm text-gray-500">
-<span class="material-symbols-outlined">account_circle</span>
-<span>{{ request.user.username }}</span>
-</div>
-</header>
-<main class="ml-64 mt-16 p-10 min-h-[calc(100vh-64px)]">
+<!-- Header compartido con las pantallas de diseño (campana, chat, cuenta y menú móvil).
+     En las listas del CRUD trae el buscador (`?q=`); en los formularios, el título. -->
+{% firstof cabecera_titulo title as titulo_cabecera %}
+{% include "kanview/_header.html" with cabecera_titulo=titulo_cabecera %}
+<main class="lg:ml-64 mt-16 p-4 lg:p-10 min-h-[calc(100vh-64px)]">
 {% if messages %}
 <div class="mb-6 flex flex-col gap-2">
 {% for message in messages %}

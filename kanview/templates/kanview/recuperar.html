@@ -6,44 +6,7 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "background": "#fbf9f8",
-                        "on-surface": "#1b1c1c",
-                        "surface-variant": "#e4e2e2",
-                        "on-surface-variant": "#3e4949",
-                        "surface-container-lowest": "#ffffff",
-                        "surface-container": "#efeded",
-                        "on-primary": "#ffffff",
-                        "outline-variant": "#bdc9c8",
-                        "outline": "#6e7979",
-                        "error": "#ba1a1a",
-                        "error-container": "#ffdad6",
-                        "on-error-container": "#93000a",
-                        "primary": "#006565",
-                        "primary-fixed-dim": "#76d6d5",
-                        "surface": "#fbf9f8",
-                        "surface-container-low": "#f5f3f3"
-                    },
-                    "fontFamily": {
-                        "headline-lg": ["Inter"],
-                        "body-md": ["Inter"],
-                        "label-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "headline-md": ["Inter"]
-                    },
-                    "boxShadow": {
-                        'neomorphic': '8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF',
-                        'inner-neomorphic': 'inset 4px 4px 8px rgba(0,0,0,0.03), inset -4px -4px 8px #FFFFFF',
-                    }
-                }
-            }
-        }
-    </script>
+{% include "kanview/_tailwind_config.html" %}
 <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
     </style>

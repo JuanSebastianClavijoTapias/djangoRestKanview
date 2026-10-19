@@ -1,5 +1,7 @@
 from django import template
 
+from ..formato import moneda_cop
+
 register = template.Library()
 
 
@@ -12,10 +14,6 @@ def getattr_filter(obj, attr_name):
     return value
 
 
-@register.filter(name="moneda_cop")
-def moneda_cop(valor):
-    """Formatea un número como pesos colombianos: 4500000 -> '4.500.000'."""
-    try:
-        return f"{int(round(float(valor))):,}".replace(",", ".")
-    except (TypeError, ValueError):
-        return valor
+# El criterio del dinero vive en `kanview/formato.py` (lo comparten las vistas y
+# las plantillas): aquí solo se registra como filtro, sin duplicar la lógica.
+register.filter("moneda_cop", moneda_cop)

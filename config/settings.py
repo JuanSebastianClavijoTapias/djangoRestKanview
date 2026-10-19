@@ -10,22 +10,60 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+# ---- Configuración local por variables de entorno --------------------------
+# Los valores reales (SECRET_KEY, credenciales del SMTP, etc.) NO viven en el
+# código: se leen del entorno y, en desarrollo, de un archivo .env que está en
+# .gitignore. Sin .env el proyecto arranca en modo seguro (DEBUG=False).
+
+def _cargar_env(ruta):
+    """Carga un .env sencillo (CLAVE=valor), sin dependencias externas."""
+    if not ruta.exists():
+        return
+    for linea in ruta.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("#") or "=" not in linea:
+            continue
+        clave, valor = linea.split("=", 1)
+        os.environ.setdefault(clave.strip(), valor.strip().strip("\"'"))
+
+
+try:  # pragma: no cover - depende de si python-dotenv está instalado
+    from dotenv import load_dotenv
+
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    _cargar_env(BASE_DIR / ".env")
+
+
+def _bool_env(clave, por_defecto=False):
+    """Convierte una variable de entorno en booleano."""
+    valor = (os.environ.get(clave) or "").strip().lower()
+    if not valor:
+        return por_defecto
+    return valor in {"1", "true", "yes", "y", "si", "sí", "on"}
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-kanview-clave-de-desarrollo-cambiar-en-produccion"
+# Sin .env queda una clave de desarrollo inofensiva; en producción se define
+# SECRET_KEY en el entorno.
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-sin-env-cambiar-en-produccion")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Por defecto False: solo se activa si el entorno o el .env lo piden.
+DEBUG = _bool_env("DEBUG", False)
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in (os.environ.get("ALLOWED_HOSTS") or "localhost,127.0.0.1").split(",")
+    if host.strip()
+]
 
 
 # Application definition
@@ -40,6 +78,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'kanview',
 ]
+
+# API (DRF): por defecto exige sesión iniciada. Sin esto, toda la API respondía
+# 200 a cualquiera, incluidos los datos de clientes, pedidos y finanzas.
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -64,6 +110,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Avisos de la campana y datos de la cuenta: el header es uno
+                # solo para todas las pantallas (también las del CRUD).
+                'kanview.notificaciones.contexto_header',
             ],
         },
     },
@@ -113,7 +162,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'es'
+LANGUAGE_CODE = 'es-CO'
 
 TIME_ZONE = 'America/Bogota'
 
@@ -128,15 +177,36 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
+# Archivos subidos por el usuario (evidencias en imágenes de los pedidos)
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# Idioma de la interfaz de administración de Django
+
+ADMIN_SITE_HEADER = 'Kanview · Administración'
+ADMIN_SITE_TITLE = 'Kanview'
+ADMIN_INDEX_TITLE = 'Panel de administración'
+
+
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-# Configuración del servidor SMTP
-EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST='smtp.gmail.com'
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_USE_SSL=False
+# Configuración del servidor SMTP. Las credenciales se leen del entorno / .env:
+# nunca se escriben en el código ni en el repositorio.
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = _bool_env("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = _bool_env("EMAIL_USE_SSL", False)
 
-EMAIL_HOST_USER='raikez630@gmail.com'
-EMAIL_HOST_PASSWORD='xkgpscsxltkjtqrf'
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no-responder@kanview.local")
+
+#: Correo de contacto que se muestra en la pantalla de Configuración. Es un dato
+#: genérico del taller, no la cuenta real con la que se envían los correos.
+CORREO_CONTACTO = os.environ.get("CORREO_CONTACTO", "contacto@kanview.com")

@@ -1,0 +1,30 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Usuarios{% endblock %}
+{% block content %}
+<div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
+<div>
+<h2 class="text-2xl font-bold">Usuarios</h2>
+<p class="text-sm text-gray-500 mt-1">
+    Clientes y trabajadores del taller en dos columnas. Desde aquí el administrador o la
+    secretaría crean y administran las cuentas de acceso con su rol: nadie se registra solo.
+</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1.5 rounded-full bg-[#e3fffe] text-[#004f4f] text-xs font-semibold">{{ total_clientes }} cliente{{ total_clientes|pluralize }}</span>
+<span class="px-3 py-1.5 rounded-full bg-[#e3fffe] text-[#004f4f] text-xs font-semibold">{{ total_trabajadores }} trabajador{{ total_trabajadores|pluralize:"es" }}</span>
+</div>
+</div>
+<div class="mb-6 flex flex-wrap items-center gap-2">
+<span class="text-xs uppercase tracking-wider text-gray-500 font-semibold mr-1">Roles disponibles</span>
+{% for rol in roles %}
+<span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium">{{ rol }}</span>
+{% empty %}
+<span class="text-xs text-gray-500">La vista no envió la lista de roles.</span>
+{% endfor %}
+</div>
+<!-- Dos columnas: clientes y trabajadores, cada una con su botón "Nuevo" -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+{% include "kanview/_tabla_usuarios.html" with filas=filas_clientes tipo="cliente" titulo="Clientes" icono="group" crear_url=crear_cliente_url total=total_clientes etiqueta_nuevo="Nuevo cliente" %}
+{% include "kanview/_tabla_usuarios.html" with filas=filas_trabajadores tipo="trabajador" titulo="Trabajadores" icono="badge" crear_url=crear_trabajador_url total=total_trabajadores etiqueta_nuevo="Nuevo trabajador" %}
+</div>
+{% endblock %}

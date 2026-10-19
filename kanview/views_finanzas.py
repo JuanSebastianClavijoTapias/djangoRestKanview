@@ -1,29 +1,40 @@
 from decimal import Decimal
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import F, Sum
 
+from . import busqueda
 from .models import AnalisisFinanciero
+from .permisos import seccion_requerida
 from .views_site import _render
 
 
-@login_required
+@seccion_requerida("finanzas")
 def finanzas(request):
     """Pantalla de Finanzas con KPIs, gráfica y tabla alimentados con datos reales.
 
     Todos los agregados se derivan exclusivamente de los campos existentes del
     modelo AnalisisFinanciero (gastos, fuentes_ingresos, productos_vendidos).
     """
+    # El buscador del header filtra con `?q=` por administrador (nombre o
+    # documento). La lista y los KPIs salen del mismo conjunto filtrado.
+    q = busqueda.texto(request)
+    vigentes = busqueda.filtrar(
+        AnalisisFinanciero.objects.filter(activo=True),
+        q,
+        ("id_administrador__nombre", "id_administrador__documento"),
+    )
+
     # Lista de registros con la relación ya cargada y el balance por fila
     # anotado en la query (no se toca el modelo).
     registros = list(
-        AnalisisFinanciero.objects.select_related("id_administrador")
+        vigentes
+        .select_related("id_administrador")
         .annotate(balance=F("fuentes_ingresos") - F("gastos"))
         .order_by("-id")
     )
 
-    # Agregados reales.
-    agregados = AnalisisFinanciero.objects.aggregate(
+    # Agregados reales (solo registros vigentes).
+    agregados = vigentes.aggregate(
         total_gastos=Sum("gastos"),
         total_ingresos=Sum("fuentes_ingresos"),
         total_productos_vendidos=Sum("productos_vendidos"),
@@ -59,4 +70,5 @@ def finanzas(request):
         total_productos_vendidos=total_productos_vendidos,
         margen=margen,
         grafica_registros=grafica_registros,
+        **busqueda.contexto(request, "Buscar movimientos...", "finanzas"),
     )
