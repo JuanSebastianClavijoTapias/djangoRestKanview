@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kanview - Verificación</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+{% include "kanview/_tailwind_config.html" %}
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-6">
+<main class="w-full max-w-md bg-surface rounded-2xl shadow-neomorphic-lift p-8">
+<h1 class="font-headline-md text-headline-md font-bold text-primary mb-2">Verificación en dos pasos</h1>
+<p class="text-sm text-gray-500 mb-6">Hola {{ usuario.get_full_name|default:usuario.username }}, introduce el código de tu aplicación autenticadora o un código de respaldo.</p>
+{% for message in messages %}<div class="mb-4 px-4 py-3 rounded-xl bg-red-50 text-red-700 text-sm">{{ message }}</div>{% endfor %}
+<form class="flex flex-col gap-4" method="post">
+{% csrf_token %}
+<label class="text-sm font-medium text-gray-700" for="id_codigo">Código</label>
+<input class="rounded-xl border px-4 py-3" id="id_codigo" name="codigo" autocomplete="one-time-code" inputmode="numeric" required autofocus/>
+<button class="bg-[#006565] text-white px-6 py-3 rounded-xl font-semibold" type="submit">Verificar</button>
+</form>
+<a class="inline-block mt-5 text-sm font-semibold text-[#006565]" href="{% url 'kanview:login' %}">Volver al inicio de sesión</a>
+</main>
+</body></html>

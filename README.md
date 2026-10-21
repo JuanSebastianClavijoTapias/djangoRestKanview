@@ -27,6 +27,12 @@ El proyecto usa SQLite por defecto (no requiere instalar nada aparte). Aplica la
 python3 manage.py migrate
 ```
 
+Dependencias nuevas para PDF y 2FA: `reportlab`, `pyotp` y `qrcode` (incluidas en `requirements.txt`).
+
+La factura se genera en PDF y se envía por correo desde el detalle del pedido. Las copias de seguridad se guardan en `backups/` (configurable con `BACKUP_DIR`) y solo las gestiona Administración.
+
+Variables de entorno útiles: `EMPRESA_NOMBRE`, `EMPRESA_NIT`, `EMPRESA_DIRECCION`, `EMPRESA_TELEFONO`, `EMPRESA_CORREO`, `FACTURA_IVA`, `TERMINOS_VERSION`, `BACKUP_DIR`, `BACKUP_RETENCION`, `MAX_VIDEO_BYTES` y `MAX_BYTES_MULTIMEDIA`.
+
 Opcional, para poder entrar a `/admin/`:
 
 ```bash
@@ -74,13 +80,18 @@ Todas bajo el prefijo `/api/`. Cada recurso tiene una ruta de lista (`GET` para 
 /login/            Inicio de sesión
 /logout/           Cerrar sesión
 /pedidos/          Tablero de pedidos
-/pedidos/<id>/     Detalle de pedido
-/tareas/           Gestión de tareas
+/pedidos/<id>/     Detalle del pedido (aprobación, multimedia, factura e historial)
+/tareas/           Redirige al tablero de Procesos
+/tareas/<id>/      Detalle y confirmación de una tarea
+/actividades/      Tablero de actividades con filtros por área
 /calendario/       Calendario de producción
 /inventario/       Inventario de materiales
 /finanzas/         Análisis financiero
-/auditoria/        Auditoría y control
-/mensajeria/       Mensajería interna
+/auditoria/        Historial de pedidos
+/auditoria/log/    Log de acciones del sistema
+/perfil/           Perfil, contraseña y 2FA
+/terminos/         Términos y condiciones
+/configuracion/backups/  Copias de seguridad (solo Administración)
 /clientes/         Gestión de clientes
 /empleados/        Gestión de empleados
 /catalogo/         Catálogo de productos
@@ -131,7 +142,7 @@ kanview/    App principal:
             views_site.py   Vistas de las páginas (basadas en funciones)
             views_crud.py   Vistas del CRUD (basadas en funciones)
             urls_site.py    Rutas de las páginas y del CRUD
-            forms.py        Formularios (forms.ModelForm)
+            views_crud.py   Formularios construidos con modelform_factory
             templates/      Plantillas HTML
 ```
 

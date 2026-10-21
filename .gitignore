@@ -7,3 +7,7 @@ db.sqlite3
 *.log
 .DS_Store
 media/
+backups/
+cypress/
+node_modules/
+cypress.config.js

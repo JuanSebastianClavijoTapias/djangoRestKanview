@@ -15,7 +15,7 @@
 </head>
 <body class="bg-surface font-body-md text-on-surface antialiased overflow-x-hidden">
 {% include "kanview/_sidebar.html" %}
-<!-- Header compartido con las pantallas de diseño (campana, chat, cuenta y menú móvil).
+<!-- Header compartido con las pantallas de diseño (campana, cuenta y menú móvil).
      En las listas del CRUD trae el buscador (`?q=`); en los formularios, el título. -->
 {% firstof cabecera_titulo title as titulo_cabecera %}
 {% include "kanview/_header.html" with cabecera_titulo=titulo_cabecera %}

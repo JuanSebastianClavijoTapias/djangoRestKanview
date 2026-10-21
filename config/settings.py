@@ -11,10 +11,16 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+#: Detecta la ejecución de la suite de pruebas para no forzar flujos de
+#: seguridad (términos/2FA) en cada prueba heredada. Las pruebas específicas
+#: activan el flujo con override_settings.
+TESTING = "test" in sys.argv
 
 
 # ---- Configuración local por variables de entorno --------------------------
@@ -94,6 +100,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'kanview.seguridad.TerminosMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -127,6 +134,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 LOGIN_URL = 'kanview:login'
 LOGIN_REDIRECT_URL = 'kanview:dashboard'
 LOGOUT_REDIRECT_URL = 'kanview:login'
+
+# El login pide el correo, pero las cuentas creadas con createsuperuser pueden
+# tener un username distinto. El backend acepta ambos identificadores.
+AUTHENTICATION_BACKENDS = [
+    'kanview.auth_backends.EmailOrUsernameBackend',
+]
 
 
 # Database
@@ -210,3 +223,32 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "no
 #: Correo de contacto que se muestra en la pantalla de Configuración. Es un dato
 #: genérico del taller, no la cuenta real con la que se envían los correos.
 CORREO_CONTACTO = os.environ.get("CORREO_CONTACTO", "contacto@kanview.com")
+
+
+# ---- Facturación -----------------------------------------------------------
+# Datos del emisor configurables por entorno. Los valores por defecto permiten
+# generar el PDF en desarrollo sin publicar datos fiscales reales.
+EMPRESA_NOMBRE = os.environ.get("EMPRESA_NOMBRE", "Kanview · Cuir Tapicería")
+EMPRESA_NIT = os.environ.get("EMPRESA_NIT", "000.000.000-0")
+EMPRESA_DIRECCION = os.environ.get("EMPRESA_DIRECCION", "Dirección del taller")
+EMPRESA_TELEFONO = os.environ.get("EMPRESA_TELEFONO", "000 000 0000")
+EMPRESA_CORREO = os.environ.get("EMPRESA_CORREO", "contacto@kanview.com")
+FACTURA_IVA = float(os.environ.get("FACTURA_IVA", "0") or 0)
+
+
+# ---- Términos y condiciones -----------------------------------------------
+TERMINOS_VERSION = os.environ.get("TERMINOS_VERSION", "1.0")
+
+
+# ---- Copias de seguridad ---------------------------------------------------
+BACKUP_DIR = Path(os.environ.get("BACKUP_DIR", str(BASE_DIR / "backups")))
+BACKUP_RETENCION = int(os.environ.get("BACKUP_RETENCION", "10"))
+
+
+# ---- Multimedia ------------------------------------------------------------
+MAX_VIDEO_BYTES = int(os.environ.get("MAX_VIDEO_BYTES", str(25 * 1024 * 1024)))
+MAX_BYTES_MULTIMEDIA = int(os.environ.get("MAX_BYTES_MULTIMEDIA", str(60 * 1024 * 1024)))
+
+
+# ---- Recuperación de contraseña -------------------------------------------
+PASSWORD_RESET_TIMEOUT = int(os.environ.get("PASSWORD_RESET_TIMEOUT", "86400"))

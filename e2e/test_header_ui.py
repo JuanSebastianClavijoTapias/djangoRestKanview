@@ -6,15 +6,14 @@ Cubre, con el navegador de verdad:
   servidor (cliente, producto o trabajador) y «Quitar filtro» lo devuelve.
 - B. Campana: el panel se abre, muestra al menos un aviso real y se cierra con
   `Esc`.
-- C. Chat: el icono navega a `/mensajeria/`.
-- D. Cuenta: el menú muestra nombre y rol real, y «Cerrar sesión» (POST) vuelve
+- C. Cuenta: el menú muestra nombre y rol real, y «Cerrar sesión» (POST) vuelve
   al login.
-- E. Menú móvil: a 375 px la hamburguesa abre el sidebar y se cierra con `Esc`.
-- F. Conmutador Kanban / Lista de `/pedidos/`: la tabla muestra el pedido, el
+- D. Menú móvil: a 375 px la hamburguesa abre el sidebar y se cierra con `Esc`.
+- E. Conmutador Kanban / Lista de `/pedidos/`: la tabla muestra el pedido, el
   botón queda marcado y se vuelve al tablero.
-- G. Cambio de estado desde el modal de una actividad: el pedido se mueve a la
+- F. Cambio de estado desde el modal de una actividad: el pedido se mueve a la
   columna «Completado».
-- H. El sidebar dice «Procesos», «Productos» y «Catálogo», y no «Tareas» ni
+- G. El sidebar dice «Procesos», «Productos» y «Catálogo», y no «Tareas» ni
   «Inventario»; `/tareas/` acaba en `/pedidos/`.
 
 Requisitos:
@@ -232,13 +231,7 @@ def main():
         page.keyboard.press("Escape")
         check(not visible(page, "#panel-avisos"), "Esc cierra el panel de avisos")
 
-        # ---- C. Chat ------------------------------------------------------
-        print("\n  -- C. Chat --")
-        with page.expect_navigation(wait_until="domcontentloaded"):
-            pulsar(page, "#btn-chat")
-        check(page.url.rstrip("/").endswith("/mensajeria"), f"el chat lleva a /mensajeria/ ({page.url})")
-
-        # ---- E. Menú móvil ------------------------------------------------
+        # ---- D. Menú móvil ------------------------------------------------
         print("\n  -- E. Menú móvil (375 px) --")
         page.set_viewport_size(ANCHO_MOVIL)
         ir(page, "/pedidos/")

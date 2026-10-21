@@ -64,7 +64,7 @@
 <!-- Tarjeta = un pedido -->
 <article class="bg-surface-container-lowest rounded-xl p-4 lg:p-5 neo-shadow min-w-0" data-pedido="{{ pedido.pk }}">
 <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
-<span class="font-label-sm text-label-sm text-tertiary-container bg-tertiary-fixed px-2 py-1 rounded max-w-full break-words">{{ pedido.estado_etiqueta }}</span>
+<span class="font-label-sm text-label-sm px-2 py-1 rounded max-w-full break-words {% if pedido.estado_aprobacion == 'aprobado' %}bg-green-100 text-green-800{% elif pedido.estado_aprobacion == 'rechazado' %}bg-red-100 text-red-800{% else %}bg-amber-100 text-amber-800{% endif %}">{{ pedido.estado_aprobacion_etiqueta }}</span>
 <a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">{{ pedido.codigo }}</a>
 </div>
 <h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface break-words">{{ pedido.producto }}</h4>
@@ -109,7 +109,10 @@
 {% endif %}
 <div class="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-outline-variant/20">
 <a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">Ver pedido</a>
+<div class="flex flex-wrap gap-3">
 <a class="font-label-sm text-label-sm text-on-surface-variant hover:underline" href="{{ pedido.url_actividades }}">Cargar actividades</a>
+{% for tarea in pedido.tareas %}<a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ tarea.url }}">{{ tarea.nombre }}</a>{% endfor %}
+</div>
 </div>
 </article>
 {% empty %}

@@ -8,9 +8,14 @@ from .models import (
     Cliente,
     Empleado,
     EvidenciaPedido,
+    Factura,
     Historial,
+    Notificacion,
     Pedido,
+    PerfilUsuario,
     Producto,
+    RegistroAuditoria,
+    SolicitudModificacionPedido,
     TareasPedido,
 )
 
@@ -25,3 +30,9 @@ admin.site.register(TareasPedido)
 admin.site.register(Actividades)
 admin.site.register(Historial)
 admin.site.register(Calendario)
+
+admin.site.register(Notificacion)
+admin.site.register(SolicitudModificacionPedido)
+admin.site.register(Factura)
+admin.site.register(PerfilUsuario)
+admin.site.register(RegistroAuditoria)

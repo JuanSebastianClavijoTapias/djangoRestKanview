@@ -4,3 +4,6 @@ djangorestframework==3.18.0
 pillow==13.0.0
 python-dotenv==1.2.4
 sqlparse==0.6.0
+reportlab==5.0.1
+pyotp==2.10.0
+qrcode==8.2

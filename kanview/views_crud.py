@@ -14,13 +14,14 @@ Reglas del proyecto que aplican aquí:
 - ``Producto`` es la única fuente de verdad del stock (``cantidad``) y de la
   categoría: no hay tablas de Inventario ni de Catálogo.
 - Pedido: código ``PED-0001`` automático, fecha y hora automáticas, fecha límite
-  de entrega y galería de imágenes (``EvidenciaPedido``).
+  de entrega y galería de imágenes/videos (``EvidenciaPedido``).
 - La fecha fin de tareas y actividades no puede superar la fecha límite del pedido.
 """
 
 import os
 
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError, transaction
 from django.forms import modelform_factory
@@ -43,7 +44,9 @@ from .models import (
     Producto,
     TareasPedido,
 )
-from . import busqueda
+from . import busqueda, historial
+from .auditoria import registrar as registrar_auditoria
+from .notificaciones import notificar_area, notificar_cliente, notificar_staff
 from .permisos import SECCION_ESCRITURA, es_solo_cliente, seccion_requerida
 from .views_site import _nav
 
@@ -56,11 +59,15 @@ SECCIONES_GESTION = {
     "catalogo": SECCION_ESCRITURA["catalogo"],
 }
 
-#: Validación de las imágenes que se adjuntan a un pedido.
+#: Validación de los archivos que se adjuntan a un pedido.
 EXTENSIONES_IMAGEN = {".jpg", ".jpeg", ".png", ".webp"}
 CONTENT_TYPES_IMAGEN = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+EXTENSIONES_VIDEO = {".mp4", ".webm", ".mov", ".m4v"}
+CONTENT_TYPES_VIDEO = {"video/mp4", "video/webm", "video/quicktime", "video/x-m4v"}
 MAX_IMAGENES = 5
 MAX_BYTES_IMAGEN = 5 * 1024 * 1024
+MAX_BYTES_VIDEO = settings.MAX_VIDEO_BYTES
+MAX_BYTES_MULTIMEDIA = settings.MAX_BYTES_MULTIMEDIA
 
 
 def _contexto_lista(request, nombre, titulo, columnas, filas, activo, crear=True):
@@ -155,7 +162,7 @@ CAMPOS_ADMINISTRADOR = ("nombre", "documento", "celular")
 CAMPOS_PRODUCTO = ("nombre", "categoria", "codigo_producto", "cantidad", "precio", "descripcion")
 
 CAMPOS_PEDIDO = (
-    "codigo_pedido", "estado", "id_cliente", "id_empleado", "id_producto",
+    "codigo_pedido", "estado", "cantidad", "id_cliente", "id_empleado", "id_producto",
     "fecha_creacion", "hora_creacion", "descripcion", "evidencias",
 )
 WIDGETS_PEDIDO = {
@@ -171,7 +178,7 @@ CAMPOS_CALENDARIO = (
 WIDGETS_CALENDARIO = {"fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
 CAMPOS_TAREA = (
-    "nombre", "descripcion", "fecha_inicio", "fecha_fin", "estado", "id_pedido", "id_empleado",
+    "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_pedido", "id_empleado",
 )
 WIDGETS_TAREA = {
     "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -179,7 +186,7 @@ WIDGETS_TAREA = {
 }
 
 CAMPOS_ACTIVIDAD = (
-    "nombre", "descripcion", "fecha_inicio", "fecha_fin", "estado", "id_tarea", "id_empleado",
+    "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_tarea", "id_empleado",
 )
 WIDGETS_ACTIVIDAD = {
     "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -250,7 +257,11 @@ def _form_cliente(request, instance=None):
 
 
 def _form_empleado(request, instance=None):
-    return _form_vista(Empleado, CAMPOS_EMPLEADO, WIDGETS_EMPLEADO, request, instance=instance)
+    form = _form_vista(Empleado, CAMPOS_EMPLEADO, WIDGETS_EMPLEADO, request, instance=instance)
+    if instance is None:
+        form.fields.pop("edad", None)
+        form.fields.pop("tareas_realizadas", None)
+    return form
 
 
 def _form_administrador(request, instance=None):
@@ -283,9 +294,24 @@ def _form_actividad(request, instance=None):
     return _trabajador_en(form, obligatorio=True, etiqueta="Trabajador")
 
 
-def _fila(obj, valores):
+def _fila(obj, valores, detalle_url=None):
     """Fila de lista: pk + valores + estado (activo) para la píldora."""
-    return {"pk": obj.pk, "valores": valores, "activo": bool(obj.activo)}
+    return {
+        "pk": obj.pk,
+        "valores": valores,
+        "activo": bool(obj.activo),
+        "detalle_url": detalle_url,
+    }
+
+
+def _guardar_con_auditoria(request, form, accion="guardar"):
+    """Guarda un ModelForm y deja constancia en el log de auditoría."""
+    obj = form.save()
+    registrar_auditoria(
+        request, accion, obj._meta.verbose_name, obj,
+        f"{obj._meta.verbose_name} {accion}: {obj}",
+    )
+    return obj
 
 
 def _desactivar(request, obj, nombre, etiqueta, activo):
@@ -302,6 +328,12 @@ def _desactivar(request, obj, nombre, etiqueta, activo):
             obj.estado = "inactivo"
             campos.append("estado")
         obj.save(update_fields=campos)
+        registrar_auditoria(
+            request, "desactivar", obj._meta.verbose_name, obj,
+            f"{etiqueta} desactivado",
+        )
+        if isinstance(obj, Pedido):
+            historial.registrar(obj, "pedido_desactivado", f"{etiqueta} desactivado.", request.user)
         messages.success(
             request,
             f"{etiqueta} desactivado. No se borró: puedes reactivarlo cuando quieras.",
@@ -324,6 +356,12 @@ def _reactivar(request, obj, nombre, etiqueta):
             obj.estado = "activo"
             campos.append("estado")
         obj.save(update_fields=campos)
+        registrar_auditoria(
+            request, "reactivar", obj._meta.verbose_name, obj,
+            f"{etiqueta} reactivado",
+        )
+        if isinstance(obj, Pedido):
+            historial.registrar(obj, "pedido_reactivado", f"{etiqueta} reactivado.", request.user)
         messages.success(request, f"{etiqueta} reactivado correctamente.")
     return redirect(f"kanview:{nombre}-lista")
 
@@ -346,7 +384,7 @@ def cliente_lista(request):
 def cliente_crear(request):
     form = _form_cliente(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Cliente creado correctamente.")
         return redirect("kanview:cliente-lista")
     return render(request, "kanview/crud/form.html", {
@@ -362,7 +400,7 @@ def cliente_editar(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     form = _form_cliente(request, instance=cliente)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Cliente actualizado correctamente.")
         return redirect("kanview:cliente-lista")
     return render(request, "kanview/crud/form.html", {
@@ -401,7 +439,7 @@ def empleado_lista(request):
 def empleado_crear(request):
     form = _form_empleado(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Empleado creado correctamente.")
         return redirect("kanview:empleado-lista")
     return render(request, "kanview/crud/form.html", {
@@ -417,7 +455,7 @@ def empleado_editar(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
     form = _form_empleado(request, instance=empleado)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Empleado actualizado correctamente.")
         return redirect("kanview:empleado-lista")
     return render(request, "kanview/crud/form.html", {
@@ -456,7 +494,7 @@ def administrador_lista(request):
 def administrador_crear(request):
     form = _form_administrador(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Administrador creado correctamente.")
         return redirect("kanview:administrador-lista")
     return render(request, "kanview/crud/form.html", {
@@ -472,7 +510,7 @@ def administrador_editar(request, pk):
     administrador = get_object_or_404(Administrador, pk=pk)
     form = _form_administrador(request, instance=administrador)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Administrador actualizado correctamente.")
         return redirect("kanview:administrador-lista")
     return render(request, "kanview/crud/form.html", {
@@ -528,7 +566,7 @@ def producto_lista(request):
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
-        "producto", "Productos", ["Nombre", "Categoría", "Código", "Cantidad", "Precio"], filas, "Catálogo",
+        "producto", "Productos", ["Nombre", "Categoría", "Código", "Cantidad", "Precio"], filas, "Productos",
     ))
 
 
@@ -538,7 +576,7 @@ def producto_crear(request):
     if request.method == "POST":
         _avisos_negativos(request, form)
         if form.is_valid():
-            producto = form.save()
+            producto = _guardar_con_auditoria(request, form, "guardar")
             messages.success(
                 request,
                 f"Producto {producto.nombre} creado con {producto.cantidad} unidad(es) en stock.",
@@ -548,7 +586,7 @@ def producto_crear(request):
         "form": form,
         "title": "Nuevo producto",
         "cancel_url": reverse("kanview:producto-lista"),
-        **_nav("Catálogo", request),
+        **_nav("Productos", request),
     })
 
 
@@ -559,20 +597,20 @@ def producto_editar(request, pk):
     if request.method == "POST":
         _avisos_negativos(request, form)
         if form.is_valid():
-            producto = form.save()
+            producto = _guardar_con_auditoria(request, form, "guardar")
             messages.success(request, "Producto actualizado: su stock y su categoría quedaron al día.")
             return redirect("kanview:producto-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar producto",
         "cancel_url": reverse("kanview:producto-lista"),
-        **_nav("Catálogo", request),
+        **_nav("Productos", request),
     })
 
 
 @seccion_requerida(SECCION_ESCRITURA["catalogo"])
 def producto_eliminar(request, pk):
-    return _desactivar(request, get_object_or_404(Producto, pk=pk), "producto", "Producto", "Catálogo")
+    return _desactivar(request, get_object_or_404(Producto, pk=pk), "producto", "Producto", "Productos")
 
 
 @seccion_requerida(SECCION_ESCRITURA["catalogo"])
@@ -613,57 +651,73 @@ def _guardar_pedido_con_codigo(pedido, intentos=5):
 
 
 def _validar_imagenes(request, form):
-    """Valida los archivos del input múltiple ANTES de guardar nada.
+    """Valida imágenes y videos ANTES de guardar nada.
 
-    Allow-list de extensión y content_type, máximo 5 archivos, tope de 5 MB y
-    comprobación real de que el archivo es una imagen (Pillow). Si algo falla se
-    agrega un error al formulario (en español) y no se guarda ninguna imagen.
+    Devuelve una lista de ``(archivo, tipo)``. Las imágenes se comprueban con
+    Pillow; los videos se validan por extensión, content-type y tamaño. Si algo
+    falla se agrega un error al formulario y no se guarda ningún archivo.
     """
     archivos = request.FILES.getlist("imagenes")
     if not archivos:
         return []
 
     if len(archivos) > MAX_IMAGENES:
-        form.add_error(None, f"Puedes adjuntar máximo {MAX_IMAGENES} imágenes por pedido.")
+        form.add_error(None, f"Puedes adjuntar máximo {MAX_IMAGENES} imágenes o videos por pedido.")
         return []
 
+    total = 0
     validos = []
     for archivo in archivos:
         nombre = getattr(archivo, "name", "") or ""
         extension = os.path.splitext(nombre)[1].lower()
+        content_type = (getattr(archivo, "content_type", "") or "").lower()
+        tamano = getattr(archivo, "size", 0) or 0
+        total += tamano
 
-        if extension not in EXTENSIONES_IMAGEN:
-            form.add_error(
-                None,
-                f"«{nombre}» no es una imagen permitida. Solo se aceptan JPG, PNG o WEBP.",
-            )
+        if total > MAX_BYTES_MULTIMEDIA:
+            form.add_error(None, "Los archivos superan el límite total permitido (60 MB).")
             return []
-        if (getattr(archivo, "size", 0) or 0) > MAX_BYTES_IMAGEN:
-            form.add_error(None, f"«{nombre}» pesa más de 5 MB. Sube una imagen más liviana.")
-            return []
-        if (getattr(archivo, "content_type", "") or "").lower() not in CONTENT_TYPES_IMAGEN:
-            form.add_error(None, f"«{nombre}» no parece una imagen válida.")
-            return []
-        try:
-            Image.open(archivo).verify()
-        except Exception:
-            form.add_error(None, f"«{nombre}» no es una imagen válida o está dañada.")
-            return []
-        archivo.seek(0)
-        validos.append(archivo)
+
+        if extension in EXTENSIONES_IMAGEN:
+            if tamano > MAX_BYTES_IMAGEN:
+                form.add_error(None, f"«{nombre}» pesa más de 5 MB. Sube una imagen más liviana.")
+                return []
+            if content_type not in CONTENT_TYPES_IMAGEN:
+                form.add_error(None, f"«{nombre}» no parece una imagen válida.")
+                return []
+            try:
+                Image.open(archivo).verify()
+            except Exception:
+                form.add_error(None, f"«{nombre}» no es una imagen válida o está dañada.")
+                return []
+            archivo.seek(0)
+            validos.append((archivo, "imagen"))
+            continue
+
+        if extension in EXTENSIONES_VIDEO:
+            if tamano > MAX_BYTES_VIDEO:
+                form.add_error(None, f"«{nombre}» pesa más de 25 MB. Sube un video más liviano.")
+                return []
+            if content_type not in CONTENT_TYPES_VIDEO:
+                form.add_error(None, f"«{nombre}» no parece un video válido.")
+                return []
+            archivo.seek(0)
+            validos.append((archivo, "video"))
+            continue
+
+        form.add_error(
+            None,
+            f"«{nombre}» no es una imagen permitida. Solo se aceptan imágenes JPG, PNG, WEBP o videos MP4, WEBM, MOV.",
+        )
+        return []
     return validos
 
 
 def _guardar_evidencias(pedido, archivos):
-    """Guarda en la galería las imágenes ya validadas."""
+    """Guarda en la galería los archivos ya validados."""
     creadas = 0
-    for archivo in archivos:
-        try:
-            Image.open(archivo).verify()
-        except Exception:
-            continue
-        archivo.seek(0)
-        EvidenciaPedido.objects.create(pedido=pedido, imagen=archivo)
+    for archivo, tipo in archivos:
+        EvidenciaPedido.objects.create(pedido=pedido, archivo=archivo, tipo=tipo)
         creadas += 1
     return creadas
 
@@ -692,16 +746,23 @@ def _form_pedido(request, instance=None):
 @seccion_requerida("pedidos")
 def pedido_lista(request):
     """Lista de pedidos. El rol Cliente solo ve los que son suyos."""
-    consulta = Pedido.objects.select_related("id_cliente", "id_empleado").order_by("-id")
+    consulta = Pedido.objects.select_related("id_cliente", "id_empleado", "id_producto").order_by("-id")
     if es_solo_cliente(request.user):
         consulta = consulta.filter(id_cliente__correo__iexact=request.user.email)
     filas = [
-        _fila(obj, [obj.codigo_pedido, obj.id_cliente, obj.id_empleado, obj.fecha_creacion])
+        _fila(
+            obj,
+            [obj.codigo_pedido, obj.id_cliente, obj.id_producto, obj.cantidad,
+             obj.get_estado_aprobacion_display(), obj.fecha_creacion],
+            detalle_url=reverse("kanview:pedido-detalle", args=[obj.pk]),
+        )
         for obj in consulta
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
-        "pedido", "Pedidos", ["Código", "Cliente", "Empleado", "Fecha"], filas, "Pedidos",
+        "pedido", "Pedidos",
+        ["Código", "Cliente", "Producto", "Cantidad", "Aprobación", "Fecha"],
+        filas, "Pedidos",
     ))
 
 
@@ -719,7 +780,22 @@ def pedido_crear(request):
             pedido.fecha_limite = form.cleaned_data.get("fecha_limite")
             _guardar_pedido_con_codigo(pedido)
             imagenes = _guardar_evidencias(pedido, archivos)
-            aviso = f" con {imagenes} imagen{'es' if imagenes != 1 else ''}" if imagenes else ""
+            aviso = f" con {imagenes} archivo{'s' if imagenes != 1 else ''}" if imagenes else ""
+            historial.registrar(
+                pedido, "pedido_creado",
+                f"Pedido {pedido.codigo_pedido} creado con {pedido.cantidad} unidad(es).",
+                request.user,
+            )
+            registrar_auditoria(
+                request, "crear", "Pedido", pedido,
+                f"Pedido {pedido.codigo_pedido} creado",
+                {"cliente": pedido.id_cliente_id, "producto": pedido.id_producto_id},
+            )
+            notificar_staff(
+                "pedido",
+                f"Nuevo pedido {pedido.codigo_pedido} para {pedido.id_cliente.nombre}.",
+                reverse("kanview:pedido-detalle", args=[pedido.pk]),
+            )
             messages.success(request, f"Pedido {pedido.codigo_pedido} creado{aviso}.")
             return redirect("kanview:pedido-lista")
     return render(request, "kanview/crud/form.html", {
@@ -728,8 +804,8 @@ def pedido_crear(request):
         "cancel_url": reverse("kanview:pedido-lista"),
         "permite_imagenes": True,
         "aviso_imagenes": (
-            "Adjunta una o varias imágenes (JPG, PNG o WEBP, máximo 5 y 5 MB cada una). "
-            "Se guardarán como galería del pedido."
+            "Adjunta imágenes o videos (JPG, PNG, WEBP, MP4, WEBM; máximo 5 archivos, "
+            "5 MB por imagen y 25 MB por video). Se guardarán en la galería del pedido."
         ),
         **_nav("Pedidos", request),
     })
@@ -748,7 +824,23 @@ def pedido_editar(request, pk):
             pedido.fecha_limite = form.cleaned_data.get("fecha_limite")
             pedido.save()
             imagenes = _guardar_evidencias(pedido, archivos)
-            aviso = f" Se agregaron {imagenes} imágenes a su galería." if imagenes else ""
+            aviso = f" Se agregaron {imagenes} archivos a su galería." if imagenes else ""
+            historial.registrar(
+                pedido, "pedido_actualizado",
+                f"Pedido {pedido.codigo_pedido} actualizado.{aviso}",
+                request.user,
+            )
+            registrar_auditoria(
+                request, "editar", "Pedido", pedido,
+                f"Pedido {pedido.codigo_pedido} actualizado",
+            )
+            notificar_cliente(
+                pedido.id_cliente,
+                "pedido",
+                f"Tu pedido {pedido.codigo_pedido} fue actualizado.",
+                reverse("kanview:pedido-detalle", args=[pedido.pk]),
+                asunto="Kanview · Pedido actualizado",
+            )
             messages.success(request, f"Pedido {pedido.codigo_pedido} actualizado.{aviso}")
             return redirect("kanview:pedido-lista")
     return render(request, "kanview/crud/form.html", {
@@ -757,8 +849,8 @@ def pedido_editar(request, pk):
         "cancel_url": reverse("kanview:pedido-lista"),
         "permite_imagenes": True,
         "aviso_imagenes": (
-            "Puedes adjuntar más imágenes para ampliar la galería (JPG, PNG o WEBP, "
-            "máximo 5 y 5 MB cada una). Deja la fecha límite vacía para quitarla."
+            "Puedes adjuntar más imágenes o videos para ampliar la galería (máximo 5 archivos, "
+            "5 MB por imagen y 25 MB por video). Deja la fecha límite vacía para quitarla."
         ),
         **_nav("Pedidos", request),
     })
@@ -792,7 +884,7 @@ def calendario_crud_lista(request):
 def calendario_crear(request):
     form = _form_calendario(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Registro de calendario creado correctamente.")
         return redirect("kanview:calendario-lista")
     return render(request, "kanview/crud/form.html", {
@@ -808,7 +900,7 @@ def calendario_editar(request, pk):
     registro = get_object_or_404(Calendario, pk=pk)
     form = _form_calendario(request, instance=registro)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Registro de calendario actualizado correctamente.")
         return redirect("kanview:calendario-lista")
     return render(request, "kanview/crud/form.html", {
@@ -845,12 +937,16 @@ def _validar_fecha_limite(form, pedido):
 @seccion_requerida("tareas")
 def tarea_lista(request):
     filas = [
-        _fila(obj, [obj.nombre, obj.get_estado_display(), obj.fecha_inicio, obj.fecha_fin, obj.id_pedido])
+        _fila(
+            obj,
+            [obj.nombre, obj.get_estado_display(), obj.fecha_inicio, obj.fecha_fin, obj.id_pedido],
+            detalle_url=reverse("kanview:tarea-detalle", args=[obj.pk]),
+        )
         for obj in TareasPedido.objects.select_related("id_pedido").order_by("-id")
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
-        "tarea", "Tareas", ["Nombre", "Estado", "Inicio", "Fin", "Pedido"], filas, "Tareas",
+        "tarea", "Tareas", ["Nombre", "Estado", "Inicio", "Fin", "Pedido"], filas, "Actividades",
     ))
 
 
@@ -860,14 +956,29 @@ def tarea_crear(request):
     if request.method == "POST" and form.is_valid():
         _validar_fecha_limite(form, form.cleaned_data.get("id_pedido"))
         if not form.errors:
-            form.save()
+            tarea = _guardar_con_auditoria(request, form)
+            historial.registrar(
+                tarea.id_pedido, "tarea_creada",
+                f"Tarea «{tarea.nombre}» creada para {tarea.id_pedido.codigo_pedido}.",
+                request.user,
+            )
+            if tarea.id_empleado:
+                from .notificaciones import notificar_empleado
+
+                notificar_empleado(
+                    tarea.id_empleado,
+                    "tarea",
+                    f"Se te asignó la tarea «{tarea.nombre}» del pedido "
+                    f"{tarea.id_pedido.codigo_pedido}.",
+                    reverse("kanview:tarea-detalle", args=[tarea.pk]),
+                )
             messages.success(request, "Tarea creada correctamente.")
             return redirect("kanview:tarea-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nueva tarea",
         "cancel_url": reverse("kanview:tarea-lista"),
-        **_nav("Tareas", request),
+        **_nav("Actividades", request),
     })
 
 
@@ -878,20 +989,25 @@ def tarea_editar(request, pk):
     if request.method == "POST" and form.is_valid():
         _validar_fecha_limite(form, form.cleaned_data.get("id_pedido"))
         if not form.errors:
-            form.save()
+            tarea = _guardar_con_auditoria(request, form)
+            historial.registrar(
+                tarea.id_pedido, "tarea_actualizada",
+                f"Tarea «{tarea.nombre}» actualizada.",
+                request.user,
+            )
             messages.success(request, "Tarea actualizada correctamente.")
             return redirect("kanview:tarea-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar tarea",
         "cancel_url": reverse("kanview:tarea-lista"),
-        **_nav("Tareas", request),
+        **_nav("Actividades", request),
     })
 
 
 @seccion_requerida("tareas")
 def tarea_eliminar(request, pk):
-    return _desactivar(request, get_object_or_404(TareasPedido, pk=pk), "tarea", "Tarea", "Tareas")
+    return _desactivar(request, get_object_or_404(TareasPedido, pk=pk), "tarea", "Tarea", "Actividades")
 
 
 @seccion_requerida("tareas")
@@ -901,7 +1017,7 @@ def tarea_reactivar(request, pk):
 
 # ---- Actividades (Auditoría) ----------------------------------------------
 
-@seccion_requerida("auditoria")
+@seccion_requerida("tareas")
 def actividad_lista(request):
     filas = [
         _fila(obj, [obj.nombre, obj.get_estado_display(), obj.fecha_inicio, obj.fecha_fin, obj.id_tarea])
@@ -909,29 +1025,53 @@ def actividad_lista(request):
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
-        "actividad", "Actividades", ["Nombre", "Estado", "Inicio", "Fin", "Tarea"], filas, "Auditoría",
+        "actividad", "Actividades", ["Nombre", "Estado", "Inicio", "Fin", "Tarea"], filas, "Actividades",
     ))
 
 
-@seccion_requerida("auditoria")
+@seccion_requerida("tareas")
 def actividad_crear(request):
     form = _form_actividad(request)
     if request.method == "POST" and form.is_valid():
         tarea = form.cleaned_data.get("id_tarea")
         _validar_fecha_limite(form, tarea.id_pedido if tarea else None)
         if not form.errors:
-            form.save()
+            actividad = _guardar_con_auditoria(request, form)
+            historial.registrar(
+                tarea.id_pedido if tarea else None,
+                "actividad_creada",
+                f"Actividad «{actividad.nombre}» creada.",
+                request.user,
+            )
+            if actividad.id_empleado:
+                from .notificaciones import notificar_empleado
+
+                notificar_empleado(
+                    actividad.id_empleado,
+                    "actividad",
+                    f"Se te asignó la actividad «{actividad.nombre}» del pedido "
+                    f"{actividad.id_tarea.id_pedido.codigo_pedido}.",
+                    reverse("kanview:actividades"),
+                )
+                notificar_area(
+                    actividad.id_empleado.cargo,
+                    "actividad",
+                    f"Nueva actividad «{actividad.nombre}» en el área de "
+                    f"{actividad.id_empleado.get_cargo_display()}.",
+                    reverse("kanview:actividades"),
+                    excepto=actividad.id_empleado_id,
+                )
             messages.success(request, "Actividad creada correctamente.")
             return redirect("kanview:actividad-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nueva actividad",
         "cancel_url": reverse("kanview:actividad-lista"),
-        **_nav("Auditoría", request),
+        **_nav("Actividades", request),
     })
 
 
-@seccion_requerida("auditoria")
+@seccion_requerida("tareas")
 def actividad_editar(request, pk):
     actividad = get_object_or_404(Actividades, pk=pk)
     form = _form_actividad(request, instance=actividad)
@@ -939,23 +1079,39 @@ def actividad_editar(request, pk):
         tarea = form.cleaned_data.get("id_tarea")
         _validar_fecha_limite(form, tarea.id_pedido if tarea else None)
         if not form.errors:
-            form.save()
+            actividad = _guardar_con_auditoria(request, form)
+            historial.registrar(
+                tarea.id_pedido if tarea else None,
+                "actividad_actualizada",
+                f"Actividad «{actividad.nombre}» actualizada.",
+                request.user,
+            )
+            if actividad.id_empleado:
+                from .notificaciones import notificar_empleado
+
+                notificar_empleado(
+                    actividad.id_empleado,
+                    "actividad",
+                    f"Se actualizó la actividad «{actividad.nombre}» del pedido "
+                    f"{actividad.id_tarea.id_pedido.codigo_pedido}.",
+                    reverse("kanview:actividades"),
+                )
             messages.success(request, "Actividad actualizada correctamente.")
             return redirect("kanview:actividad-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar actividad",
         "cancel_url": reverse("kanview:actividad-lista"),
-        **_nav("Auditoría", request),
+        **_nav("Actividades", request),
     })
 
 
-@seccion_requerida("auditoria")
+@seccion_requerida("tareas")
 def actividad_eliminar(request, pk):
     return _desactivar(request, get_object_or_404(Actividades, pk=pk), "actividad", "Actividad", "Auditoría")
 
 
-@seccion_requerida("auditoria")
+@seccion_requerida("tareas")
 def actividad_reactivar(request, pk):
     return _reactivar(request, get_object_or_404(Actividades, pk=pk), "actividad", "Actividad")
 
@@ -978,7 +1134,7 @@ def historial_crud_lista(request):
 def historial_crear(request):
     form = _form_historial(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Registro de historial creado correctamente.")
         return redirect("kanview:historial-lista")
     return render(request, "kanview/crud/form.html", {
@@ -994,7 +1150,7 @@ def historial_editar(request, pk):
     registro = get_object_or_404(Historial, pk=pk)
     form = _form_historial(request, instance=registro)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Registro de historial actualizado correctamente.")
         return redirect("kanview:historial-lista")
     return render(request, "kanview/crud/form.html", {
@@ -1034,7 +1190,7 @@ def analisis_financiero_lista(request):
 def analisis_financiero_crear(request):
     form = _form_analisis(request)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Análisis financiero creado correctamente.")
         return redirect("kanview:analisis-financiero-lista")
     return render(request, "kanview/crud/form.html", {
@@ -1050,7 +1206,7 @@ def analisis_financiero_editar(request, pk):
     registro = get_object_or_404(AnalisisFinanciero, pk=pk)
     form = _form_analisis(request, instance=registro)
     if request.method == "POST" and form.is_valid():
-        form.save()
+        _guardar_con_auditoria(request, form)
         messages.success(request, "Análisis financiero actualizado correctamente.")
         return redirect("kanview:analisis-financiero-lista")
     return render(request, "kanview/crud/form.html", {

@@ -79,14 +79,13 @@ PANTALLAS = [
     ("/pedidos/", "pedidos-tablero"),
     ("/inventario/", "inventario"),
     ("/calendario/", "calendario"),
-    ("/mensajeria/", "mensajeria"),
     ("/catalogo/", "catalogo"),
     ("/finanzas/", "finanzas"),
     ("/auditoria/", "auditoria"),
 ]
 
 #: Pantallas que también se miden a 1440 px (donde el sidebar ya está visible).
-PANTALLAS_ESCRITORIO = ["/mensajeria/", "/clientes/", "/catalogo/"]
+PANTALLAS_ESCRITORIO = ["/clientes/", "/catalogo/"]
 
 failures = []
 

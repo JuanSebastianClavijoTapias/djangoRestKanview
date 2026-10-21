@@ -1,0 +1,87 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Tarea{% endblock %}
+{% block content %}
+<div class="max-w-4xl">
+<div class="flex flex-wrap justify-between items-start gap-4 mb-6">
+<div>
+<h2 class="text-2xl font-bold">{{ tarea.nombre }}</h2>
+<p class="text-sm text-gray-500 mt-1">Pedido {{ tarea.id_pedido.codigo_pedido }} · {{ tarea.get_estado_display }}</p>
+</div>
+<div class="flex gap-2">
+<a class="px-4 py-2 rounded-xl bg-white border text-sm font-semibold" href="{% url 'kanview:tarea-editar' tarea.pk %}">Editar tarea</a>
+<a class="px-4 py-2 rounded-xl bg-white border text-sm font-semibold" href="{% url 'kanview:pedido-detalle' tarea.id_pedido.pk %}">Ver pedido</a>
+</div>
+</div>
+
+<div class="grid sm:grid-cols-3 gap-4 mb-6">
+<div class="bg-white rounded-2xl p-5 shadow-neomorphic-lift">
+<p class="text-xs uppercase text-gray-500">Responsable</p>
+<p class="font-semibold mt-1">{{ tarea.id_empleado.nombre|default:"Sin asignar" }}</p>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-neomorphic-lift">
+<p class="text-xs uppercase text-gray-500">Fechas</p>
+<p class="font-semibold mt-1">{{ tarea.fecha_inicio|date:"d/m/Y" }} - {{ tarea.fecha_fin|date:"d/m/Y" }}</p>
+</div>
+<div class="bg-white rounded-2xl p-5 shadow-neomorphic-lift">
+<p class="text-xs uppercase text-gray-500">Confirmación</p>
+{% if tarea.confirmado_por %}
+<p class="font-semibold mt-1">{{ tarea.confirmado_por }} · {{ tarea.fecha_confirmacion|date:"d/m/Y H:i" }}</p>
+{% else %}
+<p class="font-semibold mt-1 text-amber-700">Pendiente</p>
+{% endif %}
+</div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-neomorphic-lift overflow-hidden">
+<div class="px-5 py-4 border-b flex justify-between items-center">
+<h3 class="font-semibold">Actividades</h3>
+<span class="text-sm text-gray-500">{{ pendientes }} pendiente(s)</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+<tr><th class="px-5 py-3">Actividad</th><th class="px-5 py-3">Trabajador</th><th class="px-5 py-3">Estado</th><th class="px-5 py-3 text-right">Acciones</th></tr>
+</thead>
+<tbody>
+{% for actividad in actividades %}
+<tr class="border-b last:border-0">
+<td class="px-5 py-3">{{ actividad.nombre }}</td>
+<td class="px-5 py-3">{{ actividad.id_empleado.nombre|default:"Sin asignar" }}</td>
+<td class="px-5 py-3">
+<form method="post" action="{% url 'kanview:actividad-estado' actividad.pk %}">
+{% csrf_token %}
+<select name="estado" class="rounded-lg border px-2 py-1 text-sm" onchange="this.form.submit()">
+{% for valor, etiqueta in estados %}<option value="{{ valor }}"{% if actividad.estado == valor %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+</select>
+</form>
+</td>
+<td class="px-5 py-3 text-right">
+<a class="text-[#006565] font-medium" href="{% url 'kanview:actividad-editar' actividad.pk %}">Editar</a>
+</td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="px-5 py-8 text-center text-gray-500">Esta tarea no tiene actividades. Crea una para poder confirmarla.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="mt-6 bg-white rounded-2xl p-5 shadow-neomorphic-lift flex flex-wrap items-center justify-between gap-3">
+<div>
+<p class="font-semibold">Confirmar finalización</p>
+<p class="text-sm text-gray-500">Solo se puede confirmar cuando todas las actividades están completadas.</p>
+</div>
+{% if tarea.estado == 'completado' %}
+<span class="px-4 py-2 rounded-xl bg-green-50 text-green-800 text-sm font-semibold">Tarea confirmada</span>
+{% elif puede_confirmar %}
+<form method="post" action="{% url 'kanview:tarea-confirmar' tarea.pk %}">
+{% csrf_token %}
+<button class="px-5 py-2.5 rounded-xl bg-[#006565] text-white text-sm font-semibold{% if pendientes %} opacity-50 cursor-not-allowed{% endif %}" type="submit"{% if pendientes %} disabled{% endif %}>Confirmar tarea</button>
+</form>
+{% else %}
+<span class="text-sm text-gray-500">No tienes permiso para confirmar esta tarea.</span>
+{% endif %}
+</div>
+</div>
+{% endblock %}

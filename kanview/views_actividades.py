@@ -6,7 +6,9 @@ y con el pedido y el empleado responsable de cada una.
 """
 
 from . import busqueda
-from .models import ESTADOS_KANBAN, Actividades
+from django.db.models import Q
+
+from .models import ESTADOS_KANBAN, Actividades, Empleado
 from .permisos import seccion_requerida
 from .views_site import _render
 
@@ -34,9 +36,12 @@ def _agrupar(queryset):
 def actividades(request):
     """Tablero de actividades agrupadas por estado (con buscador del header)."""
     q = busqueda.texto(request)
+    cargo = (request.GET.get("cargo") or "").strip()
+    trabajador = (request.GET.get("trabajador") or "").strip()
     actividades_qs = busqueda.filtrar(
         Actividades.objects.select_related(
-            "id_tarea", "id_tarea__id_pedido", "id_tarea__id_pedido__id_empleado"
+            "id_tarea", "id_tarea__id_pedido", "id_tarea__id_pedido__id_empleado",
+            "id_empleado",
         ).order_by("fecha_fin", "nombre"),
         q,
         [
@@ -48,6 +53,13 @@ def actividades(request):
             "id_empleado__nombre",
         ],
     )
+    if cargo:
+        actividades_qs = actividades_qs.filter(id_empleado__cargo=cargo)
+    if trabajador.isdigit():
+        actividades_qs = actividades_qs.filter(
+            Q(id_empleado_id=int(trabajador))
+            | Q(id_tarea__id_empleado_id=int(trabajador))
+        )
     grupos, otras = _agrupar(actividades_qs)
 
     return _render(
@@ -61,4 +73,8 @@ def actividades(request):
         completadas=grupos["completado"],
         otras=otras,
         total_actividades=actividades_qs.count(),
+        cargos=Empleado.CARGOS,
+        cargo_activo=cargo,
+        trabajadores=Empleado.objects.filter(activo=True).order_by("nombre"),
+        trabajador_activo=trabajador,
     )

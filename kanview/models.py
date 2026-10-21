@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 # Reglas de negocio del taller
 
@@ -187,6 +188,11 @@ class Pedido(models.Model):
         ("activo", "Activo"),
         ("inactivo", "Inactivo"),
     )
+    ESTADOS_APROBACION = (
+        ("pendiente", "Pendiente de aprobación"),
+        ("aprobado", "Aprobado"),
+        ("rechazado", "Rechazado"),
+    )
 
     # El código se genera solo (PED-0001) al crear el pedido.
     codigo_pedido = models.CharField(max_length=20, unique=True, verbose_name="Código")
@@ -194,6 +200,27 @@ class Pedido(models.Model):
     hora_creacion = models.DateTimeField(verbose_name="Hora de creación")
     fecha_limite = models.DateField(null=True, blank=True, verbose_name="Fecha límite de entrega")
     estado = models.CharField(choices=ESTADOS, max_length=10, default="activo", verbose_name="Estado")
+    cantidad = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1, "La cantidad debe ser mayor que cero.")],
+        verbose_name="Cantidad",
+    )
+    estado_aprobacion = models.CharField(
+        choices=ESTADOS_APROBACION,
+        max_length=10,
+        default="pendiente",
+        verbose_name="Aprobación",
+    )
+    motivo_rechazo = models.TextField(default="", blank=True, verbose_name="Motivo del rechazo")
+    aprobado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="pedidos_aprobados",
+        verbose_name="Aprobado por",
+    )
+    fecha_aprobacion = models.DateTimeField(null=True, blank=True, verbose_name="Fecha de aprobación")
     # Campo heredado: se conserva por compatibilidad con los datos viejos.
     # Las imágenes del pedido ahora viven en el modelo EvidenciaPedido (galería).
     evidencias = models.CharField(max_length=255, default="", blank=True, verbose_name="Evidencias (heredado)")
@@ -211,12 +238,32 @@ class Pedido(models.Model):
     def __str__(self):
         return self.codigo_pedido
 
+    @property
+    def subtotal(self):
+        return self.cantidad * self.id_producto.precio
+
+    @property
+    def estado_comercial(self):
+        if self.estado_aprobacion == "rechazado":
+            return "rechazado"
+        if self.estado_aprobacion == "pendiente":
+            return "pendiente-aprobacion"
+        if not self.activo:
+            return "inactivo"
+        return "aprobado"
+
 
 class EvidenciaPedido(models.Model):
-    """Imágenes que se suben al crear el pedido (galería de evidencias)."""
+    """Fotos y videos que se adjuntan al pedido."""
+
+    TIPOS = (
+        ("imagen", "Imagen"),
+        ("video", "Video"),
+    )
 
     pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE, related_name="galeria", verbose_name="Pedido")
-    imagen = models.ImageField(upload_to="evidencias/%Y/%m/", verbose_name="Imagen")
+    archivo = models.FileField(upload_to="evidencias/%Y/%m/", verbose_name="Archivo")
+    tipo = models.CharField(choices=TIPOS, max_length=10, default="imagen", verbose_name="Tipo")
     descripcion = models.CharField(max_length=255, default="", blank=True, verbose_name="Descripción")
     fecha_carga = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de carga")
 
@@ -254,6 +301,17 @@ class TareasPedido(models.Model):
         on_delete=models.PROTECT,
         related_name="tareas_asignadas",
         verbose_name="Responsable",
+    )
+    confirmado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tareas_confirmadas",
+        verbose_name="Confirmado por",
+    )
+    fecha_confirmacion = models.DateTimeField(
+        null=True, blank=True, verbose_name="Fecha de confirmación"
     )
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
@@ -303,6 +361,24 @@ class Historial(models.Model):
     id_cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, verbose_name="Cliente")
     id_empleado = models.ForeignKey(Empleado, on_delete=models.PROTECT, verbose_name="Empleado")
     id_producto = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name="Producto")
+    id_pedido = models.ForeignKey(
+        Pedido,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="historial",
+        verbose_name="Pedido",
+    )
+    accion = models.CharField(max_length=60, default="registro", verbose_name="Acción")
+    detalle = models.TextField(default="", blank=True, verbose_name="Detalle")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="historial_registrado",
+        verbose_name="Usuario",
+    )
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
     class Meta:
@@ -331,3 +407,173 @@ class Calendario(models.Model):
 
     def __str__(self):
         return f"{self.nombre_dia} {self.dia} · {self.id_pedido}"
+
+
+class Notificacion(models.Model):
+    """Aviso persistente para un usuario (campana del header)."""
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notificaciones_kanview",
+        verbose_name="Usuario",
+    )
+    tipo = models.CharField(max_length=40, verbose_name="Tipo")
+    mensaje = models.CharField(max_length=255, verbose_name="Mensaje")
+    url = models.CharField(max_length=500, default="", blank=True, verbose_name="Enlace")
+    leida = models.BooleanField(default=False, verbose_name="Leída")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+
+    class Meta:
+        verbose_name = "Notificación"
+        verbose_name_plural = "Notificaciones"
+        ordering = ["-fecha_creacion", "-id"]
+        indexes = [
+            models.Index(fields=["usuario", "leida"]),
+        ]
+
+    def __str__(self):
+        return f"{self.usuario} · {self.mensaje[:40]}"
+
+
+class SolicitudModificacionPedido(models.Model):
+    """Cambio solicitado por el cliente sobre un pedido."""
+
+    ESTADOS = (
+        ("pendiente", "Pendiente"),
+        ("aceptada", "Aceptada"),
+        ("rechazada", "Rechazada"),
+    )
+
+    pedido = models.ForeignKey(
+        Pedido,
+        on_delete=models.CASCADE,
+        related_name="solicitudes_modificacion",
+        verbose_name="Pedido",
+    )
+    solicitado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="solicitudes_modificacion",
+        verbose_name="Solicitado por",
+    )
+    descripcion = models.TextField(verbose_name="Cambio solicitado")
+    estado = models.CharField(choices=ESTADOS, max_length=10, default="pendiente", verbose_name="Estado")
+    respuesta = models.TextField(default="", blank=True, verbose_name="Respuesta")
+    revisado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="solicitudes_revisadas",
+        verbose_name="Revisado por",
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
+    activo = models.BooleanField(default=True, verbose_name="Activo")
+
+    class Meta:
+        verbose_name = "Solicitud de modificación"
+        verbose_name_plural = "Solicitudes de modificación"
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"Solicitud #{self.pk} · {self.pedido}"
+
+
+class Factura(models.Model):
+    """Factura emitida para un pedido; el PDF se genera a partir de estos datos."""
+
+    pedido = models.OneToOneField(
+        Pedido,
+        on_delete=models.PROTECT,
+        related_name="factura",
+        verbose_name="Pedido",
+    )
+    numero = models.CharField(max_length=30, unique=True, verbose_name="Número")
+    fecha_emision = models.DateTimeField(default=timezone.now, verbose_name="Fecha de emisión")
+    cliente_nombre = models.CharField(max_length=100, verbose_name="Cliente")
+    cliente_documento = models.CharField(max_length=20, default="", blank=True, verbose_name="Documento del cliente")
+    cliente_correo = models.EmailField(max_length=254, default="", blank=True, verbose_name="Correo del cliente")
+    cliente_direccion = models.CharField(max_length=50, default="", blank=True, verbose_name="Dirección del cliente")
+    producto_nombre = models.CharField(max_length=100, verbose_name="Producto")
+    cantidad = models.PositiveIntegerField(default=1, verbose_name="Cantidad")
+    precio_unitario = models.DecimalField(decimal_places=2, max_digits=12, verbose_name="Precio unitario")
+    subtotal = models.DecimalField(decimal_places=2, max_digits=14, verbose_name="Subtotal")
+    iva_porcentaje = models.DecimalField(decimal_places=2, max_digits=5, default=0, verbose_name="IVA (%)")
+    iva_valor = models.DecimalField(decimal_places=2, max_digits=14, default=0, verbose_name="IVA")
+    total = models.DecimalField(decimal_places=2, max_digits=14, verbose_name="Total")
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="facturas_creadas",
+        verbose_name="Creado por",
+    )
+
+    class Meta:
+        verbose_name = "Factura"
+        verbose_name_plural = "Facturas"
+        ordering = ["-fecha_emision", "-id"]
+
+    def __str__(self):
+        return f"Factura {self.numero} · {self.pedido}"
+
+
+class PerfilUsuario(models.Model):
+    """Preferencias de seguridad y aceptación de términos de una cuenta."""
+
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="perfil_kanview",
+        verbose_name="Usuario",
+    )
+    totp_secret = models.CharField(max_length=64, default="", blank=True, verbose_name="Secreto TOTP")
+    totp_habilitado = models.BooleanField(default=False, verbose_name="2FA activo")
+    codigos_respaldo = models.JSONField(default=list, blank=True, verbose_name="Códigos de respaldo")
+    terminos_version = models.CharField(max_length=20, default="", blank=True, verbose_name="Versión de términos")
+    terminos_aceptados_en = models.DateTimeField(null=True, blank=True, verbose_name="Términos aceptados en")
+
+    class Meta:
+        verbose_name = "Perfil de usuario"
+        verbose_name_plural = "Perfiles de usuario"
+
+    def __str__(self):
+        return f"Perfil de {self.usuario}"
+
+
+class RegistroAuditoria(models.Model):
+    """Log de acciones relevantes del sistema."""
+
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="registros_auditoria",
+        verbose_name="Usuario",
+    )
+    accion = models.CharField(max_length=60, verbose_name="Acción")
+    entidad = models.CharField(max_length=60, verbose_name="Entidad")
+    objeto_id = models.CharField(max_length=40, default="", blank=True, verbose_name="ID afectado")
+    descripcion = models.CharField(max_length=255, verbose_name="Descripción")
+    ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP")
+    user_agent = models.CharField(max_length=255, default="", blank=True, verbose_name="Navegador")
+    datos = models.JSONField(default=dict, blank=True, verbose_name="Datos adicionales")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+
+    class Meta:
+        verbose_name = "Registro de auditoría"
+        verbose_name_plural = "Registros de auditoría"
+        ordering = ["-fecha_creacion", "-id"]
+        indexes = [
+            models.Index(fields=["entidad", "objeto_id"]),
+            models.Index(fields=["usuario", "fecha_creacion"]),
+        ]
+
+    def __str__(self):
+        return f"{self.fecha_creacion:%Y-%m-%d %H:%M} · {self.accion} · {self.entidad}"

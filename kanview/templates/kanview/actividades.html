@@ -37,7 +37,7 @@
 <p class="font-body-lg text-body-lg text-on-surface-variant mt-2">Seguimiento de actividades de producción agrupadas por su estado real.</p>
 </div>
 <div class="flex items-center gap-3">
-<a class="px-6 py-3 bg-white border border-outline-variant rounded-[16px] font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 neomorphic-card-hover shadow-sm" href="{% url 'kanview:tareas' %}">
+<a class="px-6 py-3 bg-white border border-outline-variant rounded-[16px] font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 neomorphic-card-hover shadow-sm" href="{% url 'kanview:tarea-lista' %}">
 <span class="material-symbols-outlined text-[18px]">assignment</span>
                     Ver tareas
                 </a>
@@ -47,6 +47,24 @@
                 </a>
 </div>
 </div>
+<form class="bg-white rounded-2xl shadow-neomorphic-lift p-4 mb-6 flex flex-wrap gap-3 items-end" method="get">
+<div>
+<label class="text-xs uppercase text-gray-500" for="filtro-cargo">Área / cargo</label>
+<select class="rounded-xl border px-3 py-2" id="filtro-cargo" name="cargo">
+<option value="">Todas</option>
+{% for valor, etiqueta in cargos %}<option value="{{ valor }}"{% if cargo_activo == valor %} selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+</select>
+</div>
+<div>
+<label class="text-xs uppercase text-gray-500" for="filtro-trabajador">Trabajador</label>
+<select class="rounded-xl border px-3 py-2" id="filtro-trabajador" name="trabajador">
+<option value="">Todos</option>
+{% for empleado in trabajadores %}<option value="{{ empleado.pk }}"{% if trabajador_activo == empleado.pk|stringformat:"s" %} selected{% endif %}>{{ empleado.nombre }}</option>{% endfor %}
+</select>
+</div>
+<button class="bg-[#006565] text-white px-4 py-2 rounded-xl text-sm font-semibold" type="submit">Filtrar</button>
+{% if cargo_activo or trabajador_activo %}<a class="text-sm font-semibold text-gray-500" href="{% url 'kanview:actividades' %}">Limpiar</a>{% endif %}
+</form>
 <!-- Resumen -->
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-card-gap mb-section-margin">
 <div class="neomorphic-card p-6">
@@ -88,8 +106,8 @@
 <p class="font-body-sm text-label-md text-on-surface-variant mb-6 line-clamp-2">{{ actividad.descripcion }}</p>
 <div class="flex justify-between items-center border-t border-outline-variant/20 pt-4">
 <div class="flex items-center gap-2">
-<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">{{ actividad.id_tarea.id_pedido.id_empleado.nombre|slice:":2"|upper }}</div>
-<span class="font-label-md text-label-md text-on-surface">{{ actividad.id_tarea.id_pedido.id_empleado.nombre }}</span>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">{{ actividad.id_empleado.nombre|default:"?"|slice:":2"|upper }}</div>
+<span class="font-label-md text-label-md text-on-surface">{{ actividad.id_empleado.nombre|default:"Sin asignar" }}</span>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px]">calendar_today</span>
@@ -126,8 +144,8 @@
 <p class="font-body-sm text-label-md text-on-surface-variant mb-6 line-clamp-2">{{ actividad.descripcion }}</p>
 <div class="flex justify-between items-center border-t border-outline-variant/20 pt-4">
 <div class="flex items-center gap-2">
-<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">{{ actividad.id_tarea.id_pedido.id_empleado.nombre|slice:":2"|upper }}</div>
-<span class="font-label-md text-label-md text-on-surface">{{ actividad.id_tarea.id_pedido.id_empleado.nombre }}</span>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">{{ actividad.id_empleado.nombre|default:"?"|slice:":2"|upper }}</div>
+<span class="font-label-md text-label-md text-on-surface">{{ actividad.id_empleado.nombre|default:"Sin asignar" }}</span>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px]">calendar_today</span>
@@ -166,8 +184,8 @@
 <h4 class="font-body-lg text-body-lg font-bold text-on-surface mb-2 line-through text-outline">{{ actividad.nombre }}</h4>
 <div class="flex justify-between items-center border-t border-outline-variant/20 pt-4 mt-6">
 <div class="flex items-center gap-2">
-<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">{{ actividad.id_tarea.id_pedido.id_empleado.nombre|slice:":2"|upper }}</div>
-<span class="font-label-md text-label-md text-on-surface">{{ actividad.id_tarea.id_pedido.id_empleado.nombre }}</span>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">{{ actividad.id_empleado.nombre|default:"?"|slice:":2"|upper }}</div>
+<span class="font-label-md text-label-md text-on-surface">{{ actividad.id_empleado.nombre|default:"Sin asignar" }}</span>
 </div>
 <span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
 <span class="material-symbols-outlined text-[14px]">calendar_today</span>

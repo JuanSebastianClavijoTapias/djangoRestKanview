@@ -42,6 +42,7 @@
 {% endif %}
 </td>
 <td class="py-3 px-6 text-right whitespace-nowrap">
+{% if fila.detalle_url %}<a class="text-[#006565] hover:underline font-medium mr-4" href="{{ fila.detalle_url }}">Ver</a>{% endif %}
 {% if editar_url %}
 <a class="text-[#006565] hover:underline font-medium mr-4" href="{% url editar_url fila.pk %}">Editar</a>
 {% endif %}

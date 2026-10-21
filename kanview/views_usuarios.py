@@ -24,6 +24,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
+from .auditoria import registrar as registrar_auditoria
 from .models import Cliente, Empleado, Pedido, TareasPedido
 from .permisos import (
     ROL_CLIENTE,
@@ -257,6 +258,10 @@ def usuario_acceso(request, tipo, pk):
     asignar_rol(user, rol)
 
     verbo = "creada" if creada else "actualizada"
+    registrar_auditoria(
+        request, "acceso", "Usuario", user,
+        f"Cuenta de {persona.nombre} {verbo} con rol {rol}.",
+    )
     messages.success(request, f"Cuenta de {persona.nombre} {verbo} con rol {rol}.")
     if clave_temporal:
         messages.warning(
@@ -278,6 +283,10 @@ def usuario_estado(request, tipo, pk):
         user.is_active = not user.is_active
         user.save(update_fields=["is_active"])
         estado = "activada" if user.is_active else "desactivada"
+        registrar_auditoria(
+            request, "estado_cuenta", "Usuario", user,
+            f"Cuenta {estado}: {persona.nombre}",
+        )
         messages.success(request, f"Cuenta de {persona.nombre} {estado}.")
     else:
         persona.activo = not persona.activo

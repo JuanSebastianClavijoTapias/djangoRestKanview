@@ -29,7 +29,7 @@ from django.urls import reverse
 
 from . import busqueda
 from .models import ESTADOS_KANBAN, Pedido
-from .permisos import es_solo_cliente, seccion_requerida
+from .permisos import es_solo_cliente, puede, seccion_requerida
 from .views_site import _render
 
 #: Columnas del tablero (estado calculado del pedido), en orden.
@@ -84,7 +84,12 @@ def _pedidos_queryset(request=None):
     consulta = (
         Pedido.objects.filter(activo=True)
         .select_related("id_cliente", "id_empleado", "id_producto")
-        .prefetch_related("galeria", "tareaspedido_set__actividades_set__id_empleado")
+        .prefetch_related(
+            "galeria",
+            "solicitudes_modificacion",
+            "historial__usuario",
+            "tareaspedido_set__actividades_set__id_empleado",
+        )
         .order_by("-id")
     )
     if request is not None and es_solo_cliente(request.user):
@@ -207,6 +212,8 @@ def _tarjeta(pedido):
         "vencida": vencida,
         "estado": estado,
         "estado_etiqueta": etiqueta_estado(estado),
+        "estado_aprobacion": pedido.estado_aprobacion,
+        "estado_aprobacion_etiqueta": pedido.get_estado_aprobacion_display(),
         "total": total,
         "completadas": completadas,
         "avance": round(completadas * 100 / total) if total else 0,
@@ -214,6 +221,15 @@ def _tarjeta(pedido):
         "sin_actividades": total == 0,
         "url_detalle": reverse("kanview:pedido-detalle", args=[pedido.pk]),
         "url_actividades": f"{reverse('kanview:tarea-crear')}?pedido={pedido.pk}",
+        "tareas": [
+            {
+                "pk": tarea.pk,
+                "nombre": tarea.nombre,
+                "estado": tarea.get_estado_display(),
+                "url": reverse("kanview:tarea-detalle", args=[tarea.pk]),
+            }
+            for tarea in pedido.tareaspedido_set.all()
+        ],
     }
 
 
@@ -238,6 +254,7 @@ def _fila_lista(pedido):
         "estado": etiqueta_estado(estado),
         "fecha_limite": pedido.fecha_limite.strftime("%d/%m/%Y") if pedido.fecha_limite else "Sin fecha límite",
         "avance": f"{completadas}/{total} actividades" if total else "Sin actividades cargadas",
+        "aprobacion": pedido.get_estado_aprobacion_display(),
         "url": reverse("kanview:pedido-detalle", args=[pedido.pk]),
     }
 
@@ -300,6 +317,7 @@ def pedido_detalle(request, pk):
         "kanview/pedidos_detalle.html",
         "Procesos",
         pedido=pedido,
+        puede_gestionar=puede(request.user, "gestion-pedidos"),
         # Un detalle no tiene lista que filtrar: el header muestra su título.
         cabecera_titulo=f"Pedido {pedido.codigo_pedido}",
         mostrar_buscador=False,

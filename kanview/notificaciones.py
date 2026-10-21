@@ -1,8 +1,8 @@
 """Avisos reales del taller para la campana del header.
 
-Un único helper (`notificaciones`) calcula el contador y la lista del panel a
-partir de datos que ya existen; no hay tabla de notificaciones ni nada
-inventado. Se expone a todas las plantillas con el context processor
+Un helper (`notificaciones`) calcula avisos a partir de datos que ya existen y
+otro (`contexto_header`) suma las notificaciones persistentes de la tabla
+`Notificacion`. Se expone a todas las plantillas con el context processor
 `kanview.notificaciones.contexto_header` (ver `config/settings.py`), así que
 ninguna vista repite estas consultas.
 
@@ -23,7 +23,8 @@ from datetime import timedelta
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import Pedido, Producto, TareasPedido
+from .correo import enviar_correo
+from .models import Empleado, Notificacion, Pedido, Producto, TareasPedido
 from .permisos import es_solo_cliente, puede
 
 #: Mismo umbral que usa la pantalla de existencias para «Stock Bajo».
@@ -128,9 +129,13 @@ def _stock_bajo():
     avisos = [
         _aviso(
             "inventario",
-            "inventory_2",
-            f"Stock bajo: {producto.nombre} "
-            f"({producto.cantidad} unidad(es) disponibles).",
+            "production_quantity_limits" if producto.cantidad <= 0 else "inventory_2",
+            (
+                f"Producto agotado: {producto.nombre} (0 unidades disponibles)."
+                if producto.cantidad <= 0
+                else f"Stock bajo: {producto.nombre} "
+                f"({producto.cantidad} unidad(es) disponibles)."
+            ),
             url,
         )
         for producto in consulta[:MAX_POR_TIPO]
@@ -189,10 +194,30 @@ def contexto_header(request):
         return datos
 
     nombre = usuario.get_full_name() or usuario.get_username()
+    persistentes = list(
+        Notificacion.objects.filter(usuario=usuario, leida=False)
+        .order_by("-fecha_creacion", "-id")[:MAX_POR_TIPO]
+    )
+    avisos_persistentes = [
+        {
+            "id": aviso.pk,
+            "tipo": aviso.tipo,
+            "icono": ICONOS_NOTIFICACION.get(aviso.tipo, "notifications"),
+            "texto": aviso.mensaje,
+            "url": aviso.url,
+            "persistente": True,
+        }
+        for aviso in persistentes
+    ]
+    total = datos["total"] + Notificacion.objects.filter(usuario=usuario, leida=False).count()
+    avisos = avisos_persistentes + datos["avisos"]
     return {
         **datos,
-        "avisos_total": datos["total"],
-        "avisos_restantes": max(0, datos["total"] - len(datos["avisos"])),
+        "avisos": avisos,
+        "avisos_total": total,
+        "avisos_restantes": max(0, total - len(avisos)),
+        "notificaciones_persistentes": len(persistentes),
+        "url_marcar_notificaciones": reverse("kanview:notificaciones-leer"),
         "usuario_nombre": nombre,
         "usuario_correo": usuario.email or usuario.get_username(),
         "rol_usuario": _rol(usuario),
@@ -205,3 +230,84 @@ def _rol(usuario):
     from .permisos import rol_principal
 
     return rol_principal(usuario)
+
+
+#: Icono Material asociado a cada tipo de notificación persistente.
+ICONOS_NOTIFICACION = {
+    "pedido": "shopping_bag",
+    "aprobacion": "verified",
+    "rechazo": "cancel",
+    "tarea": "assignment",
+    "actividad": "task_alt",
+    "multimedia": "perm_media",
+    "factura": "receipt_long",
+    "sistema": "info",
+    "seguridad": "shield",
+}
+
+
+def crear_notificacion(usuario, tipo, mensaje, url=""):
+    """Crea una notificación para una cuenta activa."""
+    if usuario is None or not getattr(usuario, "is_active", False):
+        return None
+    return Notificacion.objects.create(
+        usuario=usuario,
+        tipo=tipo[:40],
+        mensaje=mensaje[:255],
+        url=(url or "")[:500],
+    )
+
+
+def _usuarios_staff():
+    from django.contrib.auth import get_user_model
+
+    return get_user_model().objects.filter(
+        is_active=True,
+        groups__name__in=("Administrador", "Secretaria"),
+    ).distinct()
+
+
+def notificar_staff(tipo, mensaje, url=""):
+    """Notifica en la campana a Administración y Secretaría."""
+    return [crear_notificacion(usuario, tipo, mensaje, url) for usuario in _usuarios_staff()]
+
+
+def notificar_cliente(cliente, tipo, mensaje, url="", asunto=None):
+    """Notifica al cliente por campana si tiene cuenta y por correo si tiene email."""
+    creada = crear_notificacion(getattr(cliente, "usuario", None), tipo, mensaje, url)
+    correo = (getattr(cliente, "correo", "") or "").strip()
+    enviado = False
+    if correo:
+        enviado = enviar_correo(
+            asunto or "Kanview · Actualización de tu pedido",
+            mensaje,
+            [correo],
+        )
+    return creada, enviado
+
+
+def notificar_empleado(empleado, tipo, mensaje, url="", asunto=None):
+    """Notifica al trabajador; si no tiene cuenta, usa su correo o avisa al staff."""
+    if empleado is None:
+        return notificar_staff(tipo, mensaje, url)
+    creada = crear_notificacion(getattr(empleado, "usuario", None), tipo, mensaje, url)
+    correo = (getattr(empleado, "correo", "") or "").strip()
+    enviado = False
+    if getattr(empleado, "usuario", None) is None and correo:
+        enviado = enviar_correo(
+            asunto or "Kanview · Actividad asignada",
+            mensaje,
+            [correo],
+        )
+    if getattr(empleado, "usuario", None) is None and not correo:
+        notificar_staff(tipo, mensaje, url)
+    return creada, enviado
+
+
+def notificar_area(cargo, tipo, mensaje, url="", excepto=None):
+    """Notifica a todos los trabajadores activos de un área (cargo)."""
+    empleados = Empleado.objects.filter(activo=True, cargo=cargo)
+    if excepto is not None:
+        empleados = empleados.exclude(pk=excepto)
+    for empleado in empleados:
+        notificar_empleado(empleado, tipo, mensaje, url)

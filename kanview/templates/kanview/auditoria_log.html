@@ -1,0 +1,53 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Log de auditoría{% endblock %}
+{% block content %}
+<div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+<div>
+<h2 class="text-2xl font-bold">Log de auditoría</h2>
+<p class="text-sm text-gray-500 mt-1">{{ total }} registro(s)</p>
+</div>
+<a class="text-sm font-semibold text-[#006565]" href="{% url 'kanview:auditoria' %}">Volver al historial</a>
+</div>
+<form class="bg-white rounded-2xl p-4 shadow-neomorphic-lift mb-6 flex flex-wrap gap-3 items-end" method="get">
+<div class="flex-1 min-w-56">
+<label class="text-xs uppercase text-gray-500" for="q">Buscar</label>
+<input class="w-full rounded-xl border px-3 py-2" id="q" name="q" value="{{ q }}" placeholder="Descripción, entidad o usuario"/>
+</div>
+<div>
+<label class="text-xs uppercase text-gray-500" for="accion">Acción</label>
+<select class="rounded-xl border px-3 py-2" id="accion" name="accion">
+<option value="">Todas</option>
+{% for valor in acciones %}<option value="{{ valor }}"{% if accion_activa == valor %} selected{% endif %}>{{ valor }}</option>{% endfor %}
+</select>
+</div>
+<button class="bg-[#006565] text-white px-4 py-2 rounded-xl text-sm font-semibold" type="submit">Filtrar</button>
+</form>
+<div class="bg-white rounded-2xl shadow-neomorphic-lift overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-gray-50 text-xs uppercase text-gray-500">
+<tr><th class="px-5 py-3">Fecha</th><th class="px-5 py-3">Usuario</th><th class="px-5 py-3">Acción</th><th class="px-5 py-3">Entidad</th><th class="px-5 py-3">Descripción</th><th class="px-5 py-3">IP</th></tr>
+</thead>
+<tbody>
+{% for registro in registros %}
+<tr class="border-b last:border-0">
+<td class="px-5 py-3 whitespace-nowrap">{{ registro.fecha_creacion|date:"d/m/Y H:i" }}</td>
+<td class="px-5 py-3">{{ registro.usuario|default:"Sistema" }}</td>
+<td class="px-5 py-3">{{ registro.accion }}</td>
+<td class="px-5 py-3">{{ registro.entidad }} {{ registro.objeto_id }}</td>
+<td class="px-5 py-3">{{ registro.descripcion }}</td>
+<td class="px-5 py-3">{{ registro.ip|default:"—" }}</td>
+</tr>
+{% empty %}
+<tr><td class="px-5 py-8 text-center text-gray-500" colspan="6">No hay registros.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% if page_obj.has_other_pages %}
+<div class="flex gap-3 justify-center mt-6 text-sm">
+{% if page_obj.has_previous %}<a class="text-[#006565] font-semibold" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if accion_activa %}&accion={{ accion_activa }}{% endif %}">Anterior</a>{% endif %}
+<span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+{% if page_obj.has_next %}<a class="text-[#006565] font-semibold" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if accion_activa %}&accion={{ accion_activa }}{% endif %}">Siguiente</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

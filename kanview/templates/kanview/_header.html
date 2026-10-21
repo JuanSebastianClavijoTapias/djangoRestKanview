@@ -8,8 +8,8 @@ Contexto que espera:
     rol_usuario, puede_configuracion  (context processor kanview.notificaciones)
 
 Funciona sin JavaScript: el buscador es un <form method="get"> y «Cerrar sesión»
-es un POST con csrf. El JavaScript solo añade los paneles (campana y cuenta), el
-menú móvil del sidebar y el filtro en vivo de Mensajería.
+es un POST con csrf. El JavaScript solo añade los paneles (campana y cuenta) y el
+menú móvil del sidebar.
 {% endcomment %}
 <header class="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-mobile lg:px-container-padding-desktop">
 <div class="flex-1 min-w-0 flex items-center gap-2 md:gap-4">
@@ -18,7 +18,7 @@ menú móvil del sidebar y el filtro en vivo de Mensajería.
 <span class="material-symbols-outlined">menu</span>
 </button>
 {% if mostrar_buscador %}
-<form action="{{ request.path }}" class="hidden md:block w-full max-w-md" method="get" role="search"{% if busqueda_cliente %} data-filtro-cliente="1"{% endif %}>
+<form action="{{ request.path }}" class="hidden md:block w-full max-w-md" method="get" role="search">
 {% if request.GET.mes %}<input name="mes" type="hidden" value="{{ request.GET.mes }}">{% endif %}
 {% if request.GET.categoria %}<input name="categoria" type="hidden" value="{{ request.GET.categoria }}">{% endif %}
 <div class="relative">
@@ -66,7 +66,15 @@ menú móvil del sidebar y el filtro en vivo de Mensajería.
 <div aria-label="Avisos del taller" class="hidden absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl bg-surface border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50" data-panel id="panel-avisos" role="region">
 <div class="px-4 py-3 border-b border-outline-variant/30 flex items-center justify-between gap-2">
 <p class="font-label-md text-label-md font-semibold text-on-surface">Avisos del taller</p>
+<div class="flex items-center gap-2">
 {% if avisos_total %}<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">{{ avisos_total }}</span>{% endif %}
+{% if notificaciones_persistentes %}
+<form method="post" action="{{ url_marcar_notificaciones }}">
+{% csrf_token %}
+<button class="font-label-sm text-label-sm text-primary hover:underline" type="submit">Marcar leídas</button>
+</form>
+{% endif %}
+</div>
 </div>
 <ul class="flex flex-col">
 {% for aviso in avisos %}
@@ -85,10 +93,6 @@ menú móvil del sidebar y el filtro en vivo de Mensajería.
 {% endif %}
 </div>
 </div>
-<!-- Chat: navega a la pantalla de Mensajería. -->
-<a aria-label="Ir a Mensajería" class="w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant transition-all" href="{% url 'kanview:mensajeria' %}" id="btn-chat">
-<span class="material-symbols-outlined">chat_bubble</span>
-</a>
 <!-- Cuenta: nombre, rol real, Configuración y Cerrar sesión (POST). -->
 <div class="relative">
 <button aria-controls="panel-cuenta" aria-expanded="false" aria-label="Menú de la cuenta{% if usuario_nombre %} de {{ usuario_nombre }}{% endif %}" class="w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant transition-all" data-abre-panel id="btn-cuenta" type="button">
@@ -101,6 +105,10 @@ menú móvil del sidebar y el filtro en vivo de Mensajería.
 {% if rol_usuario %}<p class="mt-1 inline-flex px-2 py-0.5 rounded-full bg-primary/10 text-primary font-label-sm text-[11px]">{{ rol_usuario }}</p>{% endif %}
 </div>
 <div class="py-1">
+<a class="flex items-center gap-2 px-4 py-2.5 hover:bg-surface-container-low font-body-md text-[13px] text-on-surface" href="{% url 'kanview:perfil' %}">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">person</span>
+Mi perfil
+</a>
 {% if puede_configuracion %}
 <a class="flex items-center gap-2 px-4 py-2.5 hover:bg-surface-container-low font-body-md text-[13px] text-on-surface" href="{% url 'kanview:configuracion' %}">
 <span class="material-symbols-outlined text-[18px] text-on-surface-variant">settings</span>
@@ -121,7 +129,7 @@ Cerrar sesión
 {% if mostrar_buscador %}
 <!-- Panel del buscador en móvil (mismo `?q=` que el de escritorio). -->
 <div class="md:hidden absolute top-full left-0 right-0 hidden bg-background border-b border-outline-variant/30 px-container-padding-mobile py-3" data-panel id="panel-buscar">
-<form action="{{ request.path }}" class="w-full" method="get" role="search"{% if busqueda_cliente %} data-filtro-cliente="1"{% endif %}>
+<form action="{{ request.path }}" class="w-full" method="get" role="search">
 {% if request.GET.mes %}<input name="mes" type="hidden" value="{{ request.GET.mes }}">{% endif %}
 {% if request.GET.categoria %}<input name="categoria" type="hidden" value="{{ request.GET.categoria }}">{% endif %}
 <div class="relative">
@@ -214,26 +222,6 @@ Cerrar sesión
             if (evento.key !== 'Escape') { return; }
             cerrarPaneles();
             cerrarMenu();
-        });
-
-        // Mensajería no tiene modelo: su buscador filtra en vivo las filas ya
-        // pintadas (el formulario se marca con data-filtro-cliente="1").
-        document.querySelectorAll('form[data-filtro-cliente="1"]').forEach(function (form) {
-            var campo = form.querySelector('input[name="q"]');
-            if (!campo) { return; }
-            form.addEventListener('submit', function (evento) { evento.preventDefault(); });
-            campo.addEventListener('input', function () {
-                var termino = campo.value.trim().toLowerCase();
-                document.querySelectorAll('[data-buscable]').forEach(function (fila) {
-                    var coincide = !termino || fila.textContent.toLowerCase().indexOf(termino) !== -1;
-                    fila.classList.toggle('hidden', !coincide);
-                });
-                var vacio = document.getElementById('sin-chats');
-                if (vacio) {
-                    var visibles = document.querySelectorAll('[data-buscable]:not(.hidden)').length;
-                    vacio.classList.toggle('hidden', visibles > 0);
-                }
-            });
         });
     })();
 </script>

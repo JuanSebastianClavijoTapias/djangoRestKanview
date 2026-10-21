@@ -1,0 +1,26 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Evidencia{% endblock %}
+{% block content %}
+<div class="max-w-2xl">
+<h2 class="text-2xl font-bold mb-2">Editar evidencia</h2>
+<p class="text-sm text-gray-500 mb-6">Pedido {{ pedido.codigo_pedido }} · {{ evidencia.get_tipo_display }}</p>
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 mb-6">
+{% if evidencia.tipo == 'video' %}
+<video class="w-full max-h-80 rounded-xl bg-black" controls src="{% url 'kanview:evidencia-archivo' evidencia.pk %}"></video>
+{% else %}
+<img class="w-full max-h-80 object-contain rounded-xl bg-gray-100" alt="{{ evidencia.descripcion|default:'Evidencia' }}" src="{% url 'kanview:evidencia-archivo' evidencia.pk %}"/>
+{% endif %}
+</div>
+<form class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-4" enctype="multipart/form-data" method="post">
+{% csrf_token %}
+<label class="text-sm font-medium text-gray-700" for="id_descripcion">Descripción</label>
+<input class="rounded-xl border px-4 py-3" id="id_descripcion" maxlength="255" name="descripcion" value="{{ evidencia.descripcion }}"/>
+<label class="text-sm font-medium text-gray-700" for="id_archivo">Reemplazar archivo (opcional)</label>
+<input accept="image/*,video/mp4,video/webm,video/quicktime" class="rounded-xl border px-4 py-3" id="id_archivo" name="archivo" type="file"/>
+<div class="flex gap-3 mt-2">
+<button class="bg-[#006565] text-white px-6 py-2.5 rounded-xl text-sm font-semibold" type="submit">Guardar</button>
+<a class="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100" href="{% url 'kanview:pedido-detalle' pedido.pk %}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

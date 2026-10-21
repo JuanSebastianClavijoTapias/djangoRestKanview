@@ -1,0 +1,22 @@
+{
+  "name": "djangorestkanview",
+  "version": "1.0.0",
+  "description": "Sistema de gestión para Cuir Tapicería (taller de tapicería en cuero): API con Django REST Framework (vistas basadas en funciones) más un conjunto de páginas de interfaz (Django templates).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JuanSebastianClavijoTapias/djangoRestKanview.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/JuanSebastianClavijoTapias/djangoRestKanview/issues"
+  },
+  "homepage": "https://github.com/JuanSebastianClavijoTapias/djangoRestKanview#readme",
+  "devDependencies": {
+    "cypress": "^16.2.0"
+  }
+}

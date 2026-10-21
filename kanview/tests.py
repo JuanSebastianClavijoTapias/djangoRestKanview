@@ -355,7 +355,7 @@ class CrudModulesTestCase(TestCase):
 
     def _datos_pedido(self, **extra):
         datos = {
-            "estado": "activo", "descripcion": "silla en cuero",
+            "estado": "activo", "cantidad": 1, "descripcion": "silla en cuero",
             "id_cliente": self.cliente.pk, "id_empleado": self.empleado.pk,
             "id_producto": self.producto.pk,
         }
@@ -421,7 +421,7 @@ class CrudModulesTestCase(TestCase):
 
     def test_pedido_guarda_varias_imagenes(self):
         resp = self.client.post(reverse("kanview:pedido-crear"), {
-            "estado": "activo", "descripcion": "pedido con fotos",
+            "estado": "activo", "cantidad": 1, "descripcion": "pedido con fotos",
             "id_cliente": self.cliente.pk, "id_empleado": self.empleado.pk,
             "id_producto": self.producto.pk,
             "imagenes": [
@@ -841,6 +841,20 @@ class DineroConSeparadorTestCase(TestCase):
 
     # ---- empleado y análisis financiero --------------------------------------
 
+    def test_crear_empleado_no_pide_edad_ni_tareas_realizadas(self):
+        resp = self.client.get(reverse("kanview:empleado-crear"))
+        self.assertNotContains(resp, 'name="edad"')
+        self.assertNotContains(resp, 'name="tareas_realizadas"')
+
+        resp = self.client.post(reverse("kanview:empleado-crear"), {
+            "nombre": "Sin edad", "documento": "DIN-SIN", "cargo": "tapcr",
+            "celular": "300", "direccion": "Calle", "salario": "1000000",
+            "fecha_nacimiento": "1995-01-01",
+        })
+        self.assertEqual(resp.status_code, 302)
+        empleado = Empleado.objects.get(documento="DIN-SIN")
+        self.assertEqual(empleado.tareas_realizadas, 0)
+
     def test_salario_acepta_puntos_de_miles(self):
         resp = self.client.post(reverse("kanview:empleado-crear"), {
             "nombre": "Tapicero", "documento": "DIN-4", "cargo": "tapcr", "celular": "301",
@@ -928,6 +942,28 @@ class TandaUiTestCase(TestCase):
 
         # El enlace responde 200 con sesión iniciada.
         self.assertEqual(self.client.get(reverse("kanview:producto-lista")).status_code, 200)
+
+    def test_productos_marca_solo_productos_como_activo(self):
+        def bloque(sidebar, etiqueta):
+            return next(
+                parte for parte in sidebar.split("<li data-seccion=")[1:]
+                if f">{etiqueta}<" in parte
+            )
+
+        sidebar = self._sidebar(self.client.get(reverse("kanview:producto-lista")))
+        self.assertIn("bg-primary-container", bloque(sidebar, "Productos"))
+        self.assertNotIn("bg-primary-container", bloque(sidebar, "Catálogo"))
+
+        sidebar = self._sidebar(self.client.get(reverse("kanview:catalogo")))
+        self.assertIn("bg-primary-container", bloque(sidebar, "Catálogo"))
+        self.assertNotIn("bg-primary-container", bloque(sidebar, "Productos"))
+
+    def test_el_sidebar_no_tiene_mensajeria(self):
+        sidebar = self._sidebar(self.client.get(reverse("kanview:dashboard")))
+        self.assertNotIn(">Mensajería<", sidebar)
+        with self.assertRaises(NoReverseMatch):
+            reverse("kanview:mensajeria")
+        self.assertEqual(self.client.get("/mensajeria/").status_code, 404)
 
     def test_el_sidebar_tiene_procesos_y_no_tareas(self):
         resp = self.client.get(reverse("kanview:dashboard"))
@@ -1066,20 +1102,8 @@ class TandaUiTestCase(TestCase):
 
     def test_los_buscadores_tienen_aria_label(self):
         for url in (reverse("kanview:clientes"), reverse("kanview:inventario"),
-                    reverse("kanview:pedidos-tablero"), reverse("kanview:mensajeria")):
+                    reverse("kanview:pedidos-tablero")):
             self.assertContains(self.client.get(url), 'aria-label="Buscar')
-
-    def test_las_imagenes_de_mensajeria_tienen_alt(self):
-        import re
-
-        html = self.client.get(reverse("kanview:mensajeria")).content.decode()
-        # Sin el sidebar (que ya trae su propio logo con alt) ni el header
-        # (que ahora usa el icono de cuenta, no una foto): las 9 de la pantalla.
-        contenido = html[html.index("</aside>"):]
-        imagenes = re.findall(r"<img\b[^>]*>", contenido)
-        self.assertEqual(len(imagenes), 9)
-        for etiqueta in imagenes:
-            self.assertRegex(etiqueta, r'(?<![-\w])alt\s*=', etiqueta[:80])
 
     def test_el_sello_local_existe_y_reemplaza_a_la_imagen_rota(self):
         from django.contrib.staticfiles import finders
@@ -1111,7 +1135,7 @@ class TandaUiTestCase(TestCase):
 
         # Todas las pantallas (y la base del CRUD, que hereda el Panel) la incluyen.
         for obligada in ("crud_base.html", "pedidos_tablero.html", "catalogo.html", "calendario.html",
-                         "mensajeria.html", "login.html"):
+                         "login.html"):
             texto = (plantillas / obligada).read_text(encoding="utf-8")
             self.assertIn('{% include "kanview/_tailwind_config.html" %}', texto, obligada)
 
@@ -1468,7 +1492,18 @@ class EstadoTareaTestCase(TestCase):
         resp = self.client.get(reverse("kanview:actividad-estado", args=[self.actividad.pk]))
         self.assertEqual(resp.status_code, 405)
 
-    def test_la_tarea_tambien_cambia_de_estado(self):
+    def test_la_tarea_no_se_cierra_con_actividades_pendientes(self):
+        resp = self.client.post(
+            reverse("kanview:tarea-estado", args=[self.tarea.pk]),
+            {"estado": "completado"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.tarea.refresh_from_db()
+        self.assertEqual(self.tarea.estado, "pendiente")
+
+    def test_la_tarea_se_cierra_con_todas_las_actividades_completadas(self):
+        self.actividad.estado = "completado"
+        self.actividad.save(update_fields=["estado"])
         resp = self.client.post(
             reverse("kanview:tarea-estado", args=[self.tarea.pk]),
             {"estado": "completado"},
@@ -1476,6 +1511,7 @@ class EstadoTareaTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.tarea.refresh_from_db()
         self.assertEqual(self.tarea.estado, "completado")
+        self.assertEqual(self.tarea.confirmado_por, self.user)
 
     def test_un_estado_invalido_de_tarea_tampoco_cambia(self):
         self.client.post(
@@ -1599,3 +1635,52 @@ class MigracionExistenciasTestCase(TransactionTestCase):
 
         # Se vuelve a la última migración para no dejar el esquema a medias.
         self._migrar([("kanview", "0011_actividades_id_empleado_tareaspedido_id_empleado")])
+
+
+class LoginTestCase(TestCase):
+    """El login acepta el correo o el username de la cuenta."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username="admin_kanview",
+            email="admin@kanview.test",
+            password="ClaveSegura123",
+            is_staff=True,
+            is_superuser=True,
+        )
+
+    def _login(self, identificador, clave="ClaveSegura123"):
+        return self.client.post(
+            reverse("kanview:login"),
+            {"username": identificador, "password": clave},
+        )
+
+    def test_inicia_sesion_con_el_correo(self):
+        respuesta = self._login("admin@kanview.test")
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(
+            int(self.client.session["_auth_user_id"]), self.user.pk
+        )
+
+    def test_inicia_sesion_con_el_username(self):
+        respuesta = self._login("admin_kanview")
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(
+            int(self.client.session["_auth_user_id"]), self.user.pk
+        )
+
+    def test_correo_ambiguo_no_autentica(self):
+        User.objects.create_user(
+            username="otro_admin",
+            email="admin@kanview.test",
+            password="ClaveSegura123",
+        )
+        respuesta = self._login("admin@kanview.test")
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_clave_incorrecta_no_autentica(self):
+        respuesta = self._login("admin@kanview.test", "clave-equivocada")
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotIn("_auth_user_id", self.client.session)
