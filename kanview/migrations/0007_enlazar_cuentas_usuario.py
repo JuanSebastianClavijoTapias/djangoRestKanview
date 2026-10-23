@@ -8,13 +8,16 @@ Esta migración de datos deja ese enlace escrito en los campos nuevos
 Es idempotente: si se vuelve a ejecutar (o si algo ya está enlazado) no rompe.
 """
 
-from django.contrib.auth.models import User
 from django.db import migrations
 
 PREFIJO_MARCA = "kanview:trabajador:"
 
 
 def enlazar(apps, schema_editor):
+    # El modelo histórico: asignar un ``User`` real (importado de
+    # ``django.contrib.auth.models``) a un campo de un modelo histórico lanza
+    # ``ValueError: ... must be a "User" instance``, porque son clases distintas.
+    User = apps.get_model("auth", "User")
     Cliente = apps.get_model("kanview", "Cliente")
     Empleado = apps.get_model("kanview", "Empleado")
 

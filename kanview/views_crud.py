@@ -528,7 +528,7 @@ def producto_lista(request):
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
-        "producto", "Productos", ["Nombre", "Categoría", "Código", "Cantidad", "Precio"], filas, "Catálogo",
+        "producto", "Productos", ["Nombre", "Categoría", "Código", "Cantidad", "Precio"], filas, "Productos",
     ))
 
 
@@ -548,7 +548,7 @@ def producto_crear(request):
         "form": form,
         "title": "Nuevo producto",
         "cancel_url": reverse("kanview:producto-lista"),
-        **_nav("Catálogo", request),
+        **_nav("Productos", request),
     })
 
 
@@ -566,13 +566,13 @@ def producto_editar(request, pk):
         "form": form,
         "title": "Editar producto",
         "cancel_url": reverse("kanview:producto-lista"),
-        **_nav("Catálogo", request),
+        **_nav("Productos", request),
     })
 
 
 @seccion_requerida(SECCION_ESCRITURA["catalogo"])
 def producto_eliminar(request, pk):
-    return _desactivar(request, get_object_or_404(Producto, pk=pk), "producto", "Producto", "Catálogo")
+    return _desactivar(request, get_object_or_404(Producto, pk=pk), "producto", "Producto", "Productos")
 
 
 @seccion_requerida(SECCION_ESCRITURA["catalogo"])
