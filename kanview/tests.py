@@ -1088,7 +1088,7 @@ class TandaUiTestCase(TestCase):
         for url in (reverse("kanview:dashboard"), reverse("kanview:clientes")):
             resp = self.client.get(url)
             self.assertNotContains(resp, "lh3.googleusercontent.com/aida/AEtjO1")
-            self.assertContains(resp, "kanview/img/sello-kanview.svg")
+            self.assertContains(resp, "Sello de Kanview")
 
     # ---- Una sola configuración de Tailwind para todas las pantallas -------
 
