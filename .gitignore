@@ -7,3 +7,11 @@ db.sqlite3
 *.log
 .DS_Store
 media/
+node_modules/
+package.json
+package-lock.json
+cypress.config.js
+cypress/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
