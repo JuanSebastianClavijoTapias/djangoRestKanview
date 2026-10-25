@@ -6,7 +6,8 @@
     <p class="text-sm text-gray-500">Vista rápida del taller de tapicería.</p>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 gap-6 mb-8{% if not es_trabajador %} sm:grid-cols-2 xl:grid-cols-4{% endif %}">
+    {% if not es_trabajador %}
     <!-- Clientes -->
     <div class="bg-white rounded-2xl p-6 shadow-neomorphic-lift relative overflow-hidden">
         <div class="absolute -top-1 -right-1 w-14 h-14 rounded-full bg-[#e3fffe] flex items-center justify-center">
@@ -46,6 +47,7 @@
         </div>
     </div>
 
+    {% endif %}
     <!-- Pedidos activos -->
     <div class="bg-white rounded-2xl p-6 shadow-neomorphic-lift relative overflow-hidden">
         <div class="absolute -top-1 -right-1 w-14 h-14 rounded-full bg-[#ffebef] flex items-center justify-center">
@@ -60,8 +62,8 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 min-h-[280px] flex flex-col">
+<div class="grid grid-cols-1{% if not es_trabajador %} lg:grid-cols-2{% endif %} gap-6">
+    <div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 min-h-[280px] flex flex-col{% if es_trabajador %} lg:col-span-2{% endif %}">
         <h3 class="font-semibold text-lg text-on-surface mb-4">Últimos pedidos</h3>
         <div class="flex flex-col divide-y divide-gray-100 flex-1">
             {% for pedido in ultimos_pedidos %}
@@ -79,6 +81,7 @@
         <a class="inline-block mt-4 text-sm font-semibold text-[#006565] hover:underline" href="{% url 'kanview:pedido-lista' %}">Gestionar pedidos →</a>
     </div>
 
+    {% if not es_trabajador %}
     <div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
         <h3 class="font-semibold text-lg text-on-surface mb-4">Gestión rápida</h3>
         <div class="grid grid-cols-2 gap-4">
@@ -101,5 +104,6 @@
         </div>
         <p class="mt-6 text-xs text-gray-500">Accede directamente a los módulos operativos más frecuentes del taller.</p>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

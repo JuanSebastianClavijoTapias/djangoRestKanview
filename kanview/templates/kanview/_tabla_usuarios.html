@@ -44,7 +44,7 @@
 <td class="py-3 px-4">
 {% if fila.tiene_acceso %}
 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[#e3fffe] text-[#004f4f]">
-<span class="w-1.5 h-1.5 rounded-full bg-[#006565]"></span>{{ fila.rol|default:"Con acceso" }}
+<span class="w-1.5 h-1.5 rounded-full bg-[#006565]"></span>Con acceso
 </span>
 {% else %}
 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Sin acceso</span>
@@ -67,13 +67,6 @@
 </div>
 <form class="flex items-center gap-1.5 justify-end" method="post" action="{% if fila.acceso_url|slice:':1' == '/' %}{{ fila.acceso_url }}{% else %}{% url fila.acceso_url tipo fila.pk %}{% endif %}">
 {% csrf_token %}
-<div class="w-32">
-<select class="text-xs py-1.5" name="rol" aria-label="Rol de {{ fila.nombre }}" title="Rol con el que se crea o actualiza la cuenta">
-{% for rol in roles %}
-<option value="{{ rol }}"{% if fila.rol == rol %} selected="selected"{% endif %}>{{ rol }}</option>
-{% endfor %}
-</select>
-</div>
 <button class="text-[#006565] hover:underline font-medium whitespace-nowrap" type="submit" title="{% if fila.tiene_acceso %}Actualizar la cuenta de acceso{% else %}Crear la cuenta de acceso{% endif %}">Acceso</button>
 </form>
 <form class="flex justify-end" method="post" action="{% if fila.estado_url|slice:':1' == '/' %}{{ fila.estado_url }}{% else %}{% url fila.estado_url tipo fila.pk %}{% endif %}">

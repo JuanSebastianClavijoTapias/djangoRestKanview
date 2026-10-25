@@ -4,7 +4,6 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Kanview - Finanzas</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 {% include "kanview/_tailwind_config.html" %}
@@ -129,13 +128,14 @@
 <div class="flex justify-between items-center mb-6">
 <div>
 <h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Flujo de caja</h3>
-<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Ingresos vs Gastos por registro</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Ingresos vs gastos por mes · últimos {{ periodo_activo }} meses</p>
 </div>
-<select aria-label="Periodo del gráfico" class="bg-surface-container-lowest border border-outline-variant text-on-surface rounded-md font-label-md px-3 py-1.5 focus:ring-primary focus:border-primary">
-<option>Año en curso</option>
-<option>Últimos 12 meses</option>
-<option>Tercer trimestre de 2024</option>
+<form method="get">
+{% if q %}<input name="q" type="hidden" value="{{ q }}"/>{% endif %}
+<select aria-label="Periodo del gráfico" class="bg-surface-container-lowest border border-outline-variant text-on-surface rounded-md font-label-md px-3 py-1.5 focus:ring-primary focus:border-primary" name="periodo" onchange="this.form.submit()">
+{% for opcion in periodos %}<option value="{{ opcion }}"{% if opcion == periodo_activo %} selected{% endif %}>Últimos {{ opcion }} meses</option>{% endfor %}
 </select>
+</form>
 </div>
 <div class="flex-1 relative w-full h-[300px]">
 <canvas id="cashFlowChart" width="685" height="487" style="display: block; box-sizing: border-box; height: 408px; width: 573.3px;"></canvas>
@@ -145,70 +145,26 @@
 <div class="neomorphic-card p-6 flex flex-col">
 <div class="mb-6">
 <h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Fuentes de ingresos</h3>
-<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Distribución por canal (datos de ejemplo)</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Distribución real por fuente registrada</p>
 </div>
 <div class="flex-1 relative w-full h-[250px] flex justify-center items-center">
 <canvas id="revenueSourceChart" width="299" height="358" style="display: block; box-sizing: border-box; height: 300px; width: 250.7px;"></canvas>
 </div>
-<!-- Custom Legend -->
+<!-- Leyenda dinámica -->
 <div class="mt-6 space-y-3">
+{% for fuente in fuentes_ingresos_datos %}
 <div class="flex items-center justify-between font-label-md text-label-md">
 <div class="flex items-center gap-2">
-<span class="w-3 h-3 rounded-full bg-[#006565]"></span>
-<span class="text-on-surface">Direct Sales</span>
+<span class="w-3 h-3 rounded-full" style="background-color: {{ fuente.color }}"></span>
+<span class="text-on-surface">{{ fuente.label }}</span>
 </div>
-<span class="font-bold text-on-surface">45%</span>
+<span class="font-bold text-on-surface">{{ fuente.porcentaje|floatformat:1 }}%</span>
 </div>
-<div class="flex items-center justify-between font-label-md text-label-md">
-<div class="flex items-center gap-2">
-<span class="w-3 h-3 rounded-full bg-[#76d6d5]"></span>
-<span class="text-on-surface">B2B Wholesale</span>
-</div>
-<span class="font-bold text-on-surface">35%</span>
-</div>
-<div class="flex items-center justify-between font-label-md text-label-md">
-<div class="flex items-center gap-2">
-<span class="w-3 h-3 rounded-full bg-[#e4e2e2]"></span>
-<span class="text-on-surface">Custom Projects</span>
-</div>
-<span class="font-bold text-on-surface">20%</span>
-</div>
-</div>
-</div>
-</div>
-<!-- Tabla de transacciones recientes -->
-<div class="mt-8 neomorphic-card p-6 overflow-x-auto">
-<div class="flex justify-between items-center mb-6">
-<div>
-<h3 class="font-headline-md text-headline-md font-semibold text-on-surface">Transacciones recientes</h3>
-<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mt-1">Latest ledger entries</p>
-</div>
-<a class="text-primary font-label-md text-label-md hover:underline" href="{% url 'kanview:analisis-financiero-lista' %}">Ver todo</a>
-</div>
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="border-b border-surface-container-highest text-on-surface-variant">
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Administrador</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Productos Vendidos</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Ingresos</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold">Gastos</th>
-<th class="py-3 px-4 font-label-sm text-label-sm uppercase tracking-wider font-semibold text-right">Balance</th>
-</tr>
-</thead>
-<tbody class="font-body-md text-body-md">
-{% for registro in registros %}
-<tr class="border-b border-surface-container-highest/50 hover:bg-surface-container-lowest/50 hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] transition-all cursor-pointer">
-<td class="py-4 px-4 font-medium text-on-surface">{{ registro.id_administrador.nombre }}</td>
-<td class="py-4 px-4 text-on-surface-variant">{{ registro.productos_vendidos }}</td>
-<td class="py-4 px-4 font-medium text-[#006565]">+${{ registro.fuentes_ingresos|moneda_cop }}</td>
-<td class="py-4 px-4 text-on-surface-variant">-${{ registro.gastos|moneda_cop }}</td>
-<td class="py-4 px-4 text-right font-medium {% if registro.balance < 0 %}text-error{% else %}text-[#006565]{% endif %}">${{ registro.balance|moneda_cop }}</td>
-</tr>
 {% empty %}
-<tr><td class="py-8 px-4 text-center text-on-surface-variant" colspan="5">{% if q %}Ningún movimiento coincide con «{{ q }}».{% else %}No hay registros financieros todavía.{% endif %}</td></tr>
+<p class="text-sm text-on-surface-variant">Todavía no hay fuentes de ingreso registradas.</p>
 {% endfor %}
-</tbody>
-</table>
+</div>
+</div>
 </div>
 </div>
 </main>
@@ -219,7 +175,8 @@
 <span class="">Soporte</span>
 </div>
 </nav>
-{{ grafica_registros|json_script:"finanzas-chart-data" }}
+{{ flujo_caja|json_script:"finanzas-flujo-data" }}
+{{ fuentes_ingresos_datos|json_script:"finanzas-fuentes-data" }}
 <script>
         // Chart.js Configuration
         const brandColors = {
@@ -231,13 +188,15 @@
             grid: '#e4e2e2'
         };
 
-        // Datos reales por registro (provistos por kanview.views_finanzas.finanzas)
-        const chartDataEl = document.getElementById('finanzas-chart-data');
-        const chartData = chartDataEl ? (JSON.parse(chartDataEl.textContent) || []) : [];
+        // Datos reales por mes y por fuente (kanview.views_finanzas.finanzas)
+        const flujoEl = document.getElementById('finanzas-flujo-data');
+        const chartData = flujoEl ? (JSON.parse(flujoEl.textContent) || []) : [];
+        const fuentesEl = document.getElementById('finanzas-fuentes-data');
+        const fuentesData = fuentesEl ? (JSON.parse(fuentesEl.textContent) || []) : [];
 
         // Gráfico de líneas del flujo de caja
         const ctxCashFlow = document.getElementById('cashFlowChart').getContext('2d');
-        
+
         // Create gradient for income line
         const gradientIncome = ctxCashFlow.createLinearGradient(0, 0, 0, 300);
         gradientIncome.addColorStop(0, 'rgba(0, 101, 101, 0.2)');
@@ -249,7 +208,7 @@
                 labels: chartData.map(function (item) { return item.label; }),
                 datasets: [
                     {
-                        label: 'Revenue',
+                        label: 'Ingresos',
                         data: chartData.map(function (item) { return item.ingresos; }),
                         borderColor: brandColors.primary,
                         backgroundColor: gradientIncome,
@@ -263,7 +222,7 @@
                         tension: 0.4
                     },
                     {
-                        label: 'Expenses',
+                        label: 'Gastos',
                         data: chartData.map(function (item) { return item.gastos; }),
                         borderColor: brandColors.secondary,
                         borderWidth: 2,
@@ -288,14 +247,14 @@
                         labels: {
                             usePointStyle: true,
                             boxWidth: 8,
-                            font: { family: 'Inter', size: 12, weight: '500' },
+                            font: { family: 'Poppins', size: 12, weight: '500' },
                             color: brandColors.text
                         }
                     },
                     tooltip: {
                         backgroundColor: '#303030',
-                        titleFont: { family: 'Inter', size: 13 },
-                        bodyFont: { family: 'Inter', size: 13 },
+                        titleFont: { family: 'Poppins', size: 13 },
+                        bodyFont: { family: 'Poppins', size: 13 },
                         padding: 12,
                         cornerRadius: 8,
                         displayColors: false,
@@ -306,7 +265,7 @@
                                     label += ': ';
                                 }
                                 if (context.parsed.y !== null) {
-                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                    label += new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(context.parsed.y);
                                 }
                                 return label;
                             }
@@ -316,14 +275,14 @@
                 scales: {
                     x: {
                         grid: { display: false, drawBorder: false },
-                        ticks: { font: { family: 'Inter', size: 12 }, color: '#6e7979' }
+                        ticks: { font: { family: 'Poppins', size: 12 }, color: '#6e7979' }
                     },
                     y: {
                         grid: { color: brandColors.grid, drawBorder: false, borderDash: [4, 4] },
-                        ticks: { 
-                            font: { family: 'Inter', size: 12 }, 
+                        ticks: {
+                            font: { family: 'Poppins', size: 12 },
                             color: '#6e7979',
-                            callback: function(value) { return '$' + value / 1000 + 'k'; }
+                            callback: function(value) { return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value); }
                         },
                         beginAtZero: true
                     }
@@ -340,14 +299,10 @@
         new Chart(ctxRevenue, {
             type: 'doughnut',
             data: {
-                labels: ['Direct Sales', 'B2B Wholesale', 'Custom Projects'],
+                labels: fuentesData.map(function (item) { return item.label; }),
                 datasets: [{
-                    data: [45, 35, 20],
-                    backgroundColor: [
-                        brandColors.primary,
-                        brandColors.primaryLight,
-                        brandColors.surfaceVariant
-                    ],
+                    data: fuentesData.map(function (item) { return item.valor; }),
+                    backgroundColor: fuentesData.map(function (item) { return item.color; }),
                     borderWidth: 0,
                     hoverOffset: 4
                 }]
@@ -360,12 +315,13 @@
                     legend: { display: false },
                     tooltip: {
                         backgroundColor: '#303030',
-                        bodyFont: { family: 'Inter', size: 13 },
+                        bodyFont: { family: 'Poppins', size: 13 },
                         padding: 10,
                         cornerRadius: 8,
                         callbacks: {
                             label: function(context) {
-                                return ` ${context.label}: ${context.raw}%`;
+                                const fuente = fuentesData[context.dataIndex];
+                                return ` ${context.label}: ${fuente ? fuente.porcentaje.toFixed(1) : 0}%`;
                             }
                         }
                     }

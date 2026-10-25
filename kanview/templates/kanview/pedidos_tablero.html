@@ -3,7 +3,6 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <title>Kanview - Procesos</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 {% include "kanview/_tailwind_config.html" %}
 <style>
@@ -21,6 +20,24 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+        .tarjeta-pedido {
+            transition: opacity 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+        }
+        .tarjeta-pedido[draggable="true"] {
+            cursor: grab;
+        }
+        .tarjeta-pedido[draggable="true"]:active {
+            cursor: grabbing;
+        }
+        .tarjeta-arrastrando {
+            opacity: 0.45;
+            transform: scale(0.98);
+        }
+        .columna-soltar {
+            outline: 2px dashed #006565;
+            outline-offset: -5px;
+            background-color: #e3fffe !important;
         }
     </style>
 </head>
@@ -40,8 +57,8 @@
 <!-- Encabezado del tablero -->
 <div class="mb-8 flex flex-wrap justify-between items-end gap-4">
 <div class="min-w-0">
-<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">Procesos</h2>
-<p class="font-body-md text-body-md text-on-surface-variant mt-1">Seguimiento de cada pedido y de las actividades de cada trabajador.</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">{% if es_cliente %}Mis procesos{% else %}Procesos{% endif %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">{% if es_cliente %}Aquí ves únicamente tus pedidos y el avance de su producción. Para pedir un cambio, abre el pedido y envía una solicitud.{% else %}Seguimiento de cada pedido y de las actividades de cada trabajador.{% endif %}</p>
 </div>
 <!-- Alternadores de vista: enlaces GET (sin JavaScript y con estado enlazable).
      Conservan `q` y el resto de la query; el queryset es el mismo que el tablero. -->
@@ -49,26 +66,29 @@
 <a aria-pressed="{% if vista == 'kanban' %}true{% else %}false{% endif %}" class="px-4 py-2 rounded font-label-md text-label-md transition-colors{% if vista == 'kanban' %} bg-surface shadow-sm text-primary font-bold{% else %} text-on-surface-variant hover:text-on-surface{% endif %}" href="{{ url_kanban }}" id="vista-kanban">Kanban</a>
 <a aria-pressed="{% if vista == 'lista' %}true{% else %}false{% endif %}" class="px-4 py-2 rounded font-label-md text-label-md transition-colors{% if vista == 'lista' %} bg-surface shadow-sm text-primary font-bold{% else %} text-on-surface-variant hover:text-on-surface{% endif %}" href="{{ url_lista }}" id="vista-lista">Lista</a>
 </div>
+{% if puede_mover and vista == 'kanban' %}
+<p class="w-full text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">drag_indicator</span>Arrastra una tarjeta a otra columna para cambiar su estado.</p>
+{% endif %}
 </div>
 {% if vista == "kanban" %}
 <!-- Tablero: una columna por estado calculado del pedido -->
-<div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start min-w-0" id="tablero-procesos">
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start min-w-0" id="tablero-procesos" data-kanban-board>
 {% for columna in columnas %}
-<section class="kanban-col-bg rounded-2xl p-4 lg:p-card-gap flex flex-col min-w-0" data-columna="{{ columna.clave }}">
+<section class="kanban-col-bg rounded-2xl p-4 lg:p-card-gap flex flex-col min-w-0" data-kanban-column data-columna="{{ columna.clave }}" data-vacio-texto="Sin pedidos en esta columna.">
 <div class="flex justify-between items-center gap-2 mb-4">
-<h3 class="font-headline-md text-headline-md text-on-surface text-[18px] min-w-0 break-words">{{ columna.titulo }}</h3>
-<span class="shrink-0 bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm" data-contador="{{ columna.clave }}">{{ columna.pedidos|length }}</span>
+<h3 class="text-[15px] font-semibold text-on-surface min-w-0 break-words">{{ columna.titulo }}</h3>
+<span class="shrink-0 bg-surface-variant text-on-surface-variant px-2 py-1 rounded-full font-label-sm text-label-sm" data-contador="{{ columna.clave }}" data-kanban-count>{{ columna.pedidos|length }}</span>
 </div>
-<div class="flex flex-col gap-4 min-w-0">
+<div class="flex flex-col gap-4 min-w-0" data-kanban-cards>
 {% for pedido in columna.pedidos %}
 <!-- Tarjeta = un pedido -->
-<article class="bg-surface-container-lowest rounded-xl p-4 lg:p-5 neo-shadow min-w-0" data-pedido="{{ pedido.pk }}">
+<article class="tarjeta-pedido kanban-drag-card bg-surface-container-lowest rounded-xl p-4 lg:p-5 neo-shadow min-w-0" data-kanban-card data-pedido="{{ pedido.pk }}" data-estado="{{ pedido.estado }}" data-url-estado="{{ pedido.url_estado }}"{% if puede_mover %} draggable="true"{% endif %}>
 <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
 <span class="font-label-sm text-label-sm px-2 py-1 rounded max-w-full break-words {% if pedido.estado_aprobacion == 'aprobado' %}bg-green-100 text-green-800{% elif pedido.estado_aprobacion == 'rechazado' %}bg-red-100 text-red-800{% else %}bg-amber-100 text-amber-800{% endif %}">{{ pedido.estado_aprobacion_etiqueta }}</span>
 <a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">{{ pedido.codigo }}</a>
 </div>
 <h4 class="font-headline-md text-headline-md text-[16px] leading-tight mb-1 text-on-surface break-words">{{ pedido.producto }}</h4>
-<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-3 break-words">Cliente: {{ pedido.cliente }}</p>
+{% if not es_cliente %}<p class="font-body-md text-body-md text-[14px] text-on-surface-variant mb-3 break-words">Cliente: {{ pedido.cliente }}</p>{% endif %}
 <div class="flex flex-wrap items-center gap-2 mb-2 text-[12px]">
 <span class="material-symbols-outlined text-[16px] text-outline">calendar_today</span>
 <span class="{% if pedido.vencida %}text-error font-semibold{% else %}text-on-surface-variant{% endif %} break-words">
@@ -80,43 +100,43 @@
 <div class="bg-surface-tint h-1.5 rounded-full" style="width: {{ pedido.avance }}%"></div>
 </div>
 <p class="font-label-sm text-label-sm text-on-surface-variant mb-3" data-avance="{{ pedido.pk }}">{{ pedido.completadas }}/{{ pedido.total }} actividades completadas</p>
-{% if pedido.sin_actividades %}
-<p class="font-label-sm text-label-sm text-outline mb-3">Sin actividades cargadas</p>
+{% if pedido.sin_tareas %}
+<p class="font-label-sm text-label-sm text-outline mb-3">Sin tareas cargadas</p>
 {% else %}
-<div class="flex flex-col gap-3 mb-3">
-{% for grupo in pedido.grupos %}
-<div class="bg-surface-container-low rounded-xl p-3 min-w-0" data-trabajador="{{ grupo.trabajador }}">
-<div class="flex items-center gap-2 mb-2 min-w-0">
-<span class="w-7 h-7 shrink-0 rounded-full bg-secondary-container text-on-secondary-container font-bold text-[12px] flex items-center justify-center">{{ grupo.iniciales }}</span>
-<div class="min-w-0">
-<p class="font-label-md text-label-md text-on-surface break-words">{{ grupo.trabajador }}</p>
-<p class="font-label-sm text-label-sm text-on-surface-variant break-words">{{ grupo.cargo }}</p>
+<div class="flex flex-col gap-2 mb-3">
+<p class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Tareas del pedido</p>
+{% for tarea in pedido.tareas %}
+<button aria-haspopup="dialog" aria-label="Ver las actividades de la tarea «{{ tarea.nombre }}»" class="w-full text-left rounded-xl bg-surface-container-low hover:bg-surface-container p-3 transition-colors" data-tarea-detalle="{{ tarea.detalle_id }}" onclick="abrirTarea(event, this)" type="button">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<span class="font-label-md text-label-md font-semibold text-on-surface break-words min-w-0">{{ tarea.nombre }}</span>
+<span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold {% if tarea.estado == 'completado' %}bg-green-100 text-green-800{% elif tarea.estado == 'en progreso' %}bg-sky-100 text-sky-800{% else %}bg-gray-100 text-gray-700{% endif %}">{{ tarea.estado_etiqueta }}</span>
 </div>
+<div class="flex items-center gap-2 mt-2 min-w-0">
+<span class="w-7 h-7 shrink-0 rounded-full bg-secondary-container text-on-secondary-container font-bold text-[11px] flex items-center justify-center">{{ tarea.iniciales }}</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant break-words min-w-0">{{ tarea.responsable }} · {{ tarea.cargo }}</span>
 </div>
-<ul class="flex flex-col gap-1.5">
-{% for actividad in grupo.actividades %}
-<li class="min-w-0">
-<button aria-haspopup="dialog" aria-label="Ver el detalle de la actividad «{{ actividad.nombre }}»" class="w-full text-left flex flex-wrap items-center justify-between gap-1 px-2 py-1 rounded-lg bg-surface-container-lowest hover:bg-surface-container transition-colors" data-detalle="{{ actividad.detalle_id }}" onclick="abrirDetalle(event, this)" onkeydown="teclaDetalle(event, this)" type="button">
-<span class="font-label-sm text-label-sm text-on-surface break-words min-w-0">{{ actividad.nombre }}</span>
-<span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] {% if actividad.codigo == 'completado' %}bg-primary/10 text-primary{% elif actividad.codigo == 'en progreso' %}bg-tertiary-container/20 text-tertiary{% else %}bg-surface-variant text-on-surface-variant{% endif %}">{{ actividad.estado }}</span>
+<div class="flex flex-wrap items-center justify-between gap-1 mt-2 text-[11px] text-on-surface-variant">
+<span>{{ tarea.completadas }}/{{ tarea.total }} actividades</span>
+<span class="font-semibold text-primary">Ver actividades →</span>
+</div>
 </button>
-</li>
-{% endfor %}
-</ul>
-</div>
 {% endfor %}
 </div>
 {% endif %}
 <div class="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-outline-variant/20">
+<div class="flex flex-wrap items-center gap-3">
 <a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">Ver pedido</a>
+{% if puede_gestionar %}<a class="font-label-sm text-label-sm text-red-600 hover:underline" href="{% url 'kanview:pedido-eliminar' pedido.pk %}">Eliminar</a>{% endif %}
+</div>
 <div class="flex flex-wrap gap-3">
+{% if puede_gestionar %}
 <a class="font-label-sm text-label-sm text-on-surface-variant hover:underline" href="{{ pedido.url_actividades }}">Cargar actividades</a>
-{% for tarea in pedido.tareas %}<a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ tarea.url }}">{{ tarea.nombre }}</a>{% endfor %}
+{% endif %}
 </div>
 </div>
 </article>
 {% empty %}
-<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center">
+<div class="bg-surface-container-lowest rounded-xl p-5 neo-shadow text-center" data-vacio>
 <span class="material-symbols-outlined text-on-surface-variant text-[28px]">inbox</span>
 <p class="font-body-md text-body-md text-[14px] text-on-surface-variant mt-1 break-words">{% if q %}Ningún pedido coincide con «{{ q }}» en esta columna.{% else %}Sin pedidos en esta columna.{% endif %}</p>
 </div>
@@ -236,7 +256,29 @@
 </form>
 </div>
 </div>
+<div aria-labelledby="modal-tarea-titulo" class="fixed inset-0 z-[55] hidden items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4" id="modal-tarea" onclick="if (event.target === this) cerrarTarea();" role="dialog" aria-modal="true">
+<div class="bg-surface rounded-2xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-[0_24px_48px_rgba(0,0,0,0.1)] neo-shadow relative">
+<div class="flex justify-between items-start gap-4 mb-4">
+<div class="min-w-0">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tarea del pedido</p>
+<h3 class="font-headline-md text-headline-md text-on-background break-words" id="modal-tarea-titulo"></h3>
+</div>
+<button aria-label="Cerrar el detalle de la tarea" class="w-10 h-10 shrink-0 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant" id="modal-tarea-cerrar" onclick="cerrarTarea()" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 break-words" id="modal-tarea-descripcion"></p>
+<dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 text-sm">
+<div><dt class="font-label-sm text-label-sm text-on-surface-variant">Estado</dt><dd class="font-medium text-on-surface" id="modal-tarea-estado"></dd></div>
+<div><dt class="font-label-sm text-label-sm text-on-surface-variant">Responsable</dt><dd class="font-medium text-on-surface" id="modal-tarea-responsable"></dd></div>
+<div><dt class="font-label-sm text-label-sm text-on-surface-variant">Rol encargado</dt><dd class="font-medium text-on-surface" id="modal-tarea-cargo"></dd></div>
+<div><dt class="font-label-sm text-label-sm text-on-surface-variant">Fechas</dt><dd class="font-medium text-on-surface" id="modal-tarea-fechas"></dd></div>
+</dl>
+<div class="flex flex-col gap-4" id="modal-tarea-grupos"></div>
+</div>
+</div>
 {{ detalle_modales|json_script:"datos-detalle" }}
+{{ tareas_modales|json_script:"datos-tareas" }}
 <script>
     // Detalle de cada actividad, servido por la vista y leído por este script.
     const DETALLES = JSON.parse(document.getElementById('datos-detalle').textContent);
@@ -301,8 +343,85 @@
     document.addEventListener('keydown', function (evento) {
         if (evento.key === 'Escape') {
             cerrarDetalle();
+            cerrarTarea();
         }
     });
+
+    const TAREAS = JSON.parse(document.getElementById('datos-tareas').textContent);
+    const MODAL_TAREA = document.getElementById('modal-tarea');
+    let disparadorTarea = null;
+
+    function abrirTarea(evento, elemento) {
+        if (evento && typeof evento.stopPropagation === 'function') {
+            evento.stopPropagation();
+        }
+        const datos = TAREAS[elemento.dataset.tareaDetalle];
+        if (!datos) {
+            return;
+        }
+        ponerTexto('modal-tarea-titulo', datos.nombre);
+        ponerTexto('modal-tarea-descripcion', datos.descripcion || 'Sin descripción');
+        ponerTexto('modal-tarea-estado', datos.estado);
+        ponerTexto('modal-tarea-responsable', datos.responsable);
+        ponerTexto('modal-tarea-cargo', datos.cargo);
+        ponerTexto('modal-tarea-fechas', datos.fecha_inicio + ' → ' + datos.fecha_fin);
+
+        const contenedor = document.getElementById('modal-tarea-grupos');
+        contenedor.replaceChildren();
+        datos.grupos.forEach(function (grupo) {
+            const bloque = document.createElement('section');
+            bloque.className = 'rounded-xl border border-outline-variant/40 bg-surface-container-low p-3';
+            const titulo = document.createElement('h4');
+            titulo.className = 'font-label-md text-label-md font-semibold text-on-surface mb-2';
+            titulo.textContent = grupo.titulo;
+            bloque.appendChild(titulo);
+            if (!grupo.actividades.length) {
+                const vacio = document.createElement('p');
+                vacio.className = 'text-xs text-on-surface-variant';
+                vacio.textContent = 'Sin actividades en este estado.';
+                bloque.appendChild(vacio);
+            } else {
+                grupo.actividades.forEach(function (actividad) {
+                    const boton = document.createElement('button');
+                    boton.type = 'button';
+                    boton.className = 'w-full text-left flex flex-wrap items-center justify-between gap-2 px-3 py-2 mb-1.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container transition-colors';
+                    boton.dataset.detalle = actividad.detalle_id;
+                    boton.addEventListener('click', function (eventoActividad) {
+                        eventoActividad.stopPropagation();
+                        abrirDetalle(eventoActividad, boton);
+                    });
+                    const nombre = document.createElement('span');
+                    nombre.className = 'text-sm font-medium text-on-surface break-words';
+                    nombre.textContent = actividad.nombre;
+                    const detalle = document.createElement('span');
+                    detalle.className = 'text-xs text-on-surface-variant';
+                    detalle.textContent = actividad.empleado + ' · ' + actividad.cargo;
+                    boton.appendChild(nombre);
+                    boton.appendChild(detalle);
+                    bloque.appendChild(boton);
+                });
+            }
+            contenedor.appendChild(bloque);
+        });
+        disparadorTarea = elemento;
+        MODAL_TAREA.classList.remove('hidden');
+        MODAL_TAREA.classList.add('flex');
+        document.getElementById('modal-tarea-cerrar').focus();
+    }
+
+    function cerrarTarea() {
+        if (MODAL_TAREA.classList.contains('hidden')) {
+            return;
+        }
+        MODAL_TAREA.classList.add('hidden');
+        MODAL_TAREA.classList.remove('flex');
+        if (disparadorTarea) {
+            disparadorTarea.focus();
+            disparadorTarea = null;
+        }
+    }
 </script>
+{% include "kanview/_kanban_drag.html" %}
+
 
 </body></html>

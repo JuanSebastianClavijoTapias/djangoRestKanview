@@ -16,7 +16,7 @@ from .auditoria import registrar as registrar_auditoria
 from .facturacion import crear_factura, enviar_factura, generar_pdf
 from .models import EvidenciaPedido, Pedido, SolicitudModificacionPedido
 from .notificaciones import notificar_cliente, notificar_staff
-from .permisos import SECCION_ESCRITURA, es_administrador, es_solo_cliente, puede, seccion_requerida
+from .permisos import SECCION_ESCRITURA, es_administracion, es_administrador, es_solo_cliente, puede, seccion_requerida
 from .views_pedidos import _pedidos_queryset
 from .views_site import _nav
 
@@ -98,13 +98,11 @@ def pedido_rechazar(request, pk):
 # ---- Solicitudes de modificación -----------------------------------------
 
 def _puede_editar_solicitud(request, solicitud):
-    if not solicitud.activo:
+    if not solicitud.activo or solicitud.estado != "pendiente":
         return False
     pedido = solicitud.pedido
-    if es_administrador(request.user):
-        return True
     return (
-        solicitud.estado == "pendiente"
+        es_solo_cliente(request.user)
         and (pedido.id_cliente.correo or "").lower() == (request.user.email or "").lower()
     )
 
@@ -122,8 +120,9 @@ def _solicitud_contexto(request, pedido, solicitud=None):
 @seccion_requerida("pedidos")
 def solicitud_crear(request, pk):
     pedido = _pedido_visible(request, pk)
-    if not _puede_gestionar_pedido(request, pedido) and not es_solo_cliente(request.user):
-        raise Http404
+    if not es_solo_cliente(request.user):
+        messages.error(request, "Solo el cliente puede solicitar cambios en su pedido.")
+        return redirect("kanview:pedido-detalle", pk=pedido.pk)
     if request.method == "POST":
         descripcion = (request.POST.get("descripcion") or "").strip()
         if not descripcion:
@@ -210,6 +209,9 @@ def solicitud_eliminar(request, pk):
 @require_POST
 def solicitud_revisar(request, pk):
     solicitud = get_object_or_404(SolicitudModificacionPedido, pk=pk)
+    if not es_administracion(request.user):
+        messages.error(request, "Solo Administración o Secretaría pueden revisar solicitudes.")
+        return redirect("kanview:pedido-detalle", pk=solicitud.pedido_id)
     estado = (request.POST.get("estado") or "").strip()
     respuesta = (request.POST.get("respuesta") or "").strip()
     if estado not in ("aceptada", "rechazada"):
@@ -393,9 +395,8 @@ def pedido_compartir_multimedia(request, pk):
 # ---- Factura --------------------------------------------------------------
 
 def _factura_visible(request, pedido):
-    if es_solo_cliente(request.user):
-        return (pedido.id_cliente.correo or "").lower() == (request.user.email or "").lower()
-    return True
+    # El Cliente no consulta facturas desde el portal; el personal sí.
+    return not es_solo_cliente(request.user)
 
 
 @seccion_requerida("pedidos")

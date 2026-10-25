@@ -518,7 +518,7 @@ class CrudModulesTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertFalse(Pedido.objects.filter(descripcion="silla en cuero").exclude(pk=self.pedido.pk).exists())
 
-    def test_cliente_no_puede_crear_productos(self):
+    def test_cliente_no_puede_ver_ni_crear_productos(self):
         _cliente, user = self._cliente_con_cuenta()
         self.client.force_login(user)
 
@@ -532,10 +532,9 @@ class CrudModulesTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertFalse(Producto.objects.filter(codigo_producto="CLI001").exists())
 
-        # La lista de productos sí es de lectura, pero sin botones de escritura.
-        resp = self.client.get(reverse("kanview:producto-lista"))
-        self.assertEqual(resp.status_code, 200)
-        self.assertNotContains(resp, "Nuevo")
+        # El Cliente solo entra a sus procesos: productos y catálogo quedan cerrados.
+        self.assertEqual(self.client.get(reverse("kanview:producto-lista")).status_code, 302)
+        self.assertEqual(self.client.get(reverse("kanview:catalogo")).status_code, 302)
 
     def test_api_rechaza_al_rol_cliente(self):
         _cliente, user = self._cliente_con_cuenta()
@@ -543,8 +542,8 @@ class CrudModulesTestCase(TestCase):
 
         # Un Cliente no entra a los recursos de gestión ni a los de otros módulos.
         self.assertEqual(self.client.get("/api/clientes/").status_code, 403)
-        # El catálogo es de lectura para el Cliente, pero no puede escribir.
-        self.assertEqual(self.client.get("/api/productos/").status_code, 200)
+        # Productos y catálogo ya no son accesibles para el Cliente.
+        self.assertEqual(self.client.get("/api/productos/").status_code, 403)
         self.assertEqual(self.client.post("/api/productos/", {}).status_code, 403)
         self.assertEqual(self.client.get("/api/pedidos/").status_code, 200)
         self.assertEqual(self.client.post("/api/pedidos/", {}).status_code, 403)
@@ -965,20 +964,20 @@ class TandaUiTestCase(TestCase):
             reverse("kanview:mensajeria")
         self.assertEqual(self.client.get("/mensajeria/").status_code, 404)
 
-    def test_el_sidebar_tiene_procesos_y_no_tareas(self):
+    def test_el_sidebar_tiene_procesos_y_tareas(self):
         resp = self.client.get(reverse("kanview:dashboard"))
         sidebar = self._sidebar(resp)
         self.assertIn(">Procesos<", sidebar)
         self.assertIn(reverse("kanview:pedidos-tablero"), sidebar)
-        self.assertNotIn(">Tareas<", sidebar)
+        self.assertIn(">Tareas<", sidebar)
+        self.assertIn(reverse("kanview:tareas"), sidebar)
 
-    def test_tareas_redirige_al_tablero_de_procesos(self):
+    def test_tareas_muestra_el_listado_de_tareas(self):
         resp = self.client.get(reverse("kanview:tareas"))
-        self.assertEqual(resp.status_code, 302)
-        self.assertEqual(resp["Location"], reverse("kanview:pedidos-tablero"))
-        resp = self.client.get(reverse("kanview:tareas"), follow=True)
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Procesos")
+        self.assertContains(resp, "Tareas")
+        self.assertContains(resp, reverse("kanview:tarea-crear"))
+        self.assertContains(resp, "Tarea UI")
 
     def test_el_sidebar_ya_no_tiene_configuracion(self):
         resp = self.client.get(reverse("kanview:dashboard"))
@@ -1142,6 +1141,18 @@ class TandaUiTestCase(TestCase):
         # Y ninguna vuelve a forzar el fondo gris por CSS.
         for ruta in pantallas:
             self.assertNotIn("#F5F5F5 !important", ruta.read_text(encoding="utf-8"), ruta.name)
+
+    def test_todos_los_modulos_cargan_poppins(self):
+        for url in (
+            reverse("kanview:dashboard"),
+            reverse("kanview:catalogo"),
+            reverse("kanview:auditoria"),
+            reverse("kanview:finanzas"),
+            reverse("kanview:login"),
+        ):
+            html = self.client.get(url).content.decode()
+            self.assertIn("family=Poppins", html, url)
+            self.assertNotIn("family=Inter", html, url)
 
     def test_el_panel_y_el_tablero_renderizan_la_misma_configuracion(self):
         for url in (reverse("kanview:dashboard"), reverse("kanview:pedidos-tablero")):

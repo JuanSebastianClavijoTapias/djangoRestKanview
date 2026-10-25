@@ -23,7 +23,9 @@ import os
 from django import forms
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.forms import modelform_factory
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -47,7 +49,7 @@ from .models import (
 from . import busqueda, historial
 from .auditoria import registrar as registrar_auditoria
 from .notificaciones import notificar_area, notificar_cliente, notificar_staff
-from .permisos import SECCION_ESCRITURA, es_solo_cliente, seccion_requerida
+from .permisos import ROL_CLIENTE, ROL_TRABAJADOR, SECCION_ESCRITURA, asignar_rol, es_solo_cliente, seccion_requerida
 from .views_site import _nav
 
 # ---- Helpers comunes ------------------------------------------------------
@@ -147,13 +149,13 @@ def _montos_como_texto(form):
 # etiquetas en español, montos como texto y archivos.
 
 CAMPOS_CLIENTE = (
-    "nombre", "documento", "celular", "direccion", "fecha_nacimiento", "edad", "correo",
+    "nombre", "documento", "celular", "direccion", "fecha_nacimiento", "correo",
 )
 WIDGETS_CLIENTE = {"fecha_nacimiento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
 CAMPOS_EMPLEADO = (
     "nombre", "documento", "cargo", "celular", "direccion",
-    "salario", "edad", "fecha_nacimiento", "tareas_realizadas",
+    "salario", "fecha_nacimiento", "tareas_realizadas", "correo",
 )
 WIDGETS_EMPLEADO = {"fecha_nacimiento": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
 
@@ -199,7 +201,13 @@ WIDGETS_HISTORIAL = {
     "fecha_creacion": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
 }
 
-CAMPOS_ANALISIS = ("gastos", "fuentes_ingresos", "productos_vendidos", "id_administrador")
+CAMPOS_ANALISIS = (
+    "fecha", "fuentes_ingresos", "gastos", "fuente_ingreso",
+    "productos_vendidos", "id_administrador",
+)
+WIDGETS_ANALISIS = {
+    "fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+}
 
 
 def _form(modelo, campos, widgets=None, instance=None, data=None, files=None):
@@ -250,18 +258,138 @@ def _trabajador_en(form, obligatorio, etiqueta):
 
 
 def _form_cliente(request, instance=None):
-    """Cliente sin el campo edad: la edad se calcula en el modelo."""
+    """Cliente sin el campo edad; incluye la contraseña para crear su acceso."""
     form = _form_vista(Cliente, CAMPOS_CLIENTE, WIDGETS_CLIENTE, request, instance=instance)
     form.fields.pop("edad", None)
+    form.fields["contrasena"] = forms.CharField(
+        required=False,
+        label="Contraseña",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        help_text=(
+            "Déjala vacía para conservar la contraseña actual."
+            if instance is not None and instance.usuario_id
+            else "Mínimo 8 caracteres. Si la escribes, se crea la cuenta de acceso con el correo."
+        ),
+    )
     return form
+
+
+def _guardar_cliente_con_acceso(request, form):
+    """Guarda el cliente y crea/actualiza su cuenta de acceso si se indicó clave."""
+    cliente = form.instance
+    clave = (form.cleaned_data.get("contrasena") or "").strip()
+    correo = (form.cleaned_data.get("correo") or "").strip().lower()
+    usuario = cliente.usuario if cliente.usuario_id else None
+
+    if clave and len(clave) < 8:
+        form.add_error("contrasena", "La contraseña debe tener al menos 8 caracteres.")
+        return None
+    if clave and not correo:
+        form.add_error("correo", "Para crear la cuenta de acceso necesitas un correo.")
+        return None
+    if correo:
+        existente = User.objects.filter(
+            Q(username__iexact=correo) | Q(email__iexact=correo)
+        ).first()
+        if existente is not None and (usuario is None or existente.pk != usuario.pk):
+            form.add_error("correo", "Ya existe una cuenta con ese correo.")
+            return None
+
+    with transaction.atomic():
+        cliente = form.save()
+        if usuario is None and clave:
+            usuario = User(username=correo)
+        if usuario is not None:
+            usuario.username = correo
+            usuario.email = correo
+            usuario.first_name = cliente.nombre[:150]
+            usuario.is_active = True
+            if clave:
+                usuario.set_password(clave)
+            usuario.save()
+            asignar_rol(usuario, ROL_CLIENTE)
+            if cliente.usuario_id != usuario.pk:
+                cliente.usuario = usuario
+                cliente.save(update_fields=["usuario"])
+        registrar_auditoria(
+            request, "guardar", "Cliente", cliente,
+            f"Cliente {cliente.nombre} guardado con acceso {'creado' if clave else 'sin cambios'}.",
+        )
+    return cliente
 
 
 def _form_empleado(request, instance=None):
     form = _form_vista(Empleado, CAMPOS_EMPLEADO, WIDGETS_EMPLEADO, request, instance=instance)
+    form.fields.pop("edad", None)
     if instance is None:
-        form.fields.pop("edad", None)
         form.fields.pop("tareas_realizadas", None)
+    form.fields["contrasena"] = forms.CharField(
+        required=False,
+        label="Contraseña",
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        help_text=(
+            "Déjala vacía para conservar la contraseña actual."
+            if instance is not None and instance.usuario_id
+            else "Mínimo 8 caracteres. El trabajador iniciará sesión con su documento."
+        ),
+    )
     return form
+
+
+def _guardar_empleado_con_acceso(request, form):
+    """Guarda el trabajador y crea/actualiza su cuenta de acceso si se indicó clave."""
+    empleado = form.instance
+    clave = (form.cleaned_data.get("contrasena") or "").strip()
+    documento = (form.cleaned_data.get("documento") or "").strip()
+    correo = (form.cleaned_data.get("correo") or "").strip().lower()
+    usuario = empleado.usuario if empleado.usuario_id else None
+
+    if clave and len(clave) < 8:
+        form.add_error("contrasena", "La contraseña debe tener al menos 8 caracteres.")
+        return None
+    if documento and Empleado.objects.filter(
+        documento__iexact=documento
+    ).exclude(pk=empleado.pk).exists():
+        form.add_error("documento", "Ya existe un trabajador con ese documento.")
+        return None
+    if usuario is None and clave:
+        existente = User.objects.filter(
+            Q(username__iexact=documento) | Q(email__iexact=correo)
+        ).first() if correo else User.objects.filter(username__iexact=documento).first()
+        if existente is not None:
+            form.add_error("documento", "Ya existe una cuenta con ese documento o correo.")
+            return None
+    if usuario is not None and correo:
+        existente = User.objects.filter(
+            Q(username__iexact=correo) | Q(email__iexact=correo)
+        ).exclude(pk=usuario.pk).first()
+        if existente is not None:
+            form.add_error("correo", "Ya existe una cuenta con ese correo.")
+            return None
+
+    with transaction.atomic():
+        empleado = form.save()
+        if usuario is None and clave:
+            usuario = User(username=documento, email=correo, first_name=empleado.nombre[:150])
+            usuario.set_password(clave)
+            usuario.save()
+            asignar_rol(usuario, ROL_TRABAJADOR)
+        elif usuario is not None:
+            usuario.email = correo
+            usuario.first_name = empleado.nombre[:150]
+            if clave:
+                usuario.set_password(clave)
+            usuario.save()
+            if not usuario.groups.exists():
+                asignar_rol(usuario, ROL_TRABAJADOR)
+        if usuario is not None and empleado.usuario_id != usuario.pk:
+            empleado.usuario = usuario
+            empleado.save(update_fields=["usuario"])
+        registrar_auditoria(
+            request, "guardar", "Empleado", empleado,
+            f"Trabajador {empleado.nombre} guardado con acceso {'actualizado' if clave else 'sin cambios'}.",
+        )
+    return empleado
 
 
 def _form_administrador(request, instance=None):
@@ -280,8 +408,56 @@ def _form_historial(request, instance=None):
     return _form_vista(Historial, CAMPOS_HISTORIAL, WIDGETS_HISTORIAL, request, instance=instance)
 
 
+def _administrador_actual(usuario):
+    """Devuelve (o crea) el registro de Administrador vinculado al usuario."""
+    if usuario is None or not getattr(usuario, "is_authenticated", False):
+        return None
+    administrador = Administrador.objects.filter(usuario=usuario).first()
+    if administrador is not None:
+        return administrador
+
+    documento = (usuario.get_username() or "")[:50]
+    administrador = Administrador.objects.filter(
+        usuario__isnull=True, documento__iexact=documento
+    ).first()
+    if administrador is not None:
+        administrador.usuario = usuario
+        administrador.save(update_fields=["usuario"])
+        return administrador
+
+    nombre = (usuario.get_full_name() or usuario.get_username() or "Administrador")[:100]
+    return Administrador.objects.create(
+        nombre=nombre,
+        documento=documento,
+        celular="",
+        usuario=usuario,
+    )
+
+
 def _form_analisis(request, instance=None):
-    return _form_vista(AnalisisFinanciero, CAMPOS_ANALISIS, {}, request, instance=instance)
+    form = _form_vista(
+        AnalisisFinanciero, CAMPOS_ANALISIS, WIDGETS_ANALISIS, request, instance=instance
+    )
+    form.fields["fecha"].required = False
+    form.fields["fuente_ingreso"].required = False
+    if instance is None:
+        administrador = _administrador_actual(getattr(request, "user", None))
+        if administrador is not None:
+            form.fields["id_administrador"].initial = administrador.pk
+    return form
+
+
+def _guardar_analisis(request, form):
+    """Guarda el análisis con fecha y fuente aunque el formulario las omita."""
+    obj = form.save(commit=False)
+    obj.fecha = obj.fecha or timezone.localdate()
+    obj.fuente_ingreso = obj.fuente_ingreso or "directa"
+    obj.save()
+    registrar_auditoria(
+        request, "guardar", obj._meta.verbose_name, obj,
+        f"{obj._meta.verbose_name} guardado: {obj}",
+    )
+    return obj
 
 
 def _form_tarea(request, instance=None):
@@ -384,9 +560,10 @@ def cliente_lista(request):
 def cliente_crear(request):
     form = _form_cliente(request)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
-        messages.success(request, "Cliente creado correctamente.")
-        return redirect("kanview:cliente-lista")
+        cliente = _guardar_cliente_con_acceso(request, form)
+        if cliente is not None and not form.errors:
+            messages.success(request, "Cliente creado correctamente.")
+            return redirect("kanview:cliente-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nuevo cliente",
@@ -400,9 +577,10 @@ def cliente_editar(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     form = _form_cliente(request, instance=cliente)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
-        messages.success(request, "Cliente actualizado correctamente.")
-        return redirect("kanview:cliente-lista")
+        cliente = _guardar_cliente_con_acceso(request, form)
+        if cliente is not None and not form.errors:
+            messages.success(request, "Cliente actualizado correctamente.")
+            return redirect("kanview:cliente-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar cliente",
@@ -439,9 +617,10 @@ def empleado_lista(request):
 def empleado_crear(request):
     form = _form_empleado(request)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
-        messages.success(request, "Empleado creado correctamente.")
-        return redirect("kanview:empleado-lista")
+        empleado = _guardar_empleado_con_acceso(request, form)
+        if empleado is not None and not form.errors:
+            messages.success(request, "Empleado creado correctamente.")
+            return redirect("kanview:empleado-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nuevo empleado",
@@ -455,9 +634,10 @@ def empleado_editar(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
     form = _form_empleado(request, instance=empleado)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
-        messages.success(request, "Empleado actualizado correctamente.")
-        return redirect("kanview:empleado-lista")
+        empleado = _guardar_empleado_con_acceso(request, form)
+        if empleado is not None and not form.errors:
+            messages.success(request, "Empleado actualizado correctamente.")
+            return redirect("kanview:empleado-lista")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar empleado",
@@ -858,7 +1038,16 @@ def pedido_editar(request, pk):
 
 @seccion_requerida(SECCION_ESCRITURA["pedidos"])
 def pedido_eliminar(request, pk):
-    return _desactivar(request, get_object_or_404(Pedido, pk=pk), "pedido", "Pedido", "Pedidos")
+    """Elimina el pedido del tablero (desactivación reversible, no borrado físico)."""
+    pedido = get_object_or_404(Pedido, pk=pk)
+    if request.method == "POST":
+        return _desactivar(request, pedido, "pedido", "Pedido", "Pedidos")
+    return render(request, "kanview/pedido_confirm_delete.html", {
+        "pedido": pedido,
+        "cancel_url": reverse("kanview:pedido-detalle", args=[pedido.pk]),
+        "cabecera_titulo": f"Eliminar pedido {pedido.codigo_pedido}",
+        **_nav("Pedidos", request),
+    })
 
 
 @seccion_requerida(SECCION_ESCRITURA["pedidos"])
@@ -946,7 +1135,7 @@ def tarea_lista(request):
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
-        "tarea", "Tareas", ["Nombre", "Estado", "Inicio", "Fin", "Pedido"], filas, "Actividades",
+        "tarea", "Tareas", ["Nombre", "Estado", "Inicio", "Fin", "Pedido"], filas, "Tareas",
     ))
 
 
@@ -973,7 +1162,7 @@ def tarea_crear(request):
                     reverse("kanview:tarea-detalle", args=[tarea.pk]),
                 )
             messages.success(request, "Tarea creada correctamente.")
-            return redirect("kanview:tarea-lista")
+            return redirect("kanview:tareas")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nueva tarea",
@@ -996,7 +1185,7 @@ def tarea_editar(request, pk):
                 request.user,
             )
             messages.success(request, "Tarea actualizada correctamente.")
-            return redirect("kanview:tarea-lista")
+            return redirect("kanview:tareas")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar tarea",
@@ -1062,7 +1251,7 @@ def actividad_crear(request):
                     excepto=actividad.id_empleado_id,
                 )
             messages.success(request, "Actividad creada correctamente.")
-            return redirect("kanview:actividad-lista")
+            return redirect("kanview:actividades")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nueva actividad",
@@ -1097,7 +1286,7 @@ def actividad_editar(request, pk):
                     reverse("kanview:actividades"),
                 )
             messages.success(request, "Actividad actualizada correctamente.")
-            return redirect("kanview:actividad-lista")
+            return redirect("kanview:actividades")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar actividad",
@@ -1176,13 +1365,18 @@ def historial_reactivar(request, pk):
 @seccion_requerida("finanzas")
 def analisis_financiero_lista(request):
     filas = [
-        _fila(obj, [moneda_cop(obj.gastos), moneda_cop(obj.fuentes_ingresos), obj.productos_vendidos, obj.id_administrador])
-        for obj in AnalisisFinanciero.objects.select_related("id_administrador").order_by("-id")
+        _fila(
+            obj,
+            [obj.fecha, obj.get_fuente_ingreso_display(), moneda_cop(obj.fuentes_ingresos),
+             moneda_cop(obj.gastos), obj.productos_vendidos, obj.id_administrador],
+        )
+        for obj in AnalisisFinanciero.objects.select_related("id_administrador").order_by("-fecha", "-id")
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
         "analisis-financiero", "Análisis financiero",
-        ["Gastos", "Ingresos", "Productos vendidos", "Administrador"], filas, "Finanzas",
+        ["Fecha", "Fuente", "Ingresos", "Gastos", "Productos vendidos", "Administrador"],
+        filas, "Finanzas",
     ))
 
 
@@ -1190,7 +1384,7 @@ def analisis_financiero_lista(request):
 def analisis_financiero_crear(request):
     form = _form_analisis(request)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
+        _guardar_analisis(request, form)
         messages.success(request, "Análisis financiero creado correctamente.")
         return redirect("kanview:analisis-financiero-lista")
     return render(request, "kanview/crud/form.html", {
@@ -1206,7 +1400,7 @@ def analisis_financiero_editar(request, pk):
     registro = get_object_or_404(AnalisisFinanciero, pk=pk)
     form = _form_analisis(request, instance=registro)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
+        _guardar_analisis(request, form)
         messages.success(request, "Análisis financiero actualizado correctamente.")
         return redirect("kanview:analisis-financiero-lista")
     return render(request, "kanview/crud/form.html", {

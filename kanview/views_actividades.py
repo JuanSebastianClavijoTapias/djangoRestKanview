@@ -9,7 +9,7 @@ from . import busqueda
 from django.db.models import Q
 
 from .models import ESTADOS_KANBAN, Actividades, Empleado
-from .permisos import seccion_requerida
+from .permisos import puede, seccion_requerida
 from .views_site import _render
 
 # Columnas del tablero, en el orden real de ESTADOS_KANBAN.
@@ -73,6 +73,7 @@ def actividades(request):
         completadas=grupos["completado"],
         otras=otras,
         total_actividades=actividades_qs.count(),
+        puede_mover=puede(request.user, "tareas"),
         cargos=Empleado.CARGOS,
         cargo_activo=cargo,
         trabajadores=Empleado.objects.filter(activo=True).order_by("nombre"),

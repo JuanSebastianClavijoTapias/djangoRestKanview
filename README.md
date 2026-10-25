@@ -81,7 +81,7 @@ Todas bajo el prefijo `/api/`. Cada recurso tiene una ruta de lista (`GET` para 
 /logout/           Cerrar sesión
 /pedidos/          Tablero de pedidos
 /pedidos/<id>/     Detalle del pedido (aprobación, multimedia, factura e historial)
-/tareas/           Redirige al tablero de Procesos
+/tareas/           Listado y gestión de tareas
 /tareas/<id>/      Detalle y confirmación de una tarea
 /actividades/      Tablero de actividades con filtros por área
 /calendario/       Calendario de producción

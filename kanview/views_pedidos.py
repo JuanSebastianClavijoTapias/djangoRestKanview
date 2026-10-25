@@ -19,25 +19,26 @@ Reglas que aplican aquí:
   tablero.
 - El rol Cliente solo ve SUS pedidos (por el correo de su cuenta); si intenta
   abrir el detalle de un pedido ajeno recibe 404.
-- ``/tareas/`` ya no es un tablero: redirige aquí (se conserva el nombre de la
-  ruta para no romper enlaces viejos).
+- Las tareas y sus actividades se gestionan en el módulo «Tareas».
 """
 
-from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+import json
 
-from . import busqueda
-from .models import ESTADOS_KANBAN, Pedido
-from .permisos import es_solo_cliente, puede, seccion_requerida
+from django.db.models import Q
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.views.decorators.http import require_POST
+
+from . import busqueda, historial
+from .auditoria import registrar as registrar_auditoria
+from .models import ESTADOS_KANBAN, ESTADOS_PEDIDO_KANBAN, Pedido
+from .notificaciones import notificar_cliente, notificar_staff
+from .permisos import SECCION_ESCRITURA, es_administracion, es_solo_cliente, puede, seccion_requerida
 from .views_site import _render
 
-#: Columnas del tablero (estado calculado del pedido), en orden.
-COLUMNAS = (
-    ("pendiente", "Pendiente"),
-    ("en proceso", "En proceso"),
-    ("completado", "Completado"),
-)
+#: Columnas del tablero de pedidos, en orden.
+COLUMNAS = ESTADOS_PEDIDO_KANBAN
 
 #: Texto del modal cuando un campo viene vacío.
 SIN_DATO = "Sin dato"
@@ -75,6 +76,11 @@ def estado_del_pedido(pedido):
 def etiqueta_estado(estado):
     """Nombre visible de un estado calculado."""
     return dict(COLUMNAS).get(estado, estado.title())
+
+
+def estado_visible(pedido):
+    """Estado del tablero: el manual si existe; si no, el derivado de actividades."""
+    return pedido.estado_kanban or estado_del_pedido(pedido)
 
 
 # ---- Helpers (funciones, no clases) --------------------------------------
@@ -196,13 +202,85 @@ def _grupos_por_trabajador(actividades):
     return sorted(grupos.values(), key=lambda grupo: grupo["trabajador"].lower())
 
 
+def _tareas_del_pedido(pedido):
+    """Tareas visibles en la tarjeta y datos para su modal de actividades."""
+    tarjetas = []
+    modales = {}
+    for tarea in pedido.tareaspedido_set.all():
+        if not tarea.activo:
+            continue
+        actividades = [a for a in tarea.actividades_set.all() if a.activo]
+        total = len(actividades)
+        completadas = sum(1 for a in actividades if a.estado == "completado")
+        responsable = tarea.id_empleado
+        if responsable is None:
+            responsable = next((a.id_empleado for a in actividades if a.id_empleado), None)
+        cargo = responsable.get_cargo_display() if responsable else "Sin trabajador asignado"
+        iniciales = responsable.nombre[:2].upper() if responsable else "?"
+        grupos = [
+            {
+                "clave": clave,
+                "titulo": titulo,
+                "actividades": [
+                    {
+                        "pk": actividad.pk,
+                        "nombre": actividad.nombre,
+                        "descripcion": actividad.descripcion,
+                        "estado": actividad.get_estado_display(),
+                        "empleado": (
+                            actividad.id_empleado.nombre
+                            if actividad.id_empleado
+                            else "Sin asignar"
+                        ),
+                        "cargo": (
+                            actividad.id_empleado.get_cargo_display()
+                            if actividad.id_empleado
+                            else "Sin trabajador asignado"
+                        ),
+                        "detalle_id": f"actividad-{actividad.pk}",
+                    }
+                    for actividad in actividades
+                    if actividad.estado == clave
+                ],
+            }
+            for clave, titulo in ESTADOS_KANBAN
+        ]
+        tarjetas.append({
+            "pk": tarea.pk,
+            "nombre": tarea.nombre,
+            "descripcion": tarea.descripcion,
+            "estado": tarea.estado,
+            "estado_etiqueta": tarea.get_estado_display(),
+            "responsable": responsable.nombre if responsable else "Sin asignar",
+            "cargo": cargo,
+            "iniciales": iniciales,
+            "total": total,
+            "completadas": completadas,
+            "avance": round(completadas * 100 / total) if total else 0,
+            "detalle_id": f"tarea-{tarea.pk}",
+            "url": reverse("kanview:tarea-detalle", args=[tarea.pk]),
+        })
+        modales[f"tarea-{tarea.pk}"] = {
+            "nombre": tarea.nombre,
+            "descripcion": tarea.descripcion,
+            "estado": tarea.get_estado_display(),
+            "responsable": responsable.nombre if responsable else "Sin asignar",
+            "cargo": cargo,
+            "fecha_inicio": _fecha(tarea.fecha_inicio),
+            "fecha_fin": _fecha(tarea.fecha_fin),
+            "grupos": grupos,
+        }
+    return tarjetas, modales
+
+
 def _tarjeta(pedido):
     """Datos de la tarjeta del pedido para el tablero."""
     actividades = _actividades_de(pedido)
     total = len(actividades)
     completadas = sum(1 for actividad in actividades if actividad.estado == "completado")
-    estado = estado_del_pedido(pedido)
+    estado = estado_visible(pedido)
     vencida = bool(pedido.fecha_limite and pedido.fecha_limite < _hoy())
+    tareas, tareas_modal = _tareas_del_pedido(pedido)
     return {
         "pk": pedido.pk,
         "codigo": pedido.codigo_pedido,
@@ -219,17 +297,12 @@ def _tarjeta(pedido):
         "avance": round(completadas * 100 / total) if total else 0,
         "grupos": _grupos_por_trabajador(actividades),
         "sin_actividades": total == 0,
+        "sin_tareas": not tareas,
         "url_detalle": reverse("kanview:pedido-detalle", args=[pedido.pk]),
+        "url_estado": reverse("kanview:pedido-estado", args=[pedido.pk]),
         "url_actividades": f"{reverse('kanview:tarea-crear')}?pedido={pedido.pk}",
-        "tareas": [
-            {
-                "pk": tarea.pk,
-                "nombre": tarea.nombre,
-                "estado": tarea.get_estado_display(),
-                "url": reverse("kanview:tarea-detalle", args=[tarea.pk]),
-            }
-            for tarea in pedido.tareaspedido_set.all()
-        ],
+        "tareas": tareas,
+        "tareas_modal": tareas_modal,
     }
 
 
@@ -245,7 +318,7 @@ def _fila_lista(pedido):
     actividades = _actividades_de(pedido)
     total = len(actividades)
     completadas = sum(1 for actividad in actividades if actividad.estado == "completado")
-    estado = estado_del_pedido(pedido)
+    estado = estado_visible(pedido)
     return {
         "pk": pedido.pk,
         "codigo": pedido.codigo_pedido,
@@ -273,6 +346,9 @@ def pedidos_tablero(request):
     vista = _vista(request)
 
     tarjetas = [_tarjeta(pedido) for pedido in pedidos]
+    tareas_modales = {}
+    for tarjeta in tarjetas:
+        tareas_modales.update(tarjeta.pop("tareas_modal", {}))
     columnas = [
         {
             "clave": clave,
@@ -302,9 +378,73 @@ def pedidos_tablero(request):
         url_lista=url_vista(request, "lista"),
         filas_pedidos=[_fila_lista(pedido) for pedido in pedidos] if vista == "lista" else [],
         detalle_modales=detalles,
+        tareas_modales=tareas_modales,
+        puede_gestionar=puede(request.user, SECCION_ESCRITURA["pedidos"]),
+        puede_mover=(
+            puede(request.user, SECCION_ESCRITURA["pedidos"])
+            or es_solo_cliente(request.user)
+        ),
+        es_cliente=es_solo_cliente(request.user),
         estados_kanban=ESTADOS_KANBAN,
         **busqueda.contexto(request, "Buscar procesos, clientes o trabajadores...", "procesos"),
     )
+
+
+@seccion_requerida("pedidos")
+@require_POST
+def pedido_estado(request, pk):
+    """Cambia el estado manual del pedido desde el tablero (drag & drop).
+
+    El Cliente solo puede mover sus propios pedidos; el personal con permiso de
+    gestión puede mover cualquiera.
+    """
+    pedido = get_object_or_404(Pedido, pk=pk)
+    es_cliente = es_solo_cliente(request.user)
+    if es_cliente:
+        if (pedido.id_cliente.correo or "").lower() != (request.user.email or "").lower():
+            return JsonResponse({"error": "No puedes modificar un pedido ajeno."}, status=403)
+    elif not puede(request.user, SECCION_ESCRITURA["pedidos"]):
+        return JsonResponse({"error": "No tienes permiso para mover pedidos."}, status=403)
+    try:
+        cuerpo = json.loads(request.body or "{}")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        cuerpo = {}
+    estado = (cuerpo.get("estado") or request.POST.get("estado") or "").strip()
+    validos = dict(ESTADOS_PEDIDO_KANBAN)
+    if estado not in validos:
+        return JsonResponse({"error": "Estado no válido."}, status=400)
+    anterior = estado_visible(pedido)
+    pedido.estado_kanban = estado
+    pedido.save(update_fields=["estado_kanban"])
+    if anterior != estado:
+        historial.registrar(
+            pedido, "estado_tablero",
+            f"Pedido movido de «{etiqueta_estado(anterior)}» a «{etiqueta_estado(estado)}».",
+            request.user,
+        )
+        registrar_auditoria(
+            request, "mover", "Pedido", pedido,
+            f"Pedido {pedido.codigo_pedido}: {etiqueta_estado(anterior)} → {etiqueta_estado(estado)}",
+        )
+        notificar_cliente(
+            pedido.id_cliente,
+            "pedido",
+            f"Tu pedido {pedido.codigo_pedido} pasó a «{etiqueta_estado(estado)}».",
+            reverse("kanview:pedido-detalle", args=[pedido.pk]),
+            asunto="Kanview · Estado de tu pedido",
+            enviar_email=False,
+        )
+        notificar_staff(
+            "pedido",
+            f"Pedido {pedido.codigo_pedido}: {etiqueta_estado(estado)}.",
+            reverse("kanview:pedido-detalle", args=[pedido.pk]),
+        )
+    return JsonResponse({
+        "ok": True,
+        "pedido": pedido.pk,
+        "estado": estado,
+        "etiqueta": etiqueta_estado(estado),
+    })
 
 
 @seccion_requerida("pedidos")
@@ -318,13 +458,13 @@ def pedido_detalle(request, pk):
         "Procesos",
         pedido=pedido,
         puede_gestionar=puede(request.user, "gestion-pedidos"),
+        es_cliente=es_solo_cliente(request.user),
+        puede_revisar_solicitudes=es_administracion(request.user),
         # Un detalle no tiene lista que filtrar: el header muestra su título.
-        cabecera_titulo=f"Pedido {pedido.codigo_pedido}",
+        cabecera_titulo=(
+            f"Mi pedido {pedido.codigo_pedido}"
+            if es_solo_cliente(request.user)
+            else f"Pedido {pedido.codigo_pedido}"
+        ),
         mostrar_buscador=False,
     )
-
-
-@seccion_requerida("pedidos")
-def redirigir_a_procesos(request):
-    """``/tareas/`` ya no es un tablero: lleva al único kanban («Procesos»)."""
-    return redirect("kanview:pedidos-tablero")

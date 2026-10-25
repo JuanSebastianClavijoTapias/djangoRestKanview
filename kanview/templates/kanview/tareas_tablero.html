@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kanview - Tareas</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+{% include "kanview/_tailwind_config.html" %}
+<style>
+    .neomorphic-card { background:#fff; box-shadow:8px 8px 16px rgba(0,0,0,.03), -8px -8px 16px #fff; border-radius:20px; }
+    .kanban-column { background:#f5f3f3; border-radius:20px; }
+</style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased">
+{% include "kanview/_sidebar.html" %}
+{% include "kanview/_header.html" %}
+<main class="lg:ml-64 pt-24 px-container-padding-mobile lg:px-container-padding-desktop pb-24 min-h-screen">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+<div>
+<h2 class="font-display text-display text-on-surface font-bold">Tareas</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Arrastra una tarea para cambiar su estado. {{ total_tareas }} tarea{{ total_tareas|pluralize }} activa{{ total_tareas|pluralize }}.</p>
+</div>
+<div class="flex flex-wrap gap-2">
+<a class="px-4 py-2.5 rounded-xl border bg-white text-sm font-semibold" href="{% url 'kanview:tarea-lista' %}">Vista lista</a>
+<a class="px-4 py-2.5 rounded-xl bg-primary text-on-primary text-sm font-semibold" href="{% url 'kanview:tarea-crear' %}">Nueva tarea</a>
+</div>
+</div>
+<form class="neomorphic-card p-4 mb-6 flex flex-wrap gap-3 items-end" method="get">
+<div>
+<label class="text-xs uppercase text-gray-500" for="filtro-trabajador">Responsable</label>
+<select class="rounded-xl border px-3 py-2" id="filtro-trabajador" name="trabajador">
+<option value="">Todos</option>
+{% for empleado in trabajadores %}<option value="{{ empleado.pk }}"{% if trabajador_activo == empleado.pk|stringformat:"s" %} selected{% endif %}>{{ empleado.nombre }}</option>{% endfor %}
+</select>
+</div>
+<button class="bg-[#006565] text-white px-4 py-2 rounded-xl text-sm font-semibold" type="submit">Filtrar</button>
+{% if trabajador_activo %}<a class="text-sm font-semibold text-gray-500" href="{% url 'kanview:tareas' %}">Limpiar</a>{% endif %}
+</form>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-card-gap" data-kanban-board>
+{% for columna in columnas %}
+<section class="kanban-column p-4 flex flex-col min-w-0" data-kanban-column data-columna="{{ columna.clave }}" data-vacio-texto="Sin tareas en esta columna.">
+<div class="flex items-center justify-between gap-2 mb-4">
+<h3 class="text-[15px] font-semibold text-on-surface">{{ columna.titulo }}</h3>
+<span class="bg-white/80 text-on-surface-variant px-2 py-1 rounded-full text-xs font-semibold" data-kanban-count>{{ columna.tareas|length }}</span>
+</div>
+<div class="flex flex-col gap-4" data-kanban-cards>
+{% for tarea in columna.tareas %}
+<article class="kanban-drag-card neomorphic-card p-5" data-kanban-card data-tarea="{{ tarea.pk }}" data-estado="{{ tarea.estado }}" data-url-estado="{% url 'kanview:tarea-estado' tarea.pk %}"{% if puede_mover %} draggable="true"{% endif %}>
+<div class="flex items-start justify-between gap-2 mb-2">
+<span class="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{{ tarea.id_pedido.codigo_pedido }}</span>
+<span class="text-xs text-on-surface-variant" data-kanban-estado>{{ tarea.get_estado_display }}</span>
+</div>
+<h4 class="font-semibold text-on-surface mb-1">{{ tarea.nombre }}</h4>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-3">{{ tarea.descripcion }}</p>
+<div class="text-xs text-on-surface-variant flex flex-wrap gap-2 mb-3">
+<span>{{ tarea.id_empleado.nombre|default:"Sin responsable" }}</span>
+<span>·</span>
+<span>{{ tarea.fecha_inicio|date:"d/m/Y" }} → {{ tarea.fecha_fin|date:"d/m/Y" }}</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1.5 mb-3"><div class="bg-primary h-1.5 rounded-full" style="width: {{ tarea.avance }}%"></div></div>
+<div class="flex items-center justify-between gap-2 text-xs">
+<a class="text-primary font-semibold hover:underline" href="{% url 'kanview:tarea-detalle' tarea.pk %}">Ver detalle</a>
+<a class="text-on-surface-variant hover:underline" href="{% url 'kanview:tarea-editar' tarea.pk %}">Editar</a>
+</div>
+</article>
+{% empty %}
+<p class="text-sm text-on-surface-variant text-center py-6" data-vacio>Sin tareas en esta columna.</p>
+{% endfor %}
+</div>
+</section>
+{% endfor %}
+</div>
+</main>
+{% include "kanview/_kanban_drag.html" %}
+</body></html>

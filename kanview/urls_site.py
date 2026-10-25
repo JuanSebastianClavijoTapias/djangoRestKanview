@@ -99,6 +99,7 @@ urlpatterns = [
 
     # Pantallas de diseño (Stitch) conectadas a datos reales
     path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
+    path("pedidos/<int:pk>/estado/", views_pedidos.pedido_estado, name="pedido-estado"),
     path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),
     path("pedidos/<int:pk>/aprobar/", views_pedido_acciones.pedido_aprobar, name="pedido-aprobar"),
     path("pedidos/<int:pk>/rechazar/", views_pedido_acciones.pedido_rechazar, name="pedido-rechazar"),
@@ -114,9 +115,8 @@ urlpatterns = [
     path("evidencias/<int:pk>/eliminar/", views_pedido_acciones.evidencia_eliminar, name="evidencia-eliminar"),
     path("evidencias/<int:pk>/archivo/", views_pedido_acciones.evidencia_archivo, name="evidencia-archivo"),
     path("evidencias/<int:pk>/<str:token>/", views_pedido_acciones.evidencia_publica, name="evidencia-publica"),
-    # /tareas/ ya no es un tablero: es el mismo kanban único («Procesos»). Se
-    # conserva el nombre de la ruta porque hay enlaces y avisos antiguos.
-    path("tareas/", views_pedidos.redirigir_a_procesos, name="tareas"),
+    # Módulo de tareas: tablero Kanban con acceso a detalle y confirmación.
+    path("tareas/", views_tareas.tareas_tablero, name="tareas"),
     path("tareas/<int:pk>/", views_tareas.tarea_detalle, name="tarea-detalle"),
     path("tareas/<int:pk>/confirmar/", views_tareas.tarea_confirmar, name="tarea-confirmar"),
     path("tareas/<int:pk>/estado/", views_tareas.tarea_estado, name="tarea-estado"),

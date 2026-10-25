@@ -7,6 +7,9 @@ Aquí está el superconjunto de los tokens que ya usaban las pantallas de diseñ
 con los mismos valores: no se inventó ninguno. Se incluye DESPUÉS del CDN de
 Tailwind y antes de la etiqueta de cierre del head.
 {% endcomment %}
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
     tailwind.config = {
         darkMode: "class",
@@ -77,14 +80,14 @@ Tailwind y antes de la etiqueta de cierre del head.
                     "gutter": "24px"
                 },
                 fontFamily: {
-                    "headline-lg": ["Inter"],
-                    "display": ["Inter"],
-                    "body-lg": ["Inter"],
-                    "body-md": ["Inter"],
-                    "label-sm": ["Inter"],
-                    "headline-md": ["Inter"],
-                    "headline-lg-mobile": ["Inter"],
-                    "label-md": ["Inter"]
+                    "headline-lg": ["Poppins"],
+                    "display": ["Poppins"],
+                    "body-lg": ["Poppins"],
+                    "body-md": ["Poppins"],
+                    "label-sm": ["Poppins"],
+                    "headline-md": ["Poppins"],
+                    "headline-lg-mobile": ["Poppins"],
+                    "label-md": ["Poppins"]
                 },
                 fontSize: {
                     "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
@@ -117,4 +120,33 @@ Tailwind y antes de la etiqueta de cierre del head.
     /* Menú móvil: el sidebar (hidden lg:flex) se abre como panel deslizante. */
     @keyframes kanview-deslizar-entrada{from{transform:translateX(-100%);}to{transform:translateX(0);}}
     #sidebar.abierto{display:flex;animation:kanview-deslizar-entrada .18s ease-out;}
+    body, button, input, select, textarea, .material-symbols-outlined { font-family: 'Poppins', sans-serif; }
+    .material-symbols-outlined { font-family: 'Material Symbols Outlined' !important; }
+</style>
+
+<style>
+    /* Paleta compartida de tarjetas para todos los módulos. */
+    .neomorphic-card:not(.kanban-drag-card),
+    .bg-white.rounded-2xl:not(.kanban-drag-card),
+    .bg-white.rounded-3xl:not(.kanban-drag-card),
+    .bg-white.rounded-\[24px\]:not(.kanban-drag-card),
+    .bg-surface-container-lowest.rounded-xl:not(.kanban-drag-card),
+    .bg-surface-container-lowest.rounded-2xl:not(.kanban-drag-card) {
+        background: linear-gradient(135deg, #fbfdfe 0%, #e9f4f9 100%) !important;
+        border: 1px solid rgba(79, 150, 181, .16);
+    }
+
+    /* Alternancia suave: café, azul claro y gris en las rejillas de tarjetas. */
+    .grid > .neomorphic-card:nth-child(3n+2):not(.kanban-drag-card),
+    .grid > .bg-white.rounded-2xl:nth-child(3n+2):not(.kanban-drag-card),
+    .grid > .bg-surface-container-lowest.rounded-xl:nth-child(3n+2):not(.kanban-drag-card) {
+        background: linear-gradient(135deg, #fdfaf7 0%, #f2e8de 100%) !important;
+        border-color: rgba(139, 94, 60, .18) !important;
+    }
+    .grid > .neomorphic-card:nth-child(3n):not(.kanban-drag-card),
+    .grid > .bg-white.rounded-2xl:nth-child(3n):not(.kanban-drag-card),
+    .grid > .bg-surface-container-lowest.rounded-xl:nth-child(3n):not(.kanban-drag-card) {
+        background: linear-gradient(135deg, #fbfcfc 0%, #eef0f2 100%) !important;
+        border-color: rgba(80, 88, 98, .16) !important;
+    }
 </style>

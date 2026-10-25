@@ -7,7 +7,7 @@ Reglas acordadas:
 
     Administrador -> todo
     Secretaria    -> todo, incluidos usuarios
-    Trabajador    -> todo menos finanzas (y sin gestión de usuarios)
+    Trabajador    -> todo menos finanzas, auditoría y gestión de usuarios
     Cliente       -> solo su panel y sus pedidos
 """
 
@@ -28,10 +28,10 @@ ROLES = (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR, ROL_CLIENTE)
 #: Las secciones `gestion-*` separan la ESCRITURA de la LECTURA: el rol Cliente
 #: solo tiene lectura de `pedidos` y `catalogo` (los suyos), nunca escritura.
 SECCIONES = {
-    "panel": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR, ROL_CLIENTE),
+    "panel": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR),
     "pedidos": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR, ROL_CLIENTE),
     "gestion-pedidos": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR),
-    "catalogo": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR, ROL_CLIENTE),
+    "catalogo": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR),
     "gestion-catalogo": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR),
     "inventario": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR),
     "tareas": (ROL_ADMINISTRADOR, ROL_SECRETARIA, ROL_TRABAJADOR),
@@ -61,6 +61,13 @@ def es_administrador(usuario):
     if not usuario or not usuario.is_authenticated:
         return False
     return usuario.is_superuser or ROL_ADMINISTRADOR in roles_de(usuario)
+
+
+def es_administracion(usuario):
+    """True para Administración o Secretaría (revisión de solicitudes)."""
+    if not usuario or not usuario.is_authenticated:
+        return False
+    return es_administrador(usuario) or ROL_SECRETARIA in roles_de(usuario)
 
 
 def es_solo_cliente(usuario):

@@ -1,0 +1,179 @@
+<style>
+    /* Paleta de las tarjetas Kanban: gris, azul claro y café. */
+    .kanban-drag-card {
+        --kanban-bg: #f1f3f5;
+        --kanban-bg-soft: #fafbfc;
+        --kanban-border: #8f969f;
+        --kanban-text: #20242a;
+        --kanban-muted: #4b5563;
+        color: var(--kanban-text);
+    }
+    .kanban-drag-card[data-estado="pendiente"] {
+        --kanban-bg: #e9ecef;
+        --kanban-bg-soft: #f7f8f9;
+        --kanban-border: #7c838c;
+        --kanban-text: #24272c;
+        --kanban-muted: #505862;
+    }
+    .kanban-drag-card[data-estado="en proceso"],
+    .kanban-drag-card[data-estado="en progreso"] {
+        --kanban-bg: #dff0f7;
+        --kanban-bg-soft: #f4fbfd;
+        --kanban-border: #4f96b5;
+        --kanban-text: #123747;
+        --kanban-muted: #376071;
+    }
+    .kanban-drag-card[data-estado="completado"] {
+        --kanban-bg: #f2e8de;
+        --kanban-bg-soft: #fbf7f2;
+        --kanban-border: #8b5e3c;
+        --kanban-text: #3d2a1d;
+        --kanban-muted: #6d4c35;
+    }
+    .kanban-drag-card .text-on-surface,
+    .kanban-drag-card h4 {
+        color: var(--kanban-text);
+    }
+    .kanban-drag-card[data-estado] {
+        background: linear-gradient(135deg, var(--kanban-bg-soft), var(--kanban-bg));
+        border: 1px solid rgba(0, 0, 0, .06);
+        border-left: 5px solid var(--kanban-border);
+        color: var(--kanban-text);
+        opacity: 1;
+    }
+    .kanban-drag-card .text-on-surface-variant,
+    .kanban-drag-card[data-estado="completado"] .text-outline {
+        color: var(--kanban-muted);
+    }
+    [data-kanban-column][data-columna="pendiente"] h3 { color: #4b5563; }
+    [data-kanban-column][data-columna="en proceso"] h3,
+    [data-kanban-column][data-columna="en progreso"] h3 { color: #2f6f8f; }
+    [data-kanban-column][data-columna="completado"] h3 { color: #7a4e2d; }
+    .kanban-drag-card[draggable="true"] { cursor: grab; transition: opacity .15s ease, transform .15s ease; }
+    .kanban-drag-card[draggable="true"]:active { cursor: grabbing; }
+    .kanban-drag-card.arrastrando { opacity: .45; transform: scale(.98); }
+    .kanban-drop-target { outline: 2px dashed #006565; outline-offset: -5px; background-color: #e3fffe !important; }
+</style>
+<script>
+(function () {
+    document.querySelectorAll('[data-kanban-board]').forEach(function (tablero) {
+        const token = '{{ csrf_token }}';
+        let tarjeta = null;
+
+        function listaDe(columna) {
+            return columna.querySelector('[data-kanban-cards]') || columna;
+        }
+
+        function vacioDe(columna) {
+            let vacio = columna.querySelector('[data-vacio]');
+            if (vacio) { return vacio; }
+            vacio = document.createElement('p');
+            vacio.dataset.vacio = '1';
+            vacio.className = 'text-sm text-on-surface-variant text-center py-6 hidden';
+            vacio.textContent = columna.dataset.vacioTexto || 'Sin tarjetas en esta columna.';
+            listaDe(columna).appendChild(vacio);
+            return vacio;
+        }
+
+        function actualizarColumna(columna) {
+            const lista = listaDe(columna);
+            const cantidad = lista.querySelectorAll('[data-kanban-card]').length;
+            const contador = columna.querySelector('[data-kanban-count]');
+            if (contador) { contador.textContent = cantidad; }
+            const vacio = vacioDe(columna);
+            vacio.classList.toggle('hidden', cantidad > 0);
+        }
+
+        function limpiar() {
+            tablero.querySelectorAll('[data-kanban-column]').forEach(function (columna) {
+                columna.classList.remove('kanban-drop-target');
+            });
+        }
+
+        tablero.querySelectorAll('[data-kanban-card]').forEach(function (card) {
+            card.addEventListener('dragstart', function (evento) {
+                if (evento.target.closest('a, button, input, select, textarea, form')) {
+                    evento.preventDefault();
+                    return;
+                }
+                tarjeta = card;
+                card.classList.add('arrastrando');
+                evento.dataTransfer.effectAllowed = 'move';
+                evento.dataTransfer.setData('text/plain', card.dataset.estado || '');
+            });
+            card.addEventListener('dragend', function () {
+                card.classList.remove('arrastrando');
+                tarjeta = null;
+                limpiar();
+            });
+        });
+
+        tablero.querySelectorAll('[data-kanban-column]').forEach(function (columna) {
+            columna.addEventListener('dragover', function (evento) {
+                if (!tarjeta) { return; }
+                evento.preventDefault();
+                evento.dataTransfer.dropEffect = 'move';
+                limpiar();
+                columna.classList.add('kanban-drop-target');
+            });
+            columna.addEventListener('dragleave', function (evento) {
+                if (!columna.contains(evento.relatedTarget)) {
+                    columna.classList.remove('kanban-drop-target');
+                }
+            });
+            columna.addEventListener('drop', async function (evento) {
+                evento.preventDefault();
+                limpiar();
+                const estado = columna.dataset.columna;
+                const actual = tarjeta;
+                if (!actual || !estado || actual.dataset.estado === estado) { return; }
+
+                const origen = actual.parentElement;
+                const siguiente = actual.nextElementSibling;
+                const estadoAnterior = actual.dataset.estado;
+                const etiquetaAnterior = actual.querySelector('[data-kanban-estado]');
+                const textoEtiquetaAnterior = etiquetaAnterior ? etiquetaAnterior.textContent : '';
+                const destinoLista = listaDe(columna);
+                const tituloDestino = (columna.querySelector('h3') || {}).textContent || estado;
+
+                actual.dataset.estado = estado;
+                destinoLista.appendChild(actual);
+                const etiqueta = actual.querySelector('[data-kanban-estado]');
+                if (etiqueta) { etiqueta.textContent = tituloDestino.trim(); }
+                actualizarColumna(origen.closest('[data-kanban-column]') || origen);
+                actualizarColumna(columna);
+
+                try {
+                    const respuesta = await fetch(actual.dataset.urlEstado, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': token,
+                        },
+                        body: new URLSearchParams({ estado: estado }).toString(),
+                    });
+                    if (!respuesta.ok || respuesta.redirected) {
+                        const datos = await respuesta.json().catch(function () { return {}; });
+                        throw new Error(datos.error || 'No se pudo cambiar el estado.');
+                    }
+                    const datos = await respuesta.json();
+                    actual.dataset.estado = datos.estado || estado;
+                    if (etiqueta && datos.etiqueta) { etiqueta.textContent = datos.etiqueta; }
+                } catch (error) {
+                    actual.dataset.estado = estadoAnterior;
+                    if (siguiente && siguiente.parentElement === origen) {
+                        origen.insertBefore(actual, siguiente);
+                    } else {
+                        origen.appendChild(actual);
+                    }
+                    if (etiquetaAnterior) { etiquetaAnterior.textContent = textoEtiquetaAnterior; }
+                    actualizarColumna(origen.closest('[data-kanban-column]') || origen);
+                    actualizarColumna(columna);
+                    window.alert(error.message || 'No se pudo cambiar el estado.');
+                }
+            });
+        });
+    });
+})();
+</script>

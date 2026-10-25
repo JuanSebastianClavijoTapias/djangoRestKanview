@@ -212,7 +212,9 @@ def usuario_acceso(request, tipo, pk):
         or _correo_sugerido(tipo, persona)
     )
     clave = request.POST.get("clave") or ""
-    rol = request.POST.get("rol") or (ROL_CLIENTE if tipo == "cliente" else ROL_TRABAJADOR)
+    user = _usuario_de(tipo, persona)
+    rol_actual = rol_principal(user) if user is not None else ""
+    rol = request.POST.get("rol") or rol_actual or (ROL_CLIENTE if tipo == "cliente" else ROL_TRABAJADOR)
     if rol not in ROLES:
         rol = ROL_CLIENTE if tipo == "cliente" else ROL_TRABAJADOR
 
@@ -224,7 +226,6 @@ def usuario_acceso(request, tipo, pk):
         messages.error(request, "La contraseña debe tener al menos 8 caracteres.")
         return redirect(destino)
 
-    user = _usuario_de(tipo, persona)
     # El correo no puede pertenecer a otra cuenta: eso era justo lo que permitía
     # apropiarse de la cuenta de alguien más.
     existente = User.objects.filter(Q(username__iexact=correo) | Q(email__iexact=correo)).first()

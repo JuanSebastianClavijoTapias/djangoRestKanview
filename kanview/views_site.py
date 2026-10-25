@@ -27,11 +27,12 @@ from .permisos import (
 
 # Elementos del menú lateral: (icono, etiqueta, nombre de la URL, sección que lo protege).
 # La vista filtra esta lista según el rol del usuario (ver _nav).
-# Un solo tablero: «Procesos» (/pedidos/). El CRUD de tareas vive fuera del menú,
-# enlazado desde el propio tablero; el stock se gestiona en «Productos».
+# Un solo tablero: «Procesos» (/pedidos/). Las tareas y sus actividades se
+# gestionan desde el módulo «Tareas»; el stock se gestiona en «Productos».
 NAV_ITEMS = [
     ("dashboard", "Panel", "kanview:dashboard", "panel"),
     ("view_kanban", "Procesos", "kanview:pedidos-tablero", "pedidos"),
+    ("assignment", "Tareas", "kanview:tareas", "tareas"),
     ("history", "Actividades", "kanview:actividades", "tareas"),
     ("sell", "Productos", "kanview:producto-lista", "catalogo"),
     ("menu_book", "Catálogo", "kanview:catalogo", "catalogo"),
@@ -59,13 +60,15 @@ def _nav(activo=None, request=None):
 
 # ---- Autenticación --------------------------------------------------------
 
-def _destino_seguro(request, siguiente):
+def _destino_seguro(request, siguiente, usuario=None):
     if siguiente and url_has_allowed_host_and_scheme(
         siguiente,
         allowed_hosts={request.get_host()},
         require_https=request.is_secure(),
     ):
         return siguiente
+    if usuario is not None and es_solo_cliente(usuario):
+        return reverse("kanview:pedidos-tablero")
     return reverse("kanview:dashboard")
 
 
@@ -74,7 +77,7 @@ def iniciar_sesion(request):
     if request.method == "POST" and form.is_valid():
         usuario = form.get_user()
         siguiente = _destino_seguro(
-            request, request.POST.get("next") or request.GET.get("next")
+            request, request.POST.get("next") or request.GET.get("next"), usuario
         )
         perfil = perfil_de(usuario)
         if perfil and perfil.totp_habilitado:
@@ -105,7 +108,7 @@ def login_2fa(request):
     perfil = perfil_de(usuario)
     if not perfil.totp_habilitado:
         login(request, usuario)
-        return redirect(_destino_seguro(request, request.session.pop("pre_2fa_next", "")))
+        return redirect(_destino_seguro(request, request.session.pop("pre_2fa_next", ""), usuario))
     if request.method == "POST":
         codigo = (request.POST.get("codigo") or "").strip()
         valido = verificar_totp(perfil.totp_secret, codigo) or consumir_codigo_respaldo(perfil, codigo)
@@ -114,7 +117,7 @@ def login_2fa(request):
             request.session.pop("pre_2fa_user_id", None)
             login(request, usuario)
             registrar_auditoria(request, "login_2fa", "Usuario", usuario, f"Inicio de sesión con 2FA de {usuario}", usuario=usuario)
-            return redirect(_destino_seguro(request, siguiente))
+            return redirect(_destino_seguro(request, siguiente, usuario))
         registrar_auditoria(
             request, "2fa_fallido", "Usuario", usuario,
             f"Código 2FA incorrecto para {usuario}", usuario=usuario,
@@ -243,8 +246,9 @@ def recuperar_restablecer(request, uidb64, token):
 
 @login_required
 def dashboard(request):
-    """Panel general. Solo cuentan los registros vigentes; el rol Cliente solo
-    ve sus propios pedidos."""
+    """Panel general. El Cliente no tiene panel: va directo a sus procesos."""
+    if es_solo_cliente(request.user):
+        return redirect("kanview:pedidos-tablero")
     pedidos = Pedido.objects.filter(activo=True)
     clientes = Cliente.objects.filter(activo=True)
 
@@ -252,6 +256,7 @@ def dashboard(request):
         pedidos = pedidos.filter(id_cliente__correo__iexact=request.user.email)
         clientes = clientes.filter(correo__iexact=request.user.email)
 
+    rol = rol_principal(request.user)
     contexto = {
         "total_clientes": clientes.count(),
         "total_empleados": Empleado.objects.filter(activo=True).count(),
@@ -259,7 +264,8 @@ def dashboard(request):
         "total_pedidos": pedidos.count(),
         "pedidos_activos": pedidos.filter(estado="activo").count(),
         "ultimos_pedidos": pedidos.order_by("-id")[:5],
-        "rol": rol_principal(request.user),
+        "rol": rol,
+        "es_trabajador": rol == "Trabajador",
         "cabecera_titulo": "Panel",
         **_nav("Panel", request),
     }

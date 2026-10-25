@@ -272,12 +272,12 @@ def notificar_staff(tipo, mensaje, url=""):
     return [crear_notificacion(usuario, tipo, mensaje, url) for usuario in _usuarios_staff()]
 
 
-def notificar_cliente(cliente, tipo, mensaje, url="", asunto=None):
-    """Notifica al cliente por campana si tiene cuenta y por correo si tiene email."""
+def notificar_cliente(cliente, tipo, mensaje, url="", asunto=None, enviar_email=True):
+    """Notifica al cliente por campana si tiene cuenta y por correo si se pide."""
     creada = crear_notificacion(getattr(cliente, "usuario", None), tipo, mensaje, url)
     correo = (getattr(cliente, "correo", "") or "").strip()
     enviado = False
-    if correo:
+    if correo and enviar_email:
         enviado = enviar_correo(
             asunto or "Kanview · Actualización de tu pedido",
             mensaje,

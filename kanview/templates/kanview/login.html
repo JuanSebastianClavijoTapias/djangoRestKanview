@@ -5,7 +5,6 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Kanview - Iniciar Sesión</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 {% include "kanview/_tailwind_config.html" %}
@@ -38,10 +37,10 @@
 <form class="flex flex-col gap-5" method="post">
 {% csrf_token %}
 <div class="flex flex-col gap-2">
-<label class="font-label-md text-label-md text-on-surface" for="id_username">Correo electrónico</label>
+<label class="font-label-md text-label-md text-on-surface" for="id_username">Correo, usuario o documento</label>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-4 text-outline z-10 pointer-events-none">mail</span>
-<input class="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-inner-neomorphic placeholder:text-outline/50" id="id_username" name="username" placeholder="tu@empresa.com" type="email" required/>
+<input class="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-inner-neomorphic placeholder:text-outline/50" id="id_username" name="username" placeholder="Correo, usuario o documento" type="text" required/>
 </div>
 </div>
 <div class="flex flex-col gap-2">

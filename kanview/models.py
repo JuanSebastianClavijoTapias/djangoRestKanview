@@ -119,6 +119,14 @@ class Administrador(models.Model):
     nombre = models.CharField(max_length=100, verbose_name="Nombre")
     celular = models.CharField(max_length=10, verbose_name="Celular")
     documento = models.CharField(max_length=50, verbose_name="Documento")
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="administrador_kanview",
+        verbose_name="Cuenta de acceso",
+    )
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
     class Meta:
@@ -131,8 +139,23 @@ class Administrador(models.Model):
 
 
 class AnalisisFinanciero(models.Model):
+    FUENTES_INGRESO = (
+        ("directa", "Venta directa"),
+        ("mayorista", "Mayorista"),
+        ("personalizado", "Proyecto personalizado"),
+        ("otro", "Otro"),
+    )
+
+    fecha = models.DateField(default=timezone.localdate, blank=True, verbose_name="Fecha")
     gastos = models.DecimalField(decimal_places=2, max_digits=12, verbose_name="Gastos")
     fuentes_ingresos = models.DecimalField(decimal_places=2, max_digits=12, verbose_name="Fuentes de ingresos")
+    fuente_ingreso = models.CharField(
+        choices=FUENTES_INGRESO,
+        max_length=20,
+        default="directa",
+        blank=True,
+        verbose_name="Fuente de ingreso",
+    )
     productos_vendidos = models.IntegerField(verbose_name="Productos vendidos")
     id_administrador = models.ForeignKey(
         Administrador, on_delete=models.PROTECT, verbose_name="Administrador"
@@ -183,6 +206,20 @@ class Producto(models.Model):
         return self.nombre
 
 
+ESTADOS_KANBAN = (
+    ("pendiente", "Pendiente"),
+    ("en progreso", "En progreso"),
+    ("completado", "Completado"),
+)
+
+#: Estados de las COLUMNAS del tablero de pedidos (distintos de los de tareas).
+ESTADOS_PEDIDO_KANBAN = (
+    ("pendiente", "Pendiente"),
+    ("en proceso", "En proceso"),
+    ("completado", "Completado"),
+)
+
+
 class Pedido(models.Model):
     ESTADOS = (
         ("activo", "Activo"),
@@ -200,6 +237,15 @@ class Pedido(models.Model):
     hora_creacion = models.DateTimeField(verbose_name="Hora de creación")
     fecha_limite = models.DateField(null=True, blank=True, verbose_name="Fecha límite de entrega")
     estado = models.CharField(choices=ESTADOS, max_length=10, default="activo", verbose_name="Estado")
+    # Estado manual del tablero. Vacío = se calcula a partir de las actividades.
+    estado_kanban = models.CharField(
+        choices=ESTADOS_PEDIDO_KANBAN,
+        max_length=20,
+        null=True,
+        blank=True,
+        default=None,
+        verbose_name="Estado en el tablero",
+    )
     cantidad = models.PositiveIntegerField(
         default=1,
         validators=[MinValueValidator(1, "La cantidad debe ser mayor que cero.")],
@@ -274,13 +320,6 @@ class EvidenciaPedido(models.Model):
 
     def __str__(self):
         return f"Evidencia #{self.pk} · {self.pedido}"
-
-
-ESTADOS_KANBAN = (
-    ("pendiente", "Pendiente"),
-    ("en progreso", "En progreso"),
-    ("completado", "Completado"),
-)
 
 
 class TareasPedido(models.Model):

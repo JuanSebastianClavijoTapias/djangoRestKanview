@@ -13,8 +13,8 @@ Cubre, con el navegador de verdad:
   botón queda marcado y se vuelve al tablero.
 - F. Cambio de estado desde el modal de una actividad: el pedido se mueve a la
   columna «Completado».
-- G. El sidebar dice «Procesos», «Productos» y «Catálogo», y no «Tareas» ni
-  «Inventario»; `/tareas/` acaba en `/pedidos/`.
+- G. El sidebar muestra «Procesos», «Tareas», «Productos» y «Catálogo»; no
+  muestra «Inventario»; `/tareas/` abre el listado de tareas.
 
 Requisitos:
 - Servidor en 8020:
@@ -296,17 +296,17 @@ def main():
         )
 
         # ---- H. Sidebar y /tareas/ ---------------------------------------
-        print("\n  -- H. Sidebar y redirección de /tareas/ --")
+        print("\n  -- H. Sidebar y módulo de Tareas --")
         ir(page, "/pedidos/")
         page.wait_for_load_state("domcontentloaded")
         sidebar = page.inner_text("#sidebar")
-        for etiqueta in ("Procesos", "Productos", "Catálogo"):
+        for etiqueta in ("Procesos", "Tareas", "Productos", "Catálogo"):
             check(etiqueta in sidebar, f"el sidebar muestra «{etiqueta}»")
-        for etiqueta in ("Tareas", "Inventario"):
-            check(etiqueta not in sidebar, f"el sidebar ya no muestra «{etiqueta}»")
+        check("Inventario" not in sidebar, "el sidebar no muestra «Inventario»")
         ir(page, "/tareas/")
         page.wait_for_load_state("domcontentloaded")
-        check(page.url.rstrip("/").endswith("/pedidos"), f"/tareas/ acaba en /pedidos/ ({page.url})")
+        check(page.url.rstrip("/").endswith("/tareas"), f"/tareas/ abre el listado ({page.url})")
+        check("Tareas" in page.content(), "el listado de tareas está visible")
 
         # ---- D. Cuenta y cierre de sesión ---------------------------------
         print("\n  -- D. Menú de cuenta --")

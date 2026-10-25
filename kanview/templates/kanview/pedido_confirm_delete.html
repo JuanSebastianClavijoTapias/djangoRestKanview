@@ -1,0 +1,27 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Eliminar pedido{% endblock %}
+{% block content %}
+<div class="max-w-md">
+<div class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-4">
+<div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-600">delete</span>
+</div>
+<h2 class="text-xl font-bold">¿Eliminar el pedido «{{ pedido.codigo_pedido }}»?</h2>
+<p class="text-sm text-gray-500">
+    El pedido se quitará del tablero y de las listas de trabajo.
+    No se borra físicamente: queda inactivo y conserva su historial, factura y archivos.
+    Puedes reactivarlo desde el listado de pedidos.
+</p>
+<div class="rounded-xl bg-gray-50 p-4 text-sm">
+<p><strong>Cliente:</strong> {{ pedido.id_cliente.nombre }}</p>
+<p><strong>Producto:</strong> {{ pedido.id_producto.nombre }}</p>
+<p><strong>Cantidad:</strong> {{ pedido.cantidad }}</p>
+</div>
+<form class="flex items-center gap-3 mt-2" method="post">
+{% csrf_token %}
+<button class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Eliminar pedido</button>
+<a class="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors" href="{{ cancel_url }}">Cancelar</a>
+</form>
+</div>
+</div>
+{% endblock %}
