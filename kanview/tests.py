@@ -951,12 +951,12 @@ class TandaUiTestCase(TestCase):
             )
 
         sidebar = self._sidebar(self.client.get(reverse("kanview:producto-lista")))
-        self.assertIn("bg-primary-container", bloque(sidebar, "Productos"))
-        self.assertNotIn("bg-primary-container", bloque(sidebar, "Catálogo"))
+        self.assertIn("bg-[#004f4f]", bloque(sidebar, "Productos"))
+        self.assertNotIn("bg-[#004f4f]", bloque(sidebar, "Catálogo"))
 
         sidebar = self._sidebar(self.client.get(reverse("kanview:catalogo")))
-        self.assertIn("bg-primary-container", bloque(sidebar, "Catálogo"))
-        self.assertNotIn("bg-primary-container", bloque(sidebar, "Productos"))
+        self.assertIn("bg-[#004f4f]", bloque(sidebar, "Catálogo"))
+        self.assertNotIn("bg-[#004f4f]", bloque(sidebar, "Productos"))
 
     def test_el_sidebar_no_tiene_mensajeria(self):
         sidebar = self._sidebar(self.client.get(reverse("kanview:dashboard")))
@@ -1112,7 +1112,7 @@ class TandaUiTestCase(TestCase):
         for url in (reverse("kanview:dashboard"), reverse("kanview:clientes")):
             resp = self.client.get(url)
             self.assertNotContains(resp, "lh3.googleusercontent.com/aida/AEtjO1")
-            self.assertContains(resp, "kanview/img/sello-kanview.svg")
+            self.assertContains(resp, "Sello de Kanview")
 
     # ---- Una sola configuración de Tailwind para todas las pantallas -------
 

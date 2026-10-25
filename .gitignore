@@ -8,6 +8,11 @@ db.sqlite3
 .DS_Store
 media/
 backups/
-cypress/
 node_modules/
+package.json
+package-lock.json
 cypress.config.js
+cypress/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/

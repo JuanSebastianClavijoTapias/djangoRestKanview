@@ -1,67 +1,105 @@
 {% extends "kanview/crud_base.html" %}
 {% block title %}Kanview - Panel{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-bold mb-1">Resumen general</h2>
-<p class="text-sm text-gray-500 mb-6">Vista rápida del taller de tapicería.</p>
+<div class="mb-8">
+    <h2 class="text-2xl font-bold text-on-surface mb-1">Resumen general</h2>
+    <p class="text-sm text-gray-500">Vista rápida del taller de tapicería.</p>
+</div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
-<span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Clientes</span>
-<p class="text-3xl font-bold mt-2">{{ total_clientes }}</p>
-</div>
-<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
-<span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Empleados</span>
-<p class="text-3xl font-bold mt-2">{{ total_empleados }}</p>
-</div>
-<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
-<span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Productos</span>
-<p class="text-3xl font-bold mt-2">{{ total_productos }}</p>
-</div>
-<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
-<span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Pedidos activos</span>
-<p class="text-3xl font-bold mt-2 text-[#006565]">{{ pedidos_activos }} <span class="text-base text-gray-500 font-normal">/ {{ total_pedidos }}</span></p>
-</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <!-- Clientes -->
+    <div class="bg-white rounded-2xl p-6 shadow-neomorphic-lift relative overflow-hidden">
+        <div class="absolute -top-1 -right-1 w-14 h-14 rounded-full bg-[#e3fffe] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[#006565] text-xl">person</span>
+        </div>
+        <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Clientes</span>
+        <p class="text-4xl font-bold mt-2 text-on-surface">{{ total_clientes }}</p>
+        <div class="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
+            <span class="material-symbols-outlined text-[14px] text-[#006565]">trending_up</span>
+            <span>Registros acumulados - {{ total_clientes }} clientes</span>
+        </div>
+    </div>
+
+    <!-- Empleados -->
+    <div class="bg-white rounded-2xl p-6 shadow-neomorphic-lift relative overflow-hidden">
+        <div class="absolute -top-1 -right-1 w-14 h-14 rounded-full bg-[#e8f4f8] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[#0077a3] text-xl">badge</span>
+        </div>
+        <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Empleados</span>
+        <p class="text-4xl font-bold mt-2 text-on-surface">{{ total_empleados }}</p>
+        <div class="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
+            <span class="material-symbols-outlined text-[14px] text-[#0077a3]">check_circle</span>
+            <span>Personal activo - {{ total_empleados }} empleados</span>
+        </div>
+    </div>
+
+    <!-- Productos -->
+    <div class="bg-white rounded-2xl p-6 shadow-neomorphic-lift relative overflow-hidden">
+        <div class="absolute -top-1 -right-1 w-14 h-14 rounded-full bg-[#f5ede6] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[#8b5a2b] text-xl">inventory_2</span>
+        </div>
+        <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Productos</span>
+        <p class="text-4xl font-bold mt-2 text-on-surface">{{ total_productos }}</p>
+        <div class="mt-4 flex items-center gap-1.5 text-xs text-gray-500">
+            <span class="material-symbols-outlined text-[14px] text-[#8b5a2b]">info</span>
+            <span>Catálogo disponible - {{ total_productos }} items</span>
+        </div>
+    </div>
+
+    <!-- Pedidos activos -->
+    <div class="bg-white rounded-2xl p-6 shadow-neomorphic-lift relative overflow-hidden">
+        <div class="absolute -top-1 -right-1 w-14 h-14 rounded-full bg-[#ffebef] flex items-center justify-center">
+            <span class="material-symbols-outlined text-[#c41e3a] text-xl">shopping_cart</span>
+        </div>
+        <span class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Pedidos activos</span>
+        <p class="text-4xl font-bold mt-2 text-on-surface">{{ pedidos_activos }} <span class="text-xl text-gray-400 font-normal">/ {{ total_pedidos }}</span></p>
+        <div class="mt-4 flex items-center gap-1.5 text-xs text-[#c41e3a]">
+            <span class="material-symbols-outlined text-[14px]">trending_flat</span>
+            <span>En proceso de taller</span>
+        </div>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
-<h3 class="font-semibold mb-4">Últimos pedidos</h3>
-<div class="flex flex-col divide-y divide-gray-100">
-{% for pedido in ultimos_pedidos %}
-<div class="py-3 flex justify-between items-center text-sm">
-<div>
-<p class="font-medium">{{ pedido.codigo_pedido }}</p>
-<p class="text-gray-500 text-xs">{{ pedido.id_cliente }}</p>
-</div>
-<span class="px-2.5 py-1 rounded-full text-xs font-semibold {% if pedido.estado == 'activo' %}bg-[#e3fffe] text-[#004f4f]{% else %}bg-gray-100 text-gray-500{% endif %}">{{ pedido.get_estado_display }}</span>
-</div>
-{% empty %}
-<p class="text-gray-500 text-sm py-4">Todavía no hay pedidos registrados.</p>
-{% endfor %}
-</div>
-<a class="inline-block mt-4 text-sm font-semibold text-[#006565] hover:underline" href="{% url 'kanview:pedido-lista' %}">Gestionar pedidos →</a>
-</div>
+    <div class="bg-white rounded-2xl shadow-neomorphic-lift p-6 min-h-[280px] flex flex-col">
+        <h3 class="font-semibold text-lg text-on-surface mb-4">Últimos pedidos</h3>
+        <div class="flex flex-col divide-y divide-gray-100 flex-1">
+            {% for pedido in ultimos_pedidos %}
+            <div class="py-3 flex justify-between items-center text-sm">
+                <div>
+                    <p class="font-medium">{{ pedido.codigo_pedido }}</p>
+                    <p class="text-gray-500 text-xs">{{ pedido.id_cliente }}</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold {% if pedido.estado == 'activo' %}bg-[#e3fffe] text-[#004f4f]{% else %}bg-gray-100 text-gray-500{% endif %}">{{ pedido.get_estado_display }}</span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-sm py-4 flex-1">Todavía no hay pedidos registrados.</p>
+            {% endfor %}
+        </div>
+        <a class="inline-block mt-4 text-sm font-semibold text-[#006565] hover:underline" href="{% url 'kanview:pedido-lista' %}">Gestionar pedidos →</a>
+    </div>
 
-<div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
-<h3 class="font-semibold mb-4">Gestión rápida</h3>
-<div class="grid grid-cols-2 gap-3">
-<a class="flex flex-col gap-1 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors" href="{% url 'kanview:cliente-lista' %}">
-<span class="material-symbols-outlined text-[#006565]">group</span>
-<span class="text-sm font-semibold">Clientes</span>
-</a>
-<a class="flex flex-col gap-1 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors" href="{% url 'kanview:empleado-lista' %}">
-<span class="material-symbols-outlined text-[#006565]">badge</span>
-<span class="text-sm font-semibold">Empleados</span>
-</a>
-<a class="flex flex-col gap-1 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors" href="{% url 'kanview:producto-lista' %}">
-<span class="material-symbols-outlined text-[#006565]">menu_book</span>
-<span class="text-sm font-semibold">Productos</span>
-</a>
-<a class="flex flex-col gap-1 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors" href="{% url 'kanview:pedido-lista' %}">
-<span class="material-symbols-outlined text-[#006565]">shopping_cart</span>
-<span class="text-sm font-semibold">Pedidos</span>
-</a>
-</div>
-</div>
+    <div class="bg-white rounded-2xl shadow-neomorphic-lift p-6">
+        <h3 class="font-semibold text-lg text-on-surface mb-4">Gestión rápida</h3>
+        <div class="grid grid-cols-2 gap-4">
+            <a class="flex items-center gap-3 p-4 rounded-xl bg-[#f4f7f7] hover:bg-[#e8efef] transition-colors" href="{% url 'kanview:cliente-lista' %}">
+                <span class="material-symbols-outlined text-[#006565]">group</span>
+                <span class="text-sm font-semibold text-on-surface">Clientes</span>
+            </a>
+            <a class="flex items-center gap-3 p-4 rounded-xl bg-[#f4f7f7] hover:bg-[#e8efef] transition-colors" href="{% url 'kanview:empleado-lista' %}">
+                <span class="material-symbols-outlined text-[#006565]">badge</span>
+                <span class="text-sm font-semibold text-on-surface">Empleados</span>
+            </a>
+            <a class="flex items-center gap-3 p-4 rounded-xl bg-[#f4f7f7] hover:bg-[#e8efef] transition-colors" href="{% url 'kanview:producto-lista' %}">
+                <span class="material-symbols-outlined text-[#006565]">menu_book</span>
+                <span class="text-sm font-semibold text-on-surface">Productos</span>
+            </a>
+            <a class="flex items-center gap-3 p-4 rounded-xl bg-[#f4f7f7] hover:bg-[#e8efef] transition-colors" href="{% url 'kanview:pedido-lista' %}">
+                <span class="material-symbols-outlined text-[#006565]">shopping_cart</span>
+                <span class="text-sm font-semibold text-on-surface">Pedidos</span>
+            </a>
+        </div>
+        <p class="mt-6 text-xs text-gray-500">Accede directamente a los módulos operativos más frecuentes del taller.</p>
+    </div>
 </div>
 {% endblock %}
