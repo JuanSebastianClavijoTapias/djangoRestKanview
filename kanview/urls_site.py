@@ -128,6 +128,7 @@ urlpatterns = [
     path("mensajeria/<int:pk>/", views_mensajeria.conversacion, name="mensajeria-conversacion"),
     path("mensajeria/<int:pk>/enviar/", views_mensajeria.enviar, name="mensajeria-enviar"),
     path("calendario/", views_calendario.calendario, name="calendario"),
+    path("calendario/evento/nuevo/", views_calendario.calendario_evento_crear, name="calendario-evento-crear"),
     path("inventario/", views_inventario.inventario, name="inventario"),
     path("finanzas/", views_finanzas.finanzas, name="finanzas"),
     path("auditoria/", views_auditoria.auditoria, name="auditoria"),

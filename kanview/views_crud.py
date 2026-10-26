@@ -175,9 +175,15 @@ WIDGETS_PEDIDO = {
 }
 
 CAMPOS_CALENDARIO = (
-    "fecha", "anio", "mes", "nombre_mes", "dia", "nombre_dia", "id_pedido",
+    "fecha", "id_pedido",
+    "titulo", "descripcion", "hora_inicio", "hora_limite",
+    "recordatorio", "minutos_recordatorio",
 )
-WIDGETS_CALENDARIO = {"fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")}
+WIDGETS_CALENDARIO = {
+    "fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+    "hora_inicio": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+    "hora_limite": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+}
 
 CAMPOS_TAREA = (
     "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_pedido", "id_empleado",
@@ -401,7 +407,52 @@ def _form_producto(request, instance=None):
 
 
 def _form_calendario(request, instance=None):
-    return _form_vista(Calendario, CAMPOS_CALENDARIO, WIDGETS_CALENDARIO, request, instance=instance)
+    form = _form_vista(Calendario, CAMPOS_CALENDARIO, WIDGETS_CALENDARIO, request, instance=instance)
+    form.fields["fecha"].required = True
+    if "id_pedido" in form.fields:
+        form.fields["id_pedido"].required = False
+    return form
+
+
+def _validar_horas_calendario(fecha, hora_inicio, hora_limite):
+    """Devuelve un mensaje de error si las horas son inválidas; de lo contrario None."""
+    if hora_inicio and hora_limite and hora_limite < hora_inicio:
+        return "La hora límite no puede ser anterior a la hora de inicio."
+    if fecha and fecha == timezone.localdate() and hora_inicio:
+        ahora = timezone.localtime(timezone.now()).time()
+        if hora_inicio < ahora:
+            return "No se puede registrar un evento para una hora que ya pasó."
+    return None
+
+
+def _guardar_calendario(request, form):
+    """Guarda un registro de calendario calculando año, mes, día y nombres desde la fecha.
+
+    Devuelve el objeto guardado o None si la validación de horas falla.
+    """
+    from django.utils.formats import date_format
+
+    obj = form.save(commit=False)
+    error = _validar_horas_calendario(obj.fecha, obj.hora_inicio, obj.hora_limite)
+    if error:
+        form.add_error("hora_limite" if obj.hora_inicio and obj.hora_limite and obj.hora_limite < obj.hora_inicio else "hora_inicio", error)
+        return None
+
+    fecha = obj.fecha
+    if fecha:
+        obj.anio = fecha.year
+        obj.mes = fecha.month
+        obj.dia = fecha.day
+        obj.nombre_mes = date_format(fecha, "F").capitalize()
+        obj.nombre_dia = date_format(fecha, "l").capitalize()
+    if not obj.pk and request.user.is_authenticated:
+        obj.usuario = request.user
+    obj.save()
+    registrar_auditoria(
+        request, "guardar", obj._meta.verbose_name, obj,
+        f"{obj._meta.verbose_name} guardado: {obj}",
+    )
+    return obj
 
 
 def _form_historial(request, instance=None):
@@ -1073,13 +1124,14 @@ def calendario_crud_lista(request):
 def calendario_crear(request):
     form = _form_calendario(request)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
-        messages.success(request, "Registro de calendario creado correctamente.")
-        return redirect("kanview:calendario-lista")
+        obj = _guardar_calendario(request, form)
+        if obj is not None:
+            messages.success(request, "Registro de calendario creado correctamente.")
+            return redirect("kanview:calendario")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Nuevo registro de calendario",
-        "cancel_url": reverse("kanview:calendario-lista"),
+        "cancel_url": reverse("kanview:calendario"),
         **_nav("Calendario", request),
     })
 
@@ -1089,13 +1141,14 @@ def calendario_editar(request, pk):
     registro = get_object_or_404(Calendario, pk=pk)
     form = _form_calendario(request, instance=registro)
     if request.method == "POST" and form.is_valid():
-        _guardar_con_auditoria(request, form)
-        messages.success(request, "Registro de calendario actualizado correctamente.")
-        return redirect("kanview:calendario-lista")
+        obj = _guardar_calendario(request, form)
+        if obj is not None:
+            messages.success(request, "Registro de calendario actualizado correctamente.")
+            return redirect("kanview:calendario")
     return render(request, "kanview/crud/form.html", {
         "form": form,
         "title": "Editar registro de calendario",
-        "cancel_url": reverse("kanview:calendario-lista"),
+        "cancel_url": reverse("kanview:calendario"),
         **_nav("Calendario", request),
     })
 

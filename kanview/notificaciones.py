@@ -20,14 +20,21 @@ El rol Cliente no ve los avisos internos del taller: solo los de sus pedidos
 
 from datetime import timedelta
 
+from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
 from .correo import enviar_correo
-from .models import Empleado, Notificacion, Pedido, Producto, TareasPedido
-from .permisos import es_solo_cliente, puede
+from .models import Empleado, Notificacion, Pedido, Producto, Recordatorio, TareasPedido
+from .permisos import (
+    ROL_TRABAJADOR,
+    es_administracion,
+    es_solo_cliente,
+    puede,
+    roles_de,
+)
 
-#: Mismo umbral que usa la pantalla de existencias para «Stock Bajo».
+#: Mismo umbral que usa la pantalla de existencias para «Stock Bajo".
 UMBRAL_STOCK_BAJO = 10
 
 #: Un pedido cuya fecha límite cae dentro de estos días avisa en la campana.
@@ -181,6 +188,41 @@ def notificaciones(usuario):
     return {"total": total, "avisos": avisos}
 
 
+def _recordatorios_pendientes(usuario, ahora):
+    """Convierte recordatorios vencidos del calendario en notificaciones.
+
+    Se ejecuta en cada request (context processor) para no depender de cron.
+    La operacion es idempotente gracias al campo ``notificado``.
+    """
+    if not usuario or not usuario.is_authenticated or es_solo_cliente(usuario):
+        return
+
+    consulta = Recordatorio.objects.filter(notificado=False, fecha_hora__lte=ahora)
+    if es_administracion(usuario):
+        pass  # ven todos los recordatorios vencidos
+    elif ROL_TRABAJADOR in roles_de(usuario):
+        consulta = consulta.filter(
+            models.Q(calendario__usuario=usuario) | models.Q(calendario__usuario__isnull=True)
+        )
+    else:
+        return
+
+    for recordatorio in consulta.select_related("calendario"):
+        cal = recordatorio.calendario
+        if cal is None or not cal.activo:
+            continue
+        titulo = cal.titulo or "Evento del calendario"
+        hora_evento = cal.hora_inicio.strftime("%H:%M") if cal.hora_inicio else ""
+        mensaje = f"Recordatorio: {titulo}"
+        if hora_evento:
+            mensaje += f" a las {hora_evento}"
+        url = reverse("kanview:calendario")
+        destinatario = cal.usuario or usuario
+        crear_notificacion(destinatario, "calendario", mensaje, url)
+        recordatorio.notificado = True
+        recordatorio.save(update_fields=["notificado"])
+
+
 def contexto_header(request):
     """Context processor: deja los avisos y los datos de cuenta en el header.
 
@@ -194,6 +236,8 @@ def contexto_header(request):
         return datos
 
     from .mensajeria import no_leidos as mensajes_no_leidos
+
+    _recordatorios_pendientes(usuario, timezone.now())
 
     nombre = usuario.get_full_name() or usuario.get_username()
     persistentes = list(
@@ -246,6 +290,7 @@ ICONOS_NOTIFICACION = {
     "factura": "receipt_long",
     "sistema": "info",
     "seguridad": "shield",
+    "calendario": "event",
 }
 
 

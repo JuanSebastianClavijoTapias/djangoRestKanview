@@ -436,16 +436,57 @@ class Calendario(models.Model):
     nombre_mes = models.CharField(max_length=20, verbose_name="Nombre del mes")
     dia = models.IntegerField(verbose_name="Día")
     nombre_dia = models.CharField(max_length=20, verbose_name="Nombre del día")
-    id_pedido = models.ForeignKey(Pedido, on_delete=models.PROTECT, verbose_name="Pedido")
+    id_pedido = models.ForeignKey(
+        Pedido, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Pedido"
+    )
+    titulo = models.CharField(max_length=255, blank=True, verbose_name="Título")
+    descripcion = models.TextField(blank=True, verbose_name="Descripción")
+    hora_inicio = models.TimeField(null=True, blank=True, verbose_name="Hora inicio")
+    hora_limite = models.TimeField(null=True, blank=True, verbose_name="Hora límite")
+    recordatorio = models.BooleanField(default=False, verbose_name="Recordatorio")
+    minutos_recordatorio = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name="Minutos antes para recordatorio"
+    )
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Creado por",
+    )
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
     class Meta:
         verbose_name = "Calendario"
         verbose_name_plural = "Calendario"
-        ordering = ["fecha"]
+        ordering = ["fecha", "hora_inicio"]
 
     def __str__(self):
-        return f"{self.nombre_dia} {self.dia} · {self.id_pedido}"
+        if self.id_pedido:
+            return f"{self.nombre_dia} {self.dia} · {self.id_pedido}"
+        return f"{self.nombre_dia} {self.dia} · {self.titulo or 'Evento'}"
+
+
+class Recordatorio(models.Model):
+    """Recordatorio programado de un evento del calendario."""
+
+    calendario = models.ForeignKey(
+        Calendario, on_delete=models.CASCADE, related_name="recordatorios", verbose_name="Evento"
+    )
+    fecha_hora = models.DateTimeField(verbose_name="Fecha y hora del recordatorio")
+    notificado = models.BooleanField(default=False, verbose_name="Notificado")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+
+    class Meta:
+        verbose_name = "Recordatorio"
+        verbose_name_plural = "Recordatorios"
+        ordering = ["fecha_hora"]
+        indexes = [
+            models.Index(fields=["notificado", "fecha_hora"]),
+        ]
+
+    def __str__(self):
+        return f"Recordatorio {self.pk} · {self.calendario} · {self.fecha_hora}"
 
 
 class Notificacion(models.Model):

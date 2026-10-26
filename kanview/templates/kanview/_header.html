@@ -55,19 +55,20 @@ menú móvil del sidebar.
 <span class="material-symbols-outlined">search</span>
 </button>
 {% endif %}
+{% csrf_token %}
 <!-- Campana: contador y panel con avisos reales. -->
 <div class="relative">
-<button aria-controls="panel-avisos" aria-expanded="false" aria-label="Notificaciones{% if avisos_total %} ({{ avisos_total }}){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white/80 transition-all" data-abre-panel id="btn-avisos" type="button">
+<button aria-controls="panel-avisos" aria-expanded="false" aria-label="Notificaciones{% if avisos_total %} ({{ avisos_total }}){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white/80 transition-all" data-abre-panel data-marcar-url="{{ url_marcar_notificaciones }}" id="btn-avisos" type="button">
 <span class="material-symbols-outlined">notifications</span>
 {% if avisos_total %}
-<span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error text-[10px] font-bold leading-[18px] text-center" id="contador-avisos">{{ avisos_total }}</span>
+<span class="absolute -top-1.5 -right-1.5 min-w-[24px] h-[24px] px-1 rounded-full bg-error text-on-error text-[12px] font-bold leading-[24px] text-center shadow-md" id="contador-avisos">{{ avisos_total }}</span>
 {% endif %}
 </button>
 <div aria-label="Avisos del taller" class="hidden absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50" data-panel id="panel-avisos" role="region">
 <div class="px-4 py-3 border-b border-outline-variant/30 flex items-center justify-between gap-2">
 <p class="font-label-md text-label-md font-semibold text-on-surface">Avisos del taller</p>
 <div class="flex items-center gap-2">
-{% if avisos_total %}<span class="font-label-sm text-label-sm text-on-surface-variant shrink-0">{{ avisos_total }}</span>{% endif %}
+{% if avisos_total %}<span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-error text-on-error text-[11px] font-bold">{{ avisos_total }}</span>{% endif %}
 {% if notificaciones_persistentes %}
 <form method="post" action="{{ url_marcar_notificaciones }}">
 {% csrf_token %}
@@ -94,9 +95,9 @@ menú móvil del sidebar.
 </div>
 </div>
 <!-- Mensajería: acceso directo al chat interno. -->
-<a aria-label="Mensajería{% if mensajes_no_leidos %} ({{ mensajes_no_leidos }} sin leer){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant transition-all" href="{% url 'kanview:mensajeria' %}" id="btn-chat">
+<a aria-label="Mensajería{% if mensajes_no_leidos %} ({{ mensajes_no_leidos }} sin leer){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white/80 transition-all" href="{% url 'kanview:mensajeria' %}" id="btn-chat">
 <span class="material-symbols-outlined">forum</span>
-{% if mensajes_no_leidos %}<span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-on-primary text-[10px] font-bold leading-[18px] text-center">{{ mensajes_no_leidos }}</span>{% endif %}
+{% if mensajes_no_leidos %}<span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-white text-[#006565] text-[10px] font-bold leading-[18px] text-center">{{ mensajes_no_leidos }}</span>{% endif %}
 </a>
 <!-- Cuenta: nombre, rol real, Configuración y Cerrar sesión (POST). -->
 <div class="relative">
@@ -196,6 +197,31 @@ Cerrar sesión
             });
         }
 
+        function obtenerCookie(nombre) {
+            var coincidencia = document.cookie.match('(?:^|;)\\s*' + nombre + '=([^;]*)');
+            return coincidencia ? decodeURIComponent(coincidencia[1]) : '';
+        }
+
+        function obtenerCsrfToken() {
+            var input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            return input ? input.value : '';
+        }
+
+        function marcarNotificacionesLeidas(boton) {
+            var url = boton.getAttribute('data-marcar-url');
+            if (!url) { return; }
+            var contador = document.getElementById('contador-avisos');
+            if (contador) { contador.remove(); }
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': obtenerCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+        }
+
         function alternarPanel(boton) {
             var panel = document.getElementById(boton.getAttribute('aria-controls'));
             if (!panel) { return; }
@@ -206,6 +232,9 @@ Cerrar sesión
             if (!estabaAbierto) {
                 var campo = panel.querySelector('input, a, button');
                 if (campo) { campo.focus(); }
+                if (panel.id === 'panel-avisos') {
+                    marcarNotificacionesLeidas(boton);
+                }
             }
             return panel;
         }

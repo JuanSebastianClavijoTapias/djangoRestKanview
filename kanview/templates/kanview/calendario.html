@@ -14,6 +14,18 @@
         .neomorphic-active {
             box-shadow: inset 4px 4px 8px rgba(0,0,0,0.05), inset -4px -4px 8px #FFFFFF;
         }
+        .lista-tono-azul {
+            background: linear-gradient(135deg, #fbfdfe 0%, #e9f4f9 100%);
+            border: 1px solid rgba(79, 150, 181, .16);
+        }
+        .lista-tono-naranja {
+            background: linear-gradient(135deg, #fdfaf7 0%, #f2e8de 100%);
+            border: 1px solid rgba(139, 94, 60, .18);
+        }
+        .lista-tono-gris {
+            background: linear-gradient(135deg, #fbfcfc 0%, #eef0f2 100%);
+            border: 1px solid rgba(80, 88, 98, .16);
+        }
     </style>
 </head>
 <body class="bg-background text-on-background font-body-md min-h-screen">
@@ -30,9 +42,13 @@
 <p class="font-body-md text-body-md text-on-surface-variant">Gestiona el calendario de producción y las fechas límite.</p>
 </div>
 <div class="flex gap-4">
-<button class="flex items-center gap-2 px-6 py-3 bg-surface-container-highest rounded-full text-on-surface hover:bg-surface-dim transition-colors neomorphic-card">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">filter_list</span>
-<span class="font-label-md text-label-md">Filtrar</span>
+<button class="flex items-center gap-2 px-6 py-3 bg-surface-container-highest rounded-full text-on-surface hover:bg-surface-dim transition-colors neomorphic-card" id="btn-lista" onclick="mostrarLista()" type="button">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">list</span>
+<span class="font-label-md text-label-md">Lista</span>
+</button>
+<button class="hidden flex items-center gap-2 px-6 py-3 bg-surface-container-highest rounded-full text-on-surface hover:bg-surface-dim transition-colors neomorphic-card" id="btn-calendario" onclick="mostrarCalendario()" type="button">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+<span class="font-label-md text-label-md">Calendario</span>
 </button>
 <a class="flex items-center gap-2 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors shadow-sm" href="{% url 'kanview:calendario-crear' %}">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
@@ -43,7 +59,8 @@
 {% if q and not total_eventos %}
 <div class="mb-4 rounded-xl bg-surface-container-low px-4 py-3 font-body-md text-body-md text-on-surface-variant">No hay eventos en {{ mes_titulo }} que coincidan con «{{ q }}».</div>
 {% endif %}
-<!-- Cuadrícula de Calendario -->
+<!-- Vista Calendario -->
+<div id="vista-calendario">
 <div class="bg-surface-container-low p-6 rounded-2xl">
 <!-- Cabecera de los días de la semana -->
 <div class="grid grid-cols-7 gap-1 lg:gap-4 mb-4">
@@ -60,10 +77,21 @@
 <!-- Dias del mes (eventos reales de la tabla Calendario / Pedido) -->
 {% for dia in dias %}
 {% if dia.del_mes %}
-<div class="neomorphic-card rounded-xl p-3 h-32 flex flex-col hover:neomorphic-active cursor-pointer transition-shadow{% if dia.eventos %} relative overflow-hidden{% endif %}" onclick="openAssignModal('{{ dia.dia }}')">
+{% if dia.fecha < hoy %}
+<div class="neomorphic-card rounded-xl p-3 h-32 flex flex-col opacity-60 cursor-not-allowed transition-shadow{% if dia.eventos %} relative overflow-hidden{% endif %}{% if dia.hoy %} ring-2 ring-primary bg-primary/5{% endif %}">
+{% else %}
+<div class="neomorphic-card rounded-xl p-3 h-32 flex flex-col cursor-pointer hover:neomorphic-active transition-shadow{% if dia.eventos %} relative overflow-hidden{% endif %}{% if dia.hoy %} ring-2 ring-primary bg-primary/5{% endif %}" onclick="openAssignModal('{{ dia.fecha|date:'Y-m-d' }}')">
+{% endif %}
 <span class="font-label-md text-label-md text-on-background self-end mb-2{% if dia.eventos %} relative z-10{% endif %}">{{ dia.dia }}</span>
 {% for evento in dia.eventos %}
-{% if evento.activo %}
+{% if evento.es_personal %}
+<div class="bg-secondary/10 border-l-4 border-secondary p-2 rounded text-xs text-secondary font-medium mb-1 relative z-10" title="{{ evento.titulo }}{% if evento.descripcion_personal %} · {{ evento.descripcion_personal }}{% endif %}{% if evento.hora_inicio %} · {{ evento.hora_inicio|time:'H:i' }}{% endif %}{% if evento.hora_limite %} - {{ evento.hora_limite|time:'H:i' }}{% endif %}">
+<span class="block truncate">{{ evento.titulo }}</span>
+{% if evento.hora_inicio %}
+<span class="block truncate text-[10px] font-semibold text-secondary">{{ evento.hora_inicio|time:'H:i' }}{% if evento.hora_limite %} - {{ evento.hora_limite|time:'H:i' }}{% endif %}</span>
+{% endif %}
+</div>
+{% elif evento.activo %}
 <div class="bg-primary/10 border-l-4 border-primary p-2 rounded text-xs text-primary-container font-medium mb-1 relative z-10" title="Registro del calendario: {{ evento.nombre_dia }} {{ evento.dia }} de {{ evento.nombre_mes }} ({{ evento.fecha_texto }}) · Pedido {{ evento.codigo }} ({{ evento.estado_display }}) · Entrega del pedido: {{ evento.entrega }}">
 <span class="block truncate">Pedido #{{ evento.codigo }} - {{ evento.producto }}</span>
 <span class="block truncate text-[10px] font-semibold text-primary">Entrega: {{ evento.entrega }}</span>
@@ -84,6 +112,87 @@
 {% endfor %}
 </div>
 </div>
+</div>
+
+<!-- Vista Lista -->
+<div class="hidden" id="vista-lista">
+<div class="bg-surface-container-low p-6 rounded-2xl space-y-8">
+{% if eventos %}
+<!-- Eventos futuros -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-background mb-4">Próximos eventos</h3>
+<div class="space-y-3">
+{% for evento in eventos %}
+{% if evento.fecha >= hoy %}
+{% if forloop.counter0|divisibleby:3 %}
+<div class="lista-tono-azul rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
+{% elif forloop.counter|divisibleby:3 %}
+<div class="lista-tono-gris rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
+{% else %}
+<div class="lista-tono-naranja rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm">
+{% endif %}
+<div class="flex-1 min-w-0">
+{% if evento.es_personal %}
+<p class="font-semibold text-on-background truncate">{{ evento.titulo }}</p>
+{% if evento.descripcion_personal %}
+<p class="text-sm text-on-surface-variant truncate">{{ evento.descripcion_personal }}</p>
+{% endif %}
+{% else %}
+<p class="font-semibold text-on-background truncate">Pedido #{{ evento.codigo }} - {{ evento.producto }}</p>
+<p class="text-sm text-on-surface-variant truncate">{{ evento.descripcion }}</p>
+{% endif %}
+</div>
+<div class="shrink-0 text-right">
+<p class="text-sm font-medium text-on-background">{{ evento.fecha_texto }}</p>
+{% if evento.hora_inicio %}
+<p class="text-xs text-on-surface-variant">{{ evento.hora_inicio|time:'H:i' }}{% if evento.hora_limite %} - {{ evento.hora_limite|time:'H:i' }}{% endif %}</p>
+{% endif %}
+</div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+</div>
+<!-- Eventos pasados -->
+<div>
+<h3 class="font-headline-md text-headline-md text-on-background mb-4">Eventos pasados</h3>
+<div class="space-y-3">
+{% for evento in eventos %}
+{% if evento.fecha < hoy %}
+{% if forloop.counter0|divisibleby:3 %}
+<div class="lista-tono-azul rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm opacity-70">
+{% elif forloop.counter|divisibleby:3 %}
+<div class="lista-tono-gris rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm opacity-70">
+{% else %}
+<div class="lista-tono-naranja rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-sm opacity-70">
+{% endif %}
+<div class="flex-1 min-w-0">
+{% if evento.es_personal %}
+<p class="font-semibold text-on-background truncate">{{ evento.titulo }}</p>
+{% if evento.descripcion_personal %}
+<p class="text-sm text-on-surface-variant truncate">{{ evento.descripcion_personal }}</p>
+{% endif %}
+{% else %}
+<p class="font-semibold text-on-background truncate">Pedido #{{ evento.codigo }} - {{ evento.producto }}</p>
+<p class="text-sm text-on-surface-variant truncate">{{ evento.descripcion }}</p>
+{% endif %}
+</div>
+<div class="shrink-0 text-right">
+<p class="text-sm font-medium text-on-background">{{ evento.fecha_texto }}</p>
+{% if evento.hora_inicio %}
+<p class="text-xs text-on-surface-variant">{{ evento.hora_inicio|time:'H:i' }}{% if evento.hora_limite %} - {{ evento.hora_limite|time:'H:i' }}{% endif %}</p>
+{% endif %}
+</div>
+</div>
+{% endif %}
+{% endfor %}
+</div>
+</div>
+{% else %}
+<p class="text-center text-on-surface-variant py-12">No hay tareas ni eventos en {{ mes_titulo }}.</p>
+{% endif %}
+</div>
+</div>
 </main>
 <!-- BottomNavBar (Mobile Only) -->
 <div class="md:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center">
@@ -102,35 +211,87 @@
 </svg>
 </div>
 <div class="flex justify-between items-center mb-6 relative z-10">
-<h3 class="font-headline-md text-headline-md text-on-background">Asignar fecha límite</h3>
-<button class="text-on-surface-variant hover:text-on-background transition-colors" onclick="closeAssignModal()">
+<h3 class="font-headline-md text-headline-md text-on-background" id="modalTitulo">Nuevo evento</h3>
+<button class="text-on-surface-variant hover:text-on-background transition-colors" onclick="closeAssignModal()" type="button">
 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">close</span>
 </button>
 </div>
-<form class="space-y-6 relative z-10">
+<form action="{% url 'kanview:calendario-evento-crear' %}" class="space-y-6 relative z-10" method="post">
+{% csrf_token %}
+<input id="modalFecha" name="fecha" type="hidden">
 <div>
 <label class="block font-label-md text-label-md text-on-surface-variant mb-2">Fecha seleccionada</label>
 <div class="px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" id="modalDateDisplay">
                         {{ nombre_mes }} · {{ anio }}
                     </div>
 </div>
-<div>
+<!-- Eventos existentes del día -->
+<div class="hidden space-y-3" id="modalEventosExistentes">
+<h4 class="font-label-md text-label-md font-semibold text-on-surface-variant">Eventos del día</h4>
+<div class="space-y-2" id="modalListaEventos"></div>
+<button class="w-full py-2.5 px-4 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors font-label-md text-label-md" onclick="mostrarFormularioAgregar()" type="button">Agregar otro evento</button>
+</div>
+<!-- Selector de tipo -->
+<div id="modalFormularioEvento">
+<div class="flex p-1 bg-surface-container-low rounded-xl">
+<button class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-surface text-on-surface shadow-sm" id="tab-pedido" onclick="setTipo('pedido')" type="button">Pedido</button>
+<button class="flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-on-surface-variant hover:text-on-surface" id="tab-evento" onclick="setTipo('evento')" type="button">Evento</button>
+</div>
+<input id="modalTipo" name="tipo" type="hidden" value="pedido">
+<!-- Formulario de pedido -->
+<div id="form-pedido">
 <label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_modal_pedido">Tarea o pedido</label>
-<select aria-label="Tarea o pedido" class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] appearance-none" id="id_modal_pedido">
+<select aria-label="Tarea o pedido" class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] appearance-none" id="id_modal_pedido" name="id_pedido">
 {% for pedido in pedidos_mes %}
-<option>Pedido #{{ pedido.codigo_pedido }} - {{ pedido.descripcion|truncatechars:40 }}</option>
+<option value="{{ pedido.pk }}">Pedido #{{ pedido.codigo_pedido }} - {{ pedido.descripcion|truncatechars:40 }}</option>
 {% empty %}
-<option>Sin pedidos con eventos en este mes</option>
+<option value="">Sin pedidos con eventos en este mes</option>
 {% endfor %}
 </select>
+</div>
+<!-- Formulario de evento -->
+<div class="hidden space-y-4" id="form-evento">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_titulo">Nombre del evento</label>
+<input class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" id="id_titulo" maxlength="255" name="titulo" placeholder="Ej. Reunión de producción" type="text">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_descripcion">Descripción (opcional)</label>
+<textarea class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" id="id_descripcion" name="descripcion" rows="2"></textarea>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_hora_inicio">Hora inicio</label>
+<input class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" id="id_hora_inicio" name="hora_inicio" type="time">
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_hora_limite">Hora límite (opcional)</label>
+<input class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)]" id="id_hora_limite" name="hora_limite" type="time">
+</div>
+</div>
+<div class="flex items-center gap-3">
+<input class="w-5 h-5 rounded text-primary focus:ring-primary" id="id_recordatorio" name="recordatorio" type="checkbox" value="1">
+<label class="font-label-md text-label-md text-on-surface-variant" for="id_recordatorio">Recordarme</label>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-2" for="id_minutos_recordatorio">Minutos antes</label>
+<select class="w-full px-4 py-3 bg-surface-container-low rounded-lg text-on-background font-body-md border-none focus:ring-2 focus:ring-primary/50 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.05),inset_-2px_-2px_4px_rgba(255,255,255,0.8)] appearance-none" id="id_minutos_recordatorio" name="minutos_recordatorio">
+<option value="15">15 minutos antes</option>
+<option value="30">30 minutos antes</option>
+<option value="60">1 hora antes</option>
+<option value="120">2 horas antes</option>
+<option value="1440">1 día antes</option>
+</select>
+</div>
 </div>
 <div class="flex gap-4 pt-4">
 <button class="flex-1 px-6 py-3 bg-surface-container-highest rounded-lg text-on-surface hover:bg-surface-dim transition-colors font-label-md text-label-md neomorphic-card" onclick="closeAssignModal()" type="button">
                         Cancelar
                     </button>
-<button class="flex-1 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors font-label-md text-label-md shadow-sm" type="button">
-                        Asignar
+<button class="flex-1 px-6 py-3 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors font-label-md text-label-md shadow-sm" type="submit">
+                        Guardar
                     </button>
+</div>
 </div>
 </form>
 </div>
@@ -138,19 +299,115 @@
 <script>
         const MES_ACTUAL = "{{ nombre_mes }}";
         const ANIO_ACTUAL = "{{ anio }}";
+        const OPCIONES_MESES = {
+            'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4, 'mayo': 5, 'junio': 6,
+            'julio': 7, 'agosto': 8, 'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+        };
+        const EVENTOS_POR_FECHA = {
+            {% for dia in dias %}{% if dia.eventos %}
+            "{{ dia.fecha|date:'Y-m-d' }}": [
+                {% for evento in dia.eventos %}
+                {
+                    es_personal: {{ evento.es_personal|yesno:"true,false" }},
+                    titulo: "{% if evento.es_personal %}{{ evento.titulo|escapejs }}{% else %}Pedido #{{ evento.codigo|escapejs }} - {{ evento.producto|escapejs }}{% endif %}",
+                    descripcion: "{% if evento.es_personal %}{{ evento.descripcion_personal|escapejs }}{% else %}{{ evento.descripcion|escapejs }}{% endif %}",
+                    hora_inicio: "{% if evento.hora_inicio %}{{ evento.hora_inicio|time:'H:i' }}{% endif %}",
+                    hora_limite: "{% if evento.hora_limite %}{{ evento.hora_limite|time:'H:i' }}{% endif %}"
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]{% if not forloop.last %},{% endif %}
+            {% endif %}{% endfor %}
+        };
 
-        function openAssignModal(day) {
+        function openAssignModal(fechaISO) {
             const modal = document.getElementById('assignModal');
             const display = document.getElementById('modalDateDisplay');
-            display.textContent = `${day} de ${MES_ACTUAL} de ${ANIO_ACTUAL}`;
+            const campoFecha = document.getElementById('modalFecha');
+            const titulo = document.getElementById('modalTitulo');
+            const eventosDiv = document.getElementById('modalEventosExistentes');
+            const listaEventos = document.getElementById('modalListaEventos');
+            const formularioDiv = document.getElementById('modalFormularioEvento');
+            const fecha = new Date(fechaISO + 'T00:00:00');
+            const dia = fecha.getDate();
+            display.textContent = `${dia} de ${MES_ACTUAL} de ${ANIO_ACTUAL}`;
+            campoFecha.value = fechaISO;
+
+            const eventos = EVENTOS_POR_FECHA[fechaISO] || [];
+            if (eventos.length > 0) {
+                titulo.textContent = 'Eventos del día';
+                eventosDiv.classList.remove('hidden');
+                formularioDiv.classList.add('hidden');
+                listaEventos.innerHTML = eventos.map(function(ev) {
+                    var hora = '';
+                    if (ev.hora_inicio) {
+                        hora = ev.hora_inicio;
+                        if (ev.hora_limite) hora += ' - ' + ev.hora_limite;
+                    }
+                    var desc = ev.descripcion ? `<p class="text-xs text-on-surface-variant truncate">${ev.descripcion}</p>` : '';
+                    return `<div class="bg-surface-container-low rounded-lg p-3">
+                        <p class="font-semibold text-sm text-on-background truncate">${ev.titulo}</p>
+                        ${desc}
+                        ${hora ? `<p class="text-xs text-primary mt-1">${hora}</p>` : ''}
+                    </div>`;
+                }).join('');
+            } else {
+                titulo.textContent = 'Nuevo evento';
+                eventosDiv.classList.add('hidden');
+                formularioDiv.classList.remove('hidden');
+                listaEventos.innerHTML = '';
+            }
+
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+        }
+
+        function mostrarFormularioAgregar() {
+            document.getElementById('modalEventosExistentes').classList.add('hidden');
+            document.getElementById('modalFormularioEvento').classList.remove('hidden');
+            document.getElementById('modalTitulo').textContent = 'Nuevo evento';
         }
 
         function closeAssignModal() {
             const modal = document.getElementById('assignModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            document.getElementById('modalEventosExistentes').classList.add('hidden');
+            document.getElementById('modalFormularioEvento').classList.remove('hidden');
+            document.getElementById('modalTitulo').textContent = 'Nuevo evento';
+        }
+
+        function setTipo(tipo) {
+            document.getElementById('modalTipo').value = tipo;
+            const tabPedido = document.getElementById('tab-pedido');
+            const tabEvento = document.getElementById('tab-evento');
+            const formPedido = document.getElementById('form-pedido');
+            const formEvento = document.getElementById('form-evento');
+
+            if (tipo === 'pedido') {
+                tabPedido.className = 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-surface text-on-surface shadow-sm';
+                tabEvento.className = 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-on-surface-variant hover:text-on-surface';
+                formPedido.classList.remove('hidden');
+                formEvento.classList.add('hidden');
+            } else {
+                tabEvento.className = 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors bg-surface text-on-surface shadow-sm';
+                tabPedido.className = 'flex-1 py-2 rounded-lg text-sm font-medium transition-colors text-on-surface-variant hover:text-on-surface';
+                formEvento.classList.remove('hidden');
+                formPedido.classList.add('hidden');
+            }
+        }
+
+        function mostrarLista() {
+            document.getElementById('vista-calendario').classList.add('hidden');
+            document.getElementById('vista-lista').classList.remove('hidden');
+            document.getElementById('btn-lista').classList.add('hidden');
+            document.getElementById('btn-calendario').classList.remove('hidden');
+        }
+
+        function mostrarCalendario() {
+            document.getElementById('vista-lista').classList.add('hidden');
+            document.getElementById('vista-calendario').classList.remove('hidden');
+            document.getElementById('btn-calendario').classList.add('hidden');
+            document.getElementById('btn-lista').classList.remove('hidden');
         }
     </script>
 

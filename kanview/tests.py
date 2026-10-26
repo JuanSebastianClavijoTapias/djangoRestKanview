@@ -28,8 +28,10 @@ from .models import (
     Empleado,
     EvidenciaPedido,
     Historial,
+    Notificacion,
     Pedido,
     Producto,
+    Recordatorio,
     TareasPedido,
 )
 from .permisos import ROL_ADMINISTRADOR, ROL_CLIENTE, ROL_TRABAJADOR
@@ -1687,3 +1689,106 @@ class LoginTestCase(TestCase):
         respuesta = self._login("admin@kanview.test", "clave-equivocada")
         self.assertEqual(respuesta.status_code, 200)
         self.assertNotIn("_auth_user_id", self.client.session)
+
+
+class CalendarioEventosTestCase(TestCase):
+    """Crear eventos personales y recordatorios desde el calendario."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username="calendario.admin", password="pass12345", is_staff=True
+        )
+        cls.user.groups.add(_grupo(ROL_ADMINISTRADOR))
+
+    def setUp(self):
+        self.client.force_login(self.user)
+
+    def test_el_modal_precarga_la_fecha_seleccionada(self):
+        resp = self.client.get(reverse("kanview:calendario"), {"mes": "2026-10"})
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode()
+        self.assertIn('id="modalFecha"', html)
+        self.assertIn('name="fecha"', html)
+        self.assertIn('value="pedido"', html)
+        self.assertIn('id="form-evento"', html)
+        self.assertIn('id="form-pedido"', html)
+
+    def test_crear_evento_personal_desde_el_modal(self):
+        fecha = date.today() + timedelta(days=5)
+        resp = self.client.post(
+            reverse("kanview:calendario-evento-crear"),
+            {
+                "tipo": "evento",
+                "fecha": fecha.isoformat(),
+                "titulo": "Reunión de producción",
+                "descripcion": "Revisar avances",
+                "hora_inicio": "09:00",
+                "hora_limite": "10:00",
+                "recordatorio": "1",
+                "minutos_recordatorio": "30",
+            },
+        )
+        self.assertEqual(resp.status_code, 302)
+        evento = Calendario.objects.get(titulo="Reunión de producción")
+        self.assertEqual(evento.fecha, fecha)
+        self.assertTrue(evento.recordatorio)
+        self.assertEqual(evento.minutos_recordatorio, 30)
+        self.assertTrue(evento.recordatorios.exists())
+
+    def test_el_evento_personal_aparece_en_el_calendario(self):
+        fecha = date.today() + timedelta(days=5)
+        Calendario.objects.create(
+            fecha=fecha,
+            anio=fecha.year,
+            mes=fecha.month,
+            nombre_mes="Octubre",
+            dia=fecha.day,
+            nombre_dia="Jueves",
+            titulo="Reunión de producción",
+            hora_inicio="09:00:00",
+            usuario=self.user,
+        )
+        resp = self.client.get(reverse("kanview:calendario"), {"mes": f"{fecha.year}-{fecha.month:02d}"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Reunión de producción")
+
+    def test_no_permite_evento_en_fecha_pasada(self):
+        fecha = date.today() - timedelta(days=5)
+        resp = self.client.post(
+            reverse("kanview:calendario-evento-crear"),
+            {
+                "tipo": "evento",
+                "fecha": fecha.isoformat(),
+                "titulo": "Evento pasado",
+            },
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(Calendario.objects.filter(titulo="Evento pasado").exists())
+
+    def test_el_recordatorio_llega_a_notificaciones(self):
+        from django.utils import timezone
+        from datetime import datetime, timedelta
+
+        fecha = date.today() + timedelta(days=5)
+        evento = Calendario.objects.create(
+            fecha=fecha,
+            anio=fecha.year,
+            mes=fecha.month,
+            nombre_mes="Octubre",
+            dia=fecha.day,
+            nombre_dia="Jueves",
+            titulo="Reunión de producción",
+            hora_inicio="09:00:00",
+            recordatorio=True,
+            minutos_recordatorio=30,
+            usuario=self.user,
+        )
+        Recordatorio.objects.create(
+            calendario=evento,
+            fecha_hora=timezone.now() - timedelta(minutes=5),
+        )
+        self.client.get(reverse("kanview:dashboard"))
+        notif = Notificacion.objects.filter(usuario=self.user, tipo="calendario").first()
+        self.assertIsNotNone(notif)
+        self.assertIn("Reunión de producción", notif.mensaje)
