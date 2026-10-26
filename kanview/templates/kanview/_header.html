@@ -11,10 +11,10 @@ Funciona sin JavaScript: el buscador es un <form method="get"> y «Cerrar sesió
 es un POST con csrf. El JavaScript solo añade los paneles (campana y cuenta) y el
 menú móvil del sidebar.
 {% endcomment %}
-<header class="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] h-16 z-40 bg-background/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-container-padding-mobile lg:px-container-padding-desktop">
+<header class="fixed top-0 right-0 w-full lg:w-[calc(100%-16rem)] h-16 z-40 bg-[#006565] border-b border-white/10 flex justify-between items-center px-container-padding-mobile lg:px-container-padding-desktop">
 <div class="flex-1 min-w-0 flex items-center gap-2 md:gap-4">
 <!-- Menú móvil: abre el sidebar como panel deslizante (solo < lg). -->
-<button aria-controls="sidebar" aria-expanded="false" aria-label="Abrir el menú" class="lg:hidden w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all" id="btn-menu" type="button">
+<button aria-controls="sidebar" aria-expanded="false" aria-label="Abrir el menú" class="lg:hidden w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-white/80 hover:bg-white/10 transition-all" id="btn-menu" type="button">
 <span class="material-symbols-outlined">menu</span>
 </button>
 {% if mostrar_buscador %}
@@ -22,42 +22,42 @@ menú móvil del sidebar.
 {% if request.GET.mes %}<input name="mes" type="hidden" value="{{ request.GET.mes }}">{% endif %}
 {% if request.GET.categoria %}<input name="categoria" type="hidden" value="{{ request.GET.categoria }}">{% endif %}
 <div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-<input aria-label="{{ buscar_placeholder|default:'Buscar' }}" autocomplete="off" class="w-full pl-10 pr-4 py-2 bg-surface-container-low rounded-full inner-shadow text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus-within:ring-2 focus-within:ring-primary/20 border-none" id="buscador-q" name="q" placeholder="{{ buscar_placeholder|default:'Buscar…' }}" type="search" value="{{ q|default:'' }}">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/70 text-[20px]">search</span>
+<input aria-label="{{ buscar_placeholder|default:'Buscar' }}" autocomplete="off" class="w-full pl-10 pr-4 py-2 bg-white/10 rounded-full inner-shadow text-body-md text-white placeholder:text-white/60 focus:outline-none focus-within:ring-2 focus-within:ring-white/20 border-none" id="buscador-q" name="q" placeholder="{{ buscar_placeholder|default:'Buscar…' }}" type="search" value="{{ q|default:'' }}">
 </div>
 {% if q %}
-<p class="mt-1 flex items-center gap-1 min-w-0 font-label-sm text-label-sm text-on-surface-variant">
+<p class="mt-1 flex items-center gap-1 min-w-0 font-label-sm text-label-sm text-white/70">
 <span class="truncate">Buscando en {{ buscar_alcance|default:'Kanview' }}: «{{ q }}»</span>
-<a class="shrink-0 underline decoration-dotted hover:text-primary" href="{{ request.path }}">Quitar filtro</a>
+<a class="shrink-0 underline decoration-dotted hover:text-white" href="{{ request.path }}">Quitar filtro</a>
 </p>
 {% endif %}
 </form>
 {% else %}
-<h1 class="font-semibold text-lg text-on-surface truncate">{{ cabecera_titulo|default:"" }}</h1>
+<h1 class="font-semibold text-lg text-white truncate">{{ cabecera_titulo|default:"" }}</h1>
 {% endif %}
 <div class="md:hidden flex items-center gap-2 min-w-0">
 {% if q %}
-<a aria-label="Quitar el filtro «{{ q }}»" class="flex items-center gap-1 min-w-0 rounded-full bg-surface-container-low px-3 py-1 font-label-sm text-label-sm text-on-surface-variant" href="{{ request.path }}">
+<a aria-label="Quitar el filtro «{{ q }}»" class="flex items-center gap-1 min-w-0 rounded-full bg-white/10 px-3 py-1 font-label-sm text-label-sm text-white/80" href="{{ request.path }}">
 <span class="material-symbols-outlined text-[16px]">search</span>
 <span class="truncate">{{ q }}</span>
 <span class="material-symbols-outlined text-[16px]">close</span>
 </a>
 {% else %}
 <div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold shrink-0">K</div>
-<h1 class="font-headline-md text-headline-md font-bold text-primary truncate">Kanview</h1>
+<h1 class="font-headline-md text-headline-md font-bold text-white truncate">Kanview</h1>
 {% endif %}
 </div>
 </div>
 <div class="flex items-center gap-1 md:gap-2 shrink-0">
 {% if mostrar_buscador %}
 <!-- Buscador en móvil: el diseño lo esconde, así que se abre en un panel. -->
-<button aria-controls="panel-buscar" aria-expanded="false" aria-label="Buscar" class="md:hidden w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all" data-abre-panel id="btn-buscar" type="button">
+<button aria-controls="panel-buscar" aria-expanded="false" aria-label="Buscar" class="md:hidden w-10 h-10 rounded-full flex items-center justify-center text-white/80 hover:bg-white/10 transition-all" data-abre-panel id="btn-buscar" type="button">
 <span class="material-symbols-outlined">search</span>
 </button>
 {% endif %}
 <!-- Campana: contador y panel con avisos reales. -->
 <div class="relative">
-<button aria-controls="panel-avisos" aria-expanded="false" aria-label="Notificaciones{% if avisos_total %} ({{ avisos_total }}){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant transition-all" data-abre-panel id="btn-avisos" type="button">
+<button aria-controls="panel-avisos" aria-expanded="false" aria-label="Notificaciones{% if avisos_total %} ({{ avisos_total }}){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white/80 transition-all" data-abre-panel id="btn-avisos" type="button">
 <span class="material-symbols-outlined">notifications</span>
 {% if avisos_total %}
 <span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error text-[10px] font-bold leading-[18px] text-center" id="contador-avisos">{{ avisos_total }}</span>
@@ -95,7 +95,7 @@ menú móvil del sidebar.
 </div>
 <!-- Cuenta: nombre, rol real, Configuración y Cerrar sesión (POST). -->
 <div class="relative">
-<button aria-controls="panel-cuenta" aria-expanded="false" aria-label="Menú de la cuenta{% if usuario_nombre %} de {{ usuario_nombre }}{% endif %}" class="w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant transition-all" data-abre-panel id="btn-cuenta" type="button">
+<button aria-controls="panel-cuenta" aria-expanded="false" aria-label="Menú de la cuenta{% if usuario_nombre %} de {{ usuario_nombre }}{% endif %}" class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white/80 transition-all" data-abre-panel id="btn-cuenta" type="button">
 <span class="material-symbols-outlined">account_circle</span>
 </button>
 <div aria-label="Cuenta" class="hidden absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-2xl bg-surface border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50 overflow-hidden" data-panel id="panel-cuenta" role="region">
@@ -128,13 +128,13 @@ Cerrar sesión
 </div>
 {% if mostrar_buscador %}
 <!-- Panel del buscador en móvil (mismo `?q=` que el de escritorio). -->
-<div class="md:hidden absolute top-full left-0 right-0 hidden bg-background border-b border-outline-variant/30 px-container-padding-mobile py-3" data-panel id="panel-buscar">
+<div class="md:hidden absolute top-full left-0 right-0 hidden bg-[#006565] border-b border-white/10 px-container-padding-mobile py-3" data-panel id="panel-buscar">
 <form action="{{ request.path }}" class="w-full" method="get" role="search">
 {% if request.GET.mes %}<input name="mes" type="hidden" value="{{ request.GET.mes }}">{% endif %}
 {% if request.GET.categoria %}<input name="categoria" type="hidden" value="{{ request.GET.categoria }}">{% endif %}
 <div class="relative">
-<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-<input aria-label="{{ buscar_placeholder|default:'Buscar' }}" autocomplete="off" class="w-full pl-10 pr-4 py-2 bg-surface-container-low rounded-full inner-shadow text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus-within:ring-2 focus-within:ring-primary/20 border-none" name="q" placeholder="{{ buscar_placeholder|default:'Buscar…' }}" type="search" value="{{ q|default:'' }}">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-white/70 text-[20px]">search</span>
+<input aria-label="{{ buscar_placeholder|default:'Buscar' }}" autocomplete="off" class="w-full pl-10 pr-4 py-2 bg-white/10 rounded-full inner-shadow text-body-md text-white placeholder:text-white/60 focus:outline-none focus-within:ring-2 focus-within:ring-white/20 border-none" name="q" placeholder="{{ buscar_placeholder|default:'Buscar…' }}" type="search" value="{{ q|default:'' }}">
 </div>
 </form>
 </div>
