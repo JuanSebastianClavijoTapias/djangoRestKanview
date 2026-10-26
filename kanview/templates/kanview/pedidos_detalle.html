@@ -44,7 +44,10 @@
 <div class="flex flex-wrap items-center gap-2">
 {% if puede_gestionar %}
 {% if pedido.estado_aprobacion != 'aprobado' %}
-<form method="post" action="{% url 'kanview:pedido-aprobar' pedido.pk %}">{% csrf_token %}<button class="bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold" type="submit">Aprobar</button></form>
+<form class="flex items-center gap-2" method="post" action="{% url 'kanview:pedido-aprobar' pedido.pk %}">{% csrf_token %}{% if empleados %}<select class="rounded-xl border px-3 py-2 text-sm" name="empleado"{% if not pedido.id_empleado %} required{% endif %} title="Trabajador asignado">
+<option value="">Asignar trabajador...</option>
+{% for empleado in empleados %}<option value="{{ empleado.pk }}"{% if pedido.id_empleado_id == empleado.pk %} selected{% endif %}>{{ empleado.nombre }}</option>{% endfor %}
+</select>{% endif %}<button class="bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-semibold" type="submit">Aprobar</button></form>
 {% endif %}
 {% if pedido.estado_aprobacion == 'pendiente' %}
 <form class="flex items-center gap-2" method="post" action="{% url 'kanview:pedido-rechazar' pedido.pk %}">{% csrf_token %}<input class="rounded-xl border px-3 py-2 text-sm" name="motivo" placeholder="Motivo del rechazo" required/><button class="bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold" type="submit">Rechazar</button></form>
@@ -91,8 +94,8 @@
 {% if not es_cliente %}
 <div>
 <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1 border-b border-surface-variant pb-1">Empleado asignado</p>
-<p class="font-body-md text-body-md font-medium">{{ pedido.id_empleado.nombre }}</p>
-<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ pedido.id_empleado.get_cargo_display }}</p>
+<p class="font-body-md text-body-md font-medium">{{ pedido.id_empleado.nombre|default:"Sin asignar" }}</p>
+{% if pedido.id_empleado %}<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">{{ pedido.id_empleado.get_cargo_display }}</p>{% endif %}
 </div>
 {% endif %}
 <div>

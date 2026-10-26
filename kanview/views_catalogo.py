@@ -15,7 +15,7 @@ from django.utils import timezone
 from . import busqueda
 from .formato import moneda_cop as _moneda_cop
 from .models import Pedido, Producto
-from .permisos import seccion_requerida
+from .permisos import es_solo_cliente, puede, seccion_requerida
 from .views_site import _render
 
 #: Un producto con esta cantidad o menos se muestra como "Bajo stock".
@@ -58,12 +58,16 @@ def _pedidos_por_mes(producto_id, ventana):
     return [por_mes.get(clave, 0) for clave in ventana]
 
 
-def _datos_ficha(producto, ventana):
-    """Datos que la ficha lateral (JS) pinta para un producto."""
+def _datos_ficha(producto, ventana, es_cliente=False):
+    """Datos que la ficha lateral (JS) pinta para un producto.
+
+    Para el cliente no se exponen números de stock: solo «Disponible» o
+    «Agotado». El personal ve el inventario y el estado detallado.
+    """
     totales = _pedidos_por_mes(producto.pk, ventana)
     maximo = max(totales, default=0)
     stock_bajo = producto.cantidad <= STOCK_BAJO
-    return {
+    datos = {
         "id": producto.pk,
         "codigo": producto.codigo_producto,
         "nombre": producto.nombre,
@@ -75,6 +79,7 @@ def _datos_ficha(producto, ventana):
         "stock_bajo": stock_bajo,
         "precio": _moneda_cop(producto.precio),
         "editar_url": reverse("kanview:producto-editar", args=[producto.pk]),
+        "pedir_url": reverse("kanview:pedido-cliente-crear") + f"?producto={producto.pk}",
         "ventas_total": sum(totales),
         "ventas_max": maximo,
         "serie": [
@@ -86,6 +91,12 @@ def _datos_ficha(producto, ventana):
             for (_anio, mes), total in zip(ventana, totales)
         ],
     }
+    if es_cliente:
+        datos["cantidad"] = None
+        datos["inventario"] = None
+        datos["estado"] = "Disponible" if producto.cantidad else "Agotado"
+        datos["stock_bajo"] = not producto.cantidad
+    return datos
 
 
 # ---- Vista -----------------------------------------------------------------
@@ -99,6 +110,7 @@ def catalogo(request):
     """
     filtro = (request.GET.get("categoria") or "").strip()
     q = busqueda.texto(request)
+    es_cliente = es_solo_cliente(request.user)
 
     consulta = busqueda.filtrar(
         Producto.objects.filter(activo=True),
@@ -122,7 +134,7 @@ def catalogo(request):
 
     ventana = _meses_ventana(timezone.localdate())
     datos_ficha = {
-        str(producto.pk): _datos_ficha(producto, ventana)
+        str(producto.pk): _datos_ficha(producto, ventana, es_cliente=es_cliente)
         for producto in productos
     }
 
@@ -145,5 +157,8 @@ def catalogo(request):
         total_productos=len(productos),
         unidades_totales=agregados["unidades"] or 0,
         valor_inventario=_moneda_cop(agregados["valor"] or 0),
+        # El cliente ve el catálogo para pedir; la edición es del personal.
+        es_cliente=es_cliente,
+        puede_gestionar=puede(request.user, "gestion-catalogo"),
         **busqueda.contexto(request, "Buscar en catálogo...", "catálogo"),
     )

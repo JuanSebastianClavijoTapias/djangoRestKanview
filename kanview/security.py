@@ -1,6 +1,5 @@
 """Middlewares de seguridad: login obligatorio, rate limit y cabeceras."""
 
-import time
 from urllib.parse import quote
 
 from django.conf import settings
@@ -73,14 +72,17 @@ class RateLimitMiddleware:
 
         prefijo, limite, ventana = _limite(ruta)
         ip = request.META.get("REMOTE_ADDR") or "desconocida"
-        clave = f"rate:{prefijo}:{ip}:{int(time.time() // ventana)}"
-        if cache.add(clave, 1, timeout=ventana + 1):
+        # Ventana anclada al primer request (y no al minuto de reloj): así el
+        # límite no se reinicia al cruzar un límite de minuto, que permitía
+        # ráfagas dobles y hacía indeterminada esta parte de las pruebas.
+        clave = f"rate:{prefijo}:{ip}"
+        if cache.add(clave, 1, timeout=ventana):
             usado = 1
         else:
             try:
                 usado = cache.incr(clave)
             except ValueError:
-                cache.set(clave, 1, timeout=ventana + 1)
+                cache.set(clave, 1, timeout=ventana)
                 usado = 1
         if usado > limite:
             respuesta = JsonResponse(

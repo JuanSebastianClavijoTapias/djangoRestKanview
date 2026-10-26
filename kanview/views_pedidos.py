@@ -32,9 +32,9 @@ from django.views.decorators.http import require_POST
 
 from . import busqueda, historial
 from .auditoria import registrar as registrar_auditoria
-from .models import ESTADOS_KANBAN, ESTADOS_PEDIDO_KANBAN, Pedido
+from .models import ESTADOS_KANBAN, ESTADOS_PEDIDO_KANBAN, Empleado, Pedido
 from .notificaciones import notificar_cliente, notificar_staff
-from .permisos import SECCION_ESCRITURA, es_administracion, es_solo_cliente, puede, seccion_requerida
+from .permisos import SECCION_ESCRITURA, es_administracion, es_administrador, es_solo_cliente, puede, seccion_requerida
 from .views_site import _render
 
 #: Columnas del tablero de pedidos, en orden.
@@ -385,10 +385,7 @@ def pedidos_tablero(request):
         detalle_modales=detalles,
         tareas_modales=tareas_modales,
         puede_gestionar=puede(request.user, SECCION_ESCRITURA["pedidos"]),
-        puede_mover=(
-            puede(request.user, SECCION_ESCRITURA["pedidos"])
-            or es_solo_cliente(request.user)
-        ),
+        puede_mover=es_administrador(request.user),
         es_cliente=es_solo_cliente(request.user),
         estados_kanban=ESTADOS_KANBAN,
         **busqueda.contexto(request, "Buscar procesos, clientes o trabajadores...", "procesos"),
@@ -400,16 +397,12 @@ def pedidos_tablero(request):
 def pedido_estado(request, pk):
     """Cambia el estado manual del pedido desde el tablero (drag & drop).
 
-    El Cliente solo puede mover sus propios pedidos; el personal con permiso de
-    gestión puede mover cualquiera.
+    Solo el Administrador puede mover las tarjetas; el resto de roles (incluido
+    el Cliente) ven el tablero sin arrastre.
     """
+    if not es_administrador(request.user):
+        return JsonResponse({"error": "Solo el administrador puede mover las tarjetas."}, status=403)
     pedido = get_object_or_404(Pedido, pk=pk)
-    es_cliente = es_solo_cliente(request.user)
-    if es_cliente:
-        if (pedido.id_cliente.correo or "").lower() != (request.user.email or "").lower():
-            return JsonResponse({"error": "No puedes modificar un pedido ajeno."}, status=403)
-    elif not puede(request.user, SECCION_ESCRITURA["pedidos"]):
-        return JsonResponse({"error": "No tienes permiso para mover pedidos."}, status=403)
     try:
         cuerpo = json.loads(request.body or "{}")
     except (TypeError, ValueError, json.JSONDecodeError):
@@ -465,6 +458,8 @@ def pedido_detalle(request, pk):
         puede_gestionar=puede(request.user, "gestion-pedidos"),
         es_cliente=es_solo_cliente(request.user),
         puede_revisar_solicitudes=es_administracion(request.user),
+        # Trabajadores que se pueden asignar al aprobar el pedido.
+        empleados=Empleado.objects.filter(activo=True).order_by("nombre"),
         # Un detalle no tiene lista que filtrar: el header muestra su título.
         cabecera_titulo=(
             f"Mi pedido {pedido.codigo_pedido}"

@@ -31,6 +31,8 @@ Dependencias nuevas para PDF y 2FA: `reportlab`, `pyotp` y `qrcode` (incluidas e
 
 La factura se genera en PDF y se envía por correo desde el detalle del pedido. Las copias de seguridad se guardan en `backups/` (configurable con `BACKUP_DIR`) y solo las gestiona Administración.
 
+El rol Cliente ve el catálogo (`/catalogo/`) y crea sus propios pedidos desde él (`/pedidos/nuevo/`): elige producto y cantidad, y el pedido queda «Pendiente de aprobación» sin trabajador asignado. Al aprobarlo, el taller le asigna el trabajador responsable. Cada pedido descuenta el stock del producto; desactivar un pedido lo devuelve.
+
 El chat usa Django Channels y WebSockets. `runserver` funciona con Daphne; en desarrollo se usa un canal en memoria. Para producción con varios procesos configura `CHANNEL_LAYERS` con `channels_redis`.
 
 ## Seguridad
@@ -44,7 +46,11 @@ El chat usa Django Channels y WebSockets. `runserver` funciona con Daphne; en de
 - Para varias instancias, configura `CACHE_BACKEND`/`CACHE_LOCATION` con un cache compartido; el rate limit en memoria solo protege un proceso.
 - La CSP permite scripts inline porque la interfaz actual los usa; al migrarlos a archivos estáticos se puede endurecer con nonces y quitar `'unsafe-inline'`.
 
-Variables de entorno útiles: `EMPRESA_NOMBRE`, `EMPRESA_NIT`, `EMPRESA_DIRECCION`, `EMPRESA_TELEFONO`, `EMPRESA_CORREO`, `FACTURA_IVA`, `TERMINOS_VERSION`, `BACKUP_DIR`, `BACKUP_RETENCION`, `MAX_VIDEO_BYTES` y `MAX_BYTES_MULTIMEDIA`.
+Variables de entorno útiles: `EMPRESA_NOMBRE`, `EMPRESA_NIT`, `EMPRESA_DIRECCION`, `EMPRESA_TELEFONO`, `EMPRESA_CORREO`, `FACTURA_IVA`, `TERMINOS_VERSION`, `BACKUP_DIR`, `BACKUP_RETENCION`, `MAX_VIDEO_BYTES` y `MAX_BYTES_MULTIMEDIA`. El archivo `.env.example` documenta todas las variables.
+
+### Correo
+
+El envío de correos (recuperación de contraseña, facturas, evidencias) usa SMTP y se configura por entorno: `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` y `DEFAULT_FROM_EMAIL`. Sin credenciales SMTP el envío falla y se registra en el log. Para desarrollo, `EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend` imprime los correos en la terminal.
 
 Opcional, para poder entrar a `/admin/`:
 

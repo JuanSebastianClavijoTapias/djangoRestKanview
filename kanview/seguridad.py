@@ -135,7 +135,6 @@ class TerminosMiddleware:
         "/logout/",
         "/terminos/",
         "/recuperar/",
-        "/recuperar/verificar/",
         "/admin/",
         "/api/",
         "/static/",

@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import F
 from django.utils import timezone
 
 # Reglas de negocio del taller
@@ -22,8 +23,6 @@ class Cliente(models.Model):
     # solo aplica a los correos escritos (ver Meta.constraints). Antes el
     # ``unique=True`` impedía dar de alta un segundo cliente sin correo.
     correo = models.EmailField(max_length=254, default="", blank=True, verbose_name="Correo")
-    token = models.CharField(max_length=6, default="000000", verbose_name="Token")
-    url_valida = models.BooleanField(default=False, verbose_name="Código vigente")
     # Cuenta de acceso del cliente. Es un vínculo explícito (no hay que adivinar
     # por el correo): el módulo Usuarios escribe SOLO este campo.
     usuario = models.OneToOneField(
@@ -273,7 +272,11 @@ class Pedido(models.Model):
     evidencias = models.CharField(max_length=255, default="", blank=True, verbose_name="Evidencias (heredado)")
     descripcion = models.CharField(max_length=1000, verbose_name="Descripción")
     id_cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, verbose_name="Cliente")
-    id_empleado = models.ForeignKey(Empleado, on_delete=models.PROTECT, verbose_name="Empleado")
+    # El trabajador lo asigna el taller al aprobar el pedido: un pedido creado
+    # por el cliente queda "Sin asignar" hasta entonces.
+    id_empleado = models.ForeignKey(
+        Empleado, null=True, blank=True, on_delete=models.PROTECT, verbose_name="Empleado"
+    )
     id_producto = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name="Producto")
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
@@ -284,6 +287,65 @@ class Pedido(models.Model):
 
     def __str__(self):
         return self.codigo_pedido
+
+    def clean(self):
+        """La cantidad pedida no puede superar el stock del producto."""
+        super().clean()
+        if not self.id_producto_id or not self.cantidad:
+            return
+        disponible = self.id_producto.cantidad
+        if self.pk:
+            anterior = Pedido.objects.filter(pk=self.pk).select_related("id_producto").first()
+            # Las unidades que este mismo pedido ya descontó vuelven a estar
+            # disponibles al editar su cantidad o su producto.
+            if anterior is not None and anterior.id_producto_id == self.id_producto_id and anterior.activo:
+                disponible += anterior.cantidad
+        if self.cantidad > disponible:
+            # Mensaje sin cifras de stock: el cliente no debe ver el inventario.
+            raise ValidationError({
+                "cantidad": (
+                    f"No hay suficientes unidades disponibles de «{self.id_producto.nombre}». "
+                    "Reduce la cantidad."
+                )
+            })
+
+    def _ajustar_stock(self, anterior):
+        """Descuenta el stock al crear el pedido y lo devuelve al cancelarlo.
+
+        ``anterior`` es el estado guardado antes del ``save`` (None al crear).
+        Solo cuentan los pedidos activos: desactivar un pedido devuelve sus
+        unidades al inventario y reactivarlo las vuelve a descontar.
+        """
+        movimientos = {}
+        if anterior is not None and anterior.id_producto_id:
+            movimientos[anterior.id_producto_id] = (
+                movimientos.get(anterior.id_producto_id, 0) + (anterior.cantidad if anterior.activo else 0)
+            )
+        if self.id_producto_id:
+            movimientos[self.id_producto_id] = (
+                movimientos.get(self.id_producto_id, 0) - (self.cantidad if self.activo else 0)
+            )
+        for producto_id, delta in movimientos.items():
+            if delta:
+                Producto.objects.filter(pk=producto_id).update(cantidad=F("cantidad") + delta)
+
+    def save(self, *args, **kwargs):
+        update_fields = kwargs.get("update_fields")
+        afecta_stock = update_fields is None or bool(set(update_fields) & {"id_producto", "cantidad", "activo"})
+        anterior = None
+        if afecta_stock and self.pk:
+            anterior = Pedido.objects.filter(pk=self.pk).select_related("id_producto").first()
+        super().save(*args, **kwargs)
+        if afecta_stock:
+            self._ajustar_stock(anterior)
+
+    def delete(self, *args, **kwargs):
+        # Un pedido borrado devuelve sus unidades al inventario.
+        if self.id_producto_id and self.activo:
+            Producto.objects.filter(pk=self.id_producto_id).update(
+                cantidad=F("cantidad") + self.cantidad
+            )
+        return super().delete(*args, **kwargs)
 
     @property
     def subtotal(self):
@@ -450,7 +512,11 @@ class Historial(models.Model):
     hora_creacion = models.TimeField(verbose_name="Hora de creación")
     fecha_creacion = models.DateField(verbose_name="Fecha de creación")
     id_cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, verbose_name="Cliente")
-    id_empleado = models.ForeignKey(Empleado, on_delete=models.PROTECT, verbose_name="Empleado")
+    # Puede estar vacío: los pedidos creados por el cliente quedan sin
+    # trabajador asignado hasta que el taller los aprueba.
+    id_empleado = models.ForeignKey(
+        Empleado, null=True, blank=True, on_delete=models.PROTECT, verbose_name="Empleado"
+    )
     id_producto = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name="Producto")
     id_pedido = models.ForeignKey(
         Pedido,

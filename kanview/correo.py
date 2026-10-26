@@ -18,6 +18,14 @@ def enviar_correo(asunto, mensaje, destinatarios, adjuntos=None):
     destinatarios = [correo for correo in dict.fromkeys(destinatarios or []) if correo]
     if not destinatarios:
         return False
+    if settings.EMAIL_BACKEND.endswith("smtp.EmailBackend") and not (
+        settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD
+    ):
+        logger.warning(
+            "Falta EMAIL_HOST_USER/EMAIL_HOST_PASSWORD en el .env: no se pudo enviar el correo %s",
+            asunto,
+        )
+        return False
     try:
         if adjuntos:
             correo = EmailMessage(

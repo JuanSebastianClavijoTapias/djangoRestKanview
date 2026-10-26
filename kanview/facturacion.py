@@ -121,7 +121,7 @@ def generar_pdf(factura):
             f"Fecha límite: {fecha_limite}<br/>"
             f"Fecha de emisión: {factura.fecha_emision:%d/%m/%Y %H:%M}<br/>"
             f"Estado del pedido: {factura.pedido.get_estado_aprobacion_display()}<br/>"
-            f"Responsable: {escape(factura.pedido.id_empleado.nombre)}",
+            f"Responsable: {escape(factura.pedido.id_empleado.nombre if factura.pedido.id_empleado else 'Sin asignar')}",
             normal,
         ),
         Spacer(1, 0.5 * cm),

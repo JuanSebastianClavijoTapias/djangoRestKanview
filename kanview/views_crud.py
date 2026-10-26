@@ -827,7 +827,7 @@ def _avisos_negativos(request, form):
 
 
 # ---- Producto (única fuente del stock y de la categoría) ------------------
-@seccion_requerida("catalogo")
+@seccion_requerida(SECCION_ESCRITURA["catalogo"])
 def producto_lista(request):
     filas = [
         _fila(obj, [obj.nombre, obj.get_categoria_display(), obj.codigo_producto, obj.cantidad, moneda_cop(obj.precio)])
@@ -1077,6 +1077,110 @@ def pedido_crear(request):
             "5 MB por imagen y 25 MB por video). Se guardarán en la galería del pedido."
         ),
         **_nav("Pedidos", request),
+    })
+
+
+CAMPOS_PEDIDO_CLIENTE = ("id_producto", "cantidad", "descripcion", "fecha_limite")
+
+
+def _cliente_de_usuario(usuario):
+    """Cliente asociado a la cuenta: relación directa o, si falta, por el correo."""
+    cliente = getattr(usuario, "cliente_kanview", None)
+    if cliente is not None:
+        return cliente
+    return Cliente.objects.filter(correo__iexact=usuario.email or "").first()
+
+
+def _form_pedido_cliente(request):
+    """Formulario del cliente: producto del catálogo, cantidad y detalles.
+
+    El cliente no elige empleado ni estado: el trabajador lo asigna el taller
+    al aprobar el pedido.
+    """
+    form = _form_vista(Pedido, CAMPOS_PEDIDO_CLIENTE, WIDGETS_PEDIDO, request, con_archivos=True)
+    form.fields["id_producto"].queryset = Producto.objects.filter(activo=True).order_by("nombre")
+    form.fields["id_producto"].empty_label = "Selecciona un producto del catálogo"
+    form.fields["id_producto"].label = "Producto del catálogo"
+    form.fields["cantidad"].label = "Cantidad"
+    form.fields["descripcion"].label = "Descripción de tu pedido"
+    form.fields["descripcion"].widget = forms.Textarea(
+        attrs={"rows": 4, "placeholder": "Cuéntanos qué necesitas (medidas, materiales, detalles...)"}
+    )
+    form.fields["fecha_limite"] = forms.DateField(
+        required=False,
+        label="Fecha límite de entrega (opcional)",
+        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        input_formats=["%Y-%m-%d"],
+        error_messages={"invalid": "Ingresa una fecha límite válida (año-mes-día)."},
+    )
+    return form
+
+
+@seccion_requerida("pedidos")
+def pedido_cliente_crear(request):
+    """Crea un pedido desde el catálogo (rol Cliente).
+
+    El cliente elige el producto y la cantidad; el sistema fija su cuenta como
+    dueña del pedido y lo deja «Pendiente de aprobación» y sin trabajador
+    asignado hasta que el taller lo apruebe.
+    """
+    if not es_solo_cliente(request.user):
+        messages.error(request, "Solo el cliente puede crear pedidos desde el catálogo.")
+        return redirect("kanview:pedido-crear")
+    cliente = _cliente_de_usuario(request.user)
+    if cliente is None:
+        messages.error(request, "Tu cuenta no tiene un cliente asociado. Avisa al taller.")
+        return redirect("kanview:pedidos-tablero")
+    form = _form_pedido_cliente(request)
+    producto_id = (request.GET.get("producto") or "").strip()
+    if request.method == "GET" and producto_id.isdigit():
+        if Producto.objects.filter(pk=int(producto_id), activo=True).exists():
+            form.initial["id_producto"] = int(producto_id)
+    if request.method == "POST":
+        form.is_valid()
+        archivos = _validar_imagenes(request, form)
+        if not form.errors:
+            pedido = form.save(commit=False)
+            pedido.id_cliente = cliente
+            pedido.id_empleado = None
+            pedido.estado = "activo"
+            pedido.estado_aprobacion = "pendiente"
+            pedido.fecha_creacion = timezone.localdate()
+            pedido.hora_creacion = timezone.now()
+            pedido.evidencias = ""
+            pedido.fecha_limite = form.cleaned_data.get("fecha_limite")
+            _guardar_pedido_con_codigo(pedido)
+            imagenes = _guardar_evidencias(pedido, archivos)
+            aviso = f" con {imagenes} archivo{'s' if imagenes != 1 else ''}" if imagenes else ""
+            historial.registrar(
+                pedido, "pedido_creado",
+                f"Pedido {pedido.codigo_pedido} creado por el cliente con {pedido.cantidad} unidad(es).",
+                request.user,
+            )
+            registrar_auditoria(
+                request, "crear", "Pedido", pedido,
+                f"Pedido {pedido.codigo_pedido} creado por el cliente",
+                {"cliente": pedido.id_cliente_id, "producto": pedido.id_producto_id},
+            )
+            notificar_staff(
+                "pedido",
+                f"Nuevo pedido {pedido.codigo_pedido} de {cliente.nombre} pendiente de aprobación.",
+                reverse("kanview:pedido-detalle", args=[pedido.pk]),
+            )
+            messages.success(
+                request,
+                f"Pedido {pedido.codigo_pedido} creado{aviso}. Queda pendiente de aprobación.",
+            )
+            return redirect("kanview:pedido-detalle", pk=pedido.pk)
+    return render(request, "kanview/pedido_cliente_form.html", {
+        "form": form,
+        "titulo": "Nuevo pedido",
+        "cancel_url": reverse("kanview:pedidos-tablero"),
+        "aviso_imagenes": (
+            "Adjunta imágenes o videos (JPG, PNG, WEBP, MP4, WEBM; máximo 5 archivos, "
+            "5 MB por imagen y 25 MB por video). Ayudan al taller a entender tu pedido."
+        ),
+        **_nav("Procesos", request),
     })
 
 

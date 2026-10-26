@@ -622,9 +622,10 @@ class CrudModulesTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertFalse(Producto.objects.filter(codigo_producto="CLI001").exists())
 
-        # El Cliente solo entra a sus procesos: productos y catálogo quedan cerrados.
+        # La gestión de productos queda cerrada; el catálogo sí lo ve (solo
+        # lectura) para pedir desde él.
         self.assertEqual(self.client.get(reverse("kanview:producto-lista")).status_code, 302)
-        self.assertEqual(self.client.get(reverse("kanview:catalogo")).status_code, 302)
+        self.assertEqual(self.client.get(reverse("kanview:catalogo")).status_code, 200)
 
     def test_api_rechaza_al_rol_cliente(self):
         _cliente, user = self._cliente_con_cuenta()
@@ -632,8 +633,8 @@ class CrudModulesTestCase(TestCase):
 
         # Un Cliente no entra a los recursos de gestión ni a los de otros módulos.
         self.assertEqual(self.client.get("/api/clientes/").status_code, 403)
-        # Productos y catálogo ya no son accesibles para el Cliente.
-        self.assertEqual(self.client.get("/api/productos/").status_code, 403)
+        # El catálogo de productos es de solo lectura para el Cliente.
+        self.assertEqual(self.client.get("/api/productos/").status_code, 200)
         self.assertEqual(self.client.post("/api/productos/", {}).status_code, 403)
         self.assertEqual(self.client.get("/api/pedidos/").status_code, 200)
         self.assertEqual(self.client.post("/api/pedidos/", {}).status_code, 403)
@@ -1269,7 +1270,7 @@ class NotificacionesTestCase(TestCase):
             direccion="Calle", salario=1000,
         )
         cls.producto = Producto.objects.create(
-            nombre="Tela Avisos", categoria="tela", cantidad=1, precio=1000,
+            nombre="Tela Avisos", categoria="tela", cantidad=2, precio=1000,
             descripcion="x", codigo_producto="AV0001",
         )
         hoy = timezone.localdate()
@@ -1286,8 +1287,8 @@ class NotificacionesTestCase(TestCase):
             nombre="Tarea vencida", descripcion="cortar", fecha_inicio=hoy - timedelta(days=9),
             fecha_fin=hoy - timedelta(days=1), estado="pendiente", id_pedido=cls.pedido_vencido,
         )
-        # Producto por debajo del umbral de stock bajo (Producto.cantidad = 1).
-        # (El stock ya no vive en una tabla Inventario aparte.)
+        # Producto por debajo del umbral de stock bajo (queda 1: el pedido de
+        # abajo descuenta 1 unidad de las 2 del stock al crearse).
 
     def setUp(self):
         self.client.force_login(self.user)

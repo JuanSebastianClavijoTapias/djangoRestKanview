@@ -53,6 +53,7 @@ from .views_crud import (
     historial_editar,
     historial_eliminar,
     historial_reactivar,
+    pedido_cliente_crear,
     pedido_crear,
     pedido_editar,
     pedido_eliminar,
@@ -77,7 +78,6 @@ from .views_site import (
     login_2fa,
     recuperar_restablecer,
     recuperar_solicitar,
-    recuperar_verificar,
     registrarse,
 )
 
@@ -90,7 +90,6 @@ urlpatterns = [
     path("registro/", registrarse, name="registro"),
     path("logout/", cerrar_sesion, name="logout"),
     path("recuperar/", recuperar_solicitar, name="recuperar"),
-    path("recuperar/verificar/", recuperar_verificar, name="recuperar-verificar"),
     path("recuperar/restablecer/<uidb64>/<token>/", recuperar_restablecer, name="recuperar-restablecer"),
     path("perfil/", views_cuenta.perfil, name="perfil"),
     path("perfil/password/", views_cuenta.perfil_password, name="perfil-password"),
@@ -100,6 +99,7 @@ urlpatterns = [
 
     # Pantallas de diseño (Stitch) conectadas a datos reales
     path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
+    path("pedidos/nuevo/", pedido_cliente_crear, name="pedido-cliente-crear"),
     path("pedidos/<int:pk>/estado/", views_pedidos.pedido_estado, name="pedido-estado"),
     path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),
     path("pedidos/<int:pk>/aprobar/", views_pedido_acciones.pedido_aprobar, name="pedido-aprobar"),

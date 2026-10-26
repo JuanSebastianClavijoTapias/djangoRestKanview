@@ -1,0 +1,35 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - {{ titulo }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl">
+<h2 class="text-2xl font-bold mb-2">{{ titulo }}</h2>
+<p class="text-sm text-gray-500 mb-6">Elige un producto del catálogo y dinos cuántas unidades necesitas. Tu pedido quedará pendiente de aprobación: el taller lo revisará y asignará un trabajador.</p>
+<form class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-5" method="post" enctype="multipart/form-data">
+{% csrf_token %}
+{% if form.non_field_errors %}
+<div class="px-4 py-3 rounded-xl bg-red-50 text-red-700 text-sm">{{ form.non_field_errors }}</div>
+{% endif %}
+{% for field in form %}
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+{{ field }}
+{% if field.errors %}
+<span class="text-xs text-red-600">{{ field.errors|join:", " }}</span>
+{% endif %}
+{% if field.help_text %}
+<span class="text-xs text-gray-500">{{ field.help_text }}</span>
+{% endif %}
+</div>
+{% endfor %}
+<div class="flex flex-col gap-1.5">
+<label class="text-sm font-medium text-gray-700" for="id_imagenes">Archivos del pedido (opcional)</label>
+<input accept="image/*,video/mp4,video/webm,video/quicktime" id="id_imagenes" multiple="multiple" name="imagenes" type="file"/>
+<span class="text-xs text-gray-500">{{ aviso_imagenes }}</span>
+</div>
+<div class="flex items-center gap-3 mt-4">
+<button class="bg-[#006565] hover:bg-[#004f4f] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors" type="submit">Crear pedido</button>
+<a class="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors" href="{{ cancel_url }}">Cancelar</a>
+</div>
+</form>
+</div>
+{% endblock %}

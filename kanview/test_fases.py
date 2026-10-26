@@ -11,6 +11,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.mail.backends.base import BaseEmailBackend
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -46,6 +47,13 @@ PNG_1X1 = (
     b"\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01"
     b"\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
 )
+
+
+class BackendRoto(BaseEmailBackend):
+    """Backend de prueba que simula un SMTP caído."""
+
+    def send_messages(self, email_messages):
+        raise RuntimeError("SMTP caído")
 
 
 @override_settings(MEDIA_ROOT=MEDIA_TEMP)
@@ -465,7 +473,23 @@ class KanbanDragTestCase(BaseFasesTestCase):
         self.pedido.refresh_from_db()
         self.assertIsNone(self.pedido.estado_kanban)
 
-    def test_un_cliente_puede_mover_su_pedido(self):
+    def test_solo_el_administrador_mueve_las_tarjetas(self):
+        from .permisos import ROL_TRABAJADOR
+
+        trabajador = User.objects.create_user(
+            username="drag.trabajador", password="x", email="drag.trabajador@example.com"
+        )
+        trabajador.groups.add(Group.objects.get_or_create(name=ROL_TRABAJADOR)[0])
+        self.client.force_login(trabajador)
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido.pk]),
+            {"estado": "en proceso"},
+        )
+        self.assertEqual(resp.status_code, 403)
+        self.pedido.refresh_from_db()
+        self.assertIsNone(self.pedido.estado_kanban)
+
+    def test_un_cliente_no_puede_mover_su_pedido(self):
         from .permisos import ROL_CLIENTE
 
         cliente_user = User.objects.create_user(
@@ -481,9 +505,9 @@ class KanbanDragTestCase(BaseFasesTestCase):
             reverse("kanview:pedido-estado", args=[self.pedido.pk]),
             {"estado": "completado"},
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 403)
         self.pedido.refresh_from_db()
-        self.assertEqual(self.pedido.estado_kanban, "completado")
+        self.assertIsNone(self.pedido.estado_kanban)
 
     def test_un_cliente_no_puede_mover_un_pedido_ajeno(self):
         from .permisos import ROL_CLIENTE
@@ -568,10 +592,11 @@ class ClienteAccesoTestCase(BaseFasesTestCase):
         sidebar = html[html.index("<aside"):html.index("</aside>")]
         self.assertIn(">Procesos<", sidebar)
         self.assertIn(">Mensajería<", sidebar)
-        for etiqueta in ("Panel", "Productos", "Catálogo", "Tareas", "Actividades", "Finanzas"):
+        self.assertIn(">Catálogo<", sidebar)  # el cliente ve el catálogo para pedir
+        for etiqueta in ("Panel", "Productos", "Tareas", "Actividades", "Finanzas"):
             self.assertNotIn(f">{etiqueta}<", sidebar)
         self.assertEqual(self.client.get(reverse("kanview:producto-lista")).status_code, 302)
-        self.assertEqual(self.client.get(reverse("kanview:catalogo")).status_code, 302)
+        self.assertEqual(self.client.get(reverse("kanview:catalogo")).status_code, 200)
         self.assertNotIn("Cargar actividades", html)
         self.assertNotIn("Cliente:", html)
         import re
@@ -579,8 +604,89 @@ class ClienteAccesoTestCase(BaseFasesTestCase):
         tarjetas = re.findall(r"<article[^>]*data-pedido[^>]*>", html)
         self.assertTrue(tarjetas)
         for tarjeta in tarjetas:
-            self.assertIn('draggable="true"', tarjeta)
+            # El cliente ve el tablero, pero sin mover tarjetas: eso es del admin.
+            self.assertNotIn('draggable="true"', tarjeta)
         self.assertContains(resp, "Mis procesos")
+
+    def test_cliente_crea_su_pedido_con_un_producto_del_catalogo(self):
+        producto = Producto.objects.create(
+            nombre="Silla del catálogo", categoria="tela", cantidad=5, precio=250000,
+            descripcion="x", codigo_producto="CLI001",
+        )
+        self.client.force_login(self.cliente_usuario)
+
+        # El formulario del cliente no pide empleado, cliente ni estado.
+        resp = self.client.get(reverse("kanview:pedido-cliente-crear"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'name="id_producto"')
+        self.assertNotContains(resp, 'name="id_empleado"')
+        self.assertNotContains(resp, 'name="id_cliente"')
+
+        resp = self.client.post(reverse("kanview:pedido-cliente-crear"), {
+            "id_producto": producto.pk, "cantidad": "2",
+            "descripcion": "Quiero dos sillas en cuero",
+        })
+        self.assertEqual(resp.status_code, 302)
+        pedido = Pedido.objects.get(descripcion="Quiero dos sillas en cuero")
+        self.assertEqual(pedido.id_cliente, self.cliente)
+        self.assertIsNone(pedido.id_empleado)  # el taller lo asigna al aprobar
+        self.assertEqual(pedido.estado_aprobacion, "pendiente")
+        self.assertEqual(pedido.id_producto, producto)
+        self.assertTrue(pedido.codigo_pedido.startswith("PED-"))
+        producto.refresh_from_db()
+        self.assertEqual(producto.cantidad, 3)  # descuenta del stock
+
+    def test_cliente_no_puede_pedir_mas_unidades_de_las_que_hay(self):
+        producto = Producto.objects.create(
+            nombre="Espuma escasa", categoria="espuma", cantidad=2, precio=10000,
+            descripcion="x", codigo_producto="CLI002",
+        )
+        self.client.force_login(self.cliente_usuario)
+        resp = self.client.post(reverse("kanview:pedido-cliente-crear"), {
+            "id_producto": producto.pk, "cantidad": "5", "descripcion": "demasiadas unidades",
+        }, follow=True)
+        self.assertContains(resp, "No hay suficientes unidades disponibles")
+        self.assertFalse(Pedido.objects.filter(descripcion="demasiadas unidades").exists())
+        producto.refresh_from_db()
+        self.assertEqual(producto.cantidad, 2)  # no descuenta nada
+
+    def test_aprobar_el_pedido_del_cliente_asigna_al_trabajador(self):
+        producto = Producto.objects.create(
+            nombre="Hilo del catálogo", categoria="hilo", cantidad=4, precio=5000,
+            descripcion="x", codigo_producto="CLI003",
+        )
+        self.client.force_login(self.cliente_usuario)
+        self.client.post(reverse("kanview:pedido-cliente-crear"), {
+            "id_producto": producto.pk, "cantidad": "1", "descripcion": "pedido por aprobar",
+        })
+        pedido = Pedido.objects.get(descripcion="pedido por aprobar")
+        self.assertIsNone(pedido.id_empleado)
+
+        self.client.force_login(self.user)
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            # Sin trabajador asignado la aprobación se rechaza.
+            self.client.post(reverse("kanview:pedido-aprobar", args=[pedido.pk]))
+            pedido.refresh_from_db()
+            self.assertEqual(pedido.estado_aprobacion, "pendiente")
+
+            self.client.post(
+                reverse("kanview:pedido-aprobar", args=[pedido.pk]),
+                {"empleado": self.empleado.pk},
+            )
+        pedido.refresh_from_db()
+        self.assertEqual(pedido.estado_aprobacion, "aprobado")
+        self.assertEqual(pedido.id_empleado, self.empleado)
+
+    def test_el_cliente_no_ve_el_stock_del_catalogo(self):
+        self.client.force_login(self.cliente_usuario)
+        resp = self.client.get(reverse("kanview:catalogo"))
+        self.assertEqual(resp.status_code, 200)
+        html = resp.content.decode()
+        # Sin cifras ni estados de inventario: solo Disponible / Agotado.
+        self.assertNotIn("En stock", html)
+        self.assertNotIn("Bajo stock", html)
+        self.assertNotIn("Inventario", html)
+        self.assertIn("Disponible", html)
 
     def test_cliente_puede_cambiar_el_estado_de_sus_actividades(self):
         self.client.force_login(self.cliente_usuario)
@@ -967,6 +1073,39 @@ class SeguridadFase3TestCase(BaseFasesTestCase):
         resp = self.client.post(url, {"nueva": "NuevaClave123", "repetida": "NuevaClave123"})
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(self.client.login(username="fases.admin", password="NuevaClave123"))
+
+    def test_recuperar_solicitar_envia_el_enlace(self):
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            resp = self.client.post(reverse("kanview:recuperar"), {"correo": self.user.email})
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
+        self.assertIn("/recuperar/restablecer/", mail.outbox[0].body)
+
+    def test_recuperar_solicitar_no_revela_si_el_correo_existe(self):
+        mensaje = "Si el correo está registrado, enviamos un enlace para restablecer la contraseña."
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"):
+            desconocido = self.client.post(reverse("kanview:recuperar"), {"correo": "nadie@example.com"}, follow=True)
+            registrado = self.client.post(reverse("kanview:recuperar"), {"correo": self.user.email}, follow=True)
+        self.assertContains(desconocido, mensaje)
+        self.assertContains(registrado, mensaje)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_recuperar_solicitar_avisa_si_el_envio_falla(self):
+        with override_settings(EMAIL_BACKEND="kanview.test_fases.BackendRoto"):
+            resp = self.client.post(reverse("kanview:recuperar"), {"correo": self.user.email}, follow=True)
+        self.assertContains(resp, "No pudimos enviar el correo")
+
+    def test_el_enlace_de_recuperacion_no_se_puede_reusar(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+        url = reverse("kanview:recuperar-restablecer", args=[uid, token])
+        self.client.post(url, {"nueva": "NuevaClave123", "repetida": "NuevaClave123"})
+        self.client.logout()
+        resp = self.client.post(url, {"nueva": "OtraClave123", "repetida": "OtraClave123"}, follow=True)
+        self.assertContains(resp, "El enlace no es válido o ya venció")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("NuevaClave123"))
 
     def test_paginas_de_perfil_y_2fa_renderizan(self):
         self.assertEqual(self.client.get(reverse("kanview:perfil")).status_code, 200)

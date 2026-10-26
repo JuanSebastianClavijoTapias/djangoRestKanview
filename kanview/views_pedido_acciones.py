@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 from . import historial
 from .auditoria import registrar as registrar_auditoria
 from .facturacion import crear_factura, enviar_factura, generar_pdf
-from .models import EvidenciaPedido, Pedido, SolicitudModificacionPedido
+from .models import Empleado, EvidenciaPedido, Pedido, SolicitudModificacionPedido
 from .notificaciones import notificar_cliente, notificar_staff
 from .permisos import SECCION_ESCRITURA, es_administracion, es_administrador, es_solo_cliente, puede, seccion_requerida
 from .views_pedidos import _pedidos_queryset
@@ -44,14 +44,29 @@ def _puede_ver_evidencia(request, evidencia):
 @require_POST
 def pedido_aprobar(request, pk):
     pedido = get_object_or_404(Pedido, pk=pk)
+    # El trabajador se asigna al aprobar: los pedidos creados por el cliente
+    # nacen «Sin asignar» y el taller elige quién los atiende en este paso.
+    empleado_id = (request.POST.get("empleado") or "").strip()
+    empleado = Empleado.objects.filter(pk=empleado_id, activo=True).first() if empleado_id.isdigit() else None
+    if empleado_id and empleado is None:
+        messages.error(request, "Selecciona un trabajador válido para asignar al pedido.")
+        return redirect("kanview:pedido-detalle", pk=pedido.pk)
+    if empleado is not None:
+        pedido.id_empleado = empleado
+    if pedido.id_empleado_id is None:
+        messages.error(request, "Asigna un trabajador al pedido antes de aprobarlo.")
+        return redirect("kanview:pedido-detalle", pk=pedido.pk)
     pedido.estado_aprobacion = "aprobado"
     pedido.motivo_rechazo = ""
     pedido.aprobado_por = request.user
     pedido.fecha_aprobacion = timezone.now()
-    pedido.save(update_fields=["estado_aprobacion", "motivo_rechazo", "aprobado_por", "fecha_aprobacion"])
+    pedido.save(update_fields=[
+        "estado_aprobacion", "motivo_rechazo", "aprobado_por", "fecha_aprobacion", "id_empleado",
+    ])
+    asignado = f" Trabajador asignado: {pedido.id_empleado.nombre}." if empleado else ""
     historial.registrar(
         pedido, "pedido_aprobado",
-        f"Pedido aprobado por {request.user.get_full_name() or request.user.get_username()}.",
+        f"Pedido aprobado por {request.user.get_full_name() or request.user.get_username()}.{asignado}",
         request.user,
     )
     registrar_auditoria(request, "aprobar", "Pedido", pedido, f"Pedido {pedido.codigo_pedido} aprobado")

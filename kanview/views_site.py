@@ -35,7 +35,7 @@ NAV_ITEMS = [
     ("assignment", "Tareas", "kanview:tareas", "tareas"),
     ("history", "Actividades", "kanview:actividades", "tareas"),
     ("forum", "Mensajería", "kanview:mensajeria", "mensajeria"),
-    ("sell", "Productos", "kanview:producto-lista", "catalogo"),
+    ("sell", "Productos", "kanview:producto-lista", "gestion-catalogo"),
     ("menu_book", "Catálogo", "kanview:catalogo", "catalogo"),
     ("calendar_today", "Calendario", "kanview:calendario", "calendario"),
     ("fact_check", "Auditoría", "kanview:auditoria", "auditoria"),
@@ -198,24 +198,30 @@ def recuperar_solicitar(request):
                 url = request.build_absolute_uri(
                     reverse("kanview:recuperar-restablecer", args=[uid, token])
                 )
-                enviar_correo(
+                enviado = enviar_correo(
                     "Kanview · Restablece tu contraseña",
                     f"Hola,\n\nPara definir una nueva contraseña abre este enlace:\n{url}\n\n"
                     "El enlace es de un solo uso y vence pronto.",
                     [correo],
                 )
+                if not enviado:
+                    # Si el SMTP falla hay que avisar: si no, el usuario espera un
+                    # correo que nunca llega. Aunque esto rompe el secreto absoluto
+                    # de la existencia de la cuenta (solo ante un fallo de envío),
+                    # es preferible a dejarlo bloqueado sin explicación.
+                    messages.error(
+                        request,
+                        "No pudimos enviar el correo por un problema del servidor "
+                        "de mensajes (tu cuenta no está en causa). Intenta de nuevo "
+                        "en unos minutos o avisa al administrador.",
+                    )
+                    return redirect("kanview:recuperar")
             messages.success(
                 request,
                 "Si el correo está registrado, enviamos un enlace para restablecer la contraseña.",
             )
         return redirect("kanview:recuperar")
     return render(request, "kanview/recuperar.html", {"correo": request.GET.get("correo", "")})
-
-
-def recuperar_verificar(request):
-    """Compatibilidad: el flujo antiguo de códigos ya no se usa."""
-    messages.info(request, "Revisa el enlace de restablecimiento enviado a tu correo.")
-    return redirect("kanview:recuperar")
 
 
 def recuperar_restablecer(request, uidb64, token):

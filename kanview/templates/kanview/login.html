@@ -17,6 +17,7 @@
 <body class="bg-background text-on-background h-screen w-full flex overflow-hidden font-body-md text-body-md antialiased">
 <!-- Left Side: Login Form -->
 <main class="w-full md:w-1/2 flex flex-col justify-center items-center p-container-padding-mobile md:p-container-padding-desktop relative z-10 bg-surface-container-lowest h-full overflow-y-auto">
+<div class="flex-1"></div>
 <div class="w-full max-w-[420px] flex flex-col gap-8">
 <!-- Brand / Header -->
 <div class="flex flex-col gap-2 text-center md:text-left">
@@ -52,16 +53,15 @@
 <span class="material-symbols-outlined">visibility_off</span>
 </button>
 </div>
+<div class="flex justify-end">
+<a class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim transition-colors font-semibold" href="{% url 'kanview:recuperar' %}">¿Olvidé mi contraseña?</a>
 </div>
-<div class="flex items-center justify-between mt-1">
+</div>
+<div class="flex items-center mt-1">
 <label class="flex items-center gap-2 cursor-pointer group">
 <input class="w-4 h-4 rounded text-primary bg-surface border-outline-variant focus:ring-primary focus:ring-offset-0 cursor-pointer" type="checkbox"/>
 <span class="font-label-sm text-label-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Recordarme</span>
 </label>
-<div class="flex items-center gap-3">
-<a class="font-label-sm text-label-sm text-primary hover:text-primary-fixed-dim transition-colors font-semibold" href="{% url 'kanview:recuperar' %}">¿Olvidé mi contraseña?</a>
-<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" href="{% url 'kanview:terminos' %}">Términos y condiciones</a>
-</div>
 </div>
 <input name="next" type="hidden" value="{{ next }}"/>
 <button class="mt-4 w-full bg-primary hover:bg-primary-fixed-dim text-on-primary font-label-md text-label-md py-3.5 rounded-2xl shadow-[0_12px_24px_rgba(0,128,128,0.2)] hover:shadow-[0_16px_32px_rgba(0,128,128,0.3)] transition-all duration-300 active:scale-[0.98] flex justify-center items-center gap-2" type="submit">
@@ -74,6 +74,8 @@
                 que la crea desde el módulo <span class="text-primary font-semibold">Usuarios</span>.
             </p>
 </div>
+<div class="flex-1"></div>
+<a class="pt-8 font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" href="{% url 'kanview:terminos' %}">Términos y condiciones</a>
 </main>
 <!-- Right Side: Tres fotografías del taller -->
 <aside class="hidden md:flex w-1/2 h-full relative bg-surface-container-low overflow-hidden items-center justify-center">

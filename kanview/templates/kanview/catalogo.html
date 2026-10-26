@@ -70,7 +70,15 @@
 <div class="flex justify-between items-start mb-2">
 <span class="font-mono text-sm text-outline tracking-wider">{{ producto_destacado.codigo_producto }}</span>
 <div class="flex items-center gap-2 px-2 py-1 bg-surface-container-low rounded-full">
-{% if producto_destacado.cantidad <= umbral_stock_bajo %}
+{% if es_cliente %}
+{% if producto_destacado.cantidad %}
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Disponible</span>
+{% else %}
+<div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Agotado</span>
+{% endif %}
+{% elif producto_destacado.cantidad <= umbral_stock_bajo %}
 <div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
 <span class="font-label-sm text-label-sm text-on-surface-variant">Bajo stock ({{ producto_destacado.cantidad }})</span>
 {% else %}
@@ -90,10 +98,13 @@
 <span class="font-label-sm text-label-sm text-outline">Precio Base (COP)</span>
 <span class="font-headline-md text-headline-md text-on-surface font-bold">${{ producto_destacado.precio|moneda_cop }}</span>
 </div>
+<div class="flex items-center gap-3">
 <button class="text-primary hover:text-primary-fixed-dim font-label-md text-label-md font-semibold flex items-center gap-1 transition-colors" onclick="openProductDetail('{{ producto_destacado.pk }}')">
                             Ver detalles
                             <span class="material-symbols-outlined text-sm transition-transform group-hover:translate-x-1">arrow_forward</span>
 </button>
+{% if es_cliente %}<a class="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary-fixed-dim transition-colors flex items-center gap-1" href="{% url 'kanview:pedido-cliente-crear' %}?producto={{ producto_destacado.pk }}">Pedir</a>{% endif %}
+</div>
 </div>
 </div>
 </article>
@@ -104,7 +115,15 @@
 <div class="flex justify-between items-center mb-3">
 <span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">{{ producto.codigo_producto }}</span>
 <div class="flex items-center gap-1.5">
-{% if producto.cantidad <= umbral_stock_bajo %}
+{% if es_cliente %}
+{% if producto.cantidad %}
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,101,101,0.6)]"></div>
+<span class="font-label-sm text-[11px] text-outline uppercase">Disponible</span>
+{% else %}
+<div class="w-2 h-2 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(169,96,57,0.6)]"></div>
+<span class="font-label-sm text-[11px] text-outline uppercase">Agotado</span>
+{% endif %}
+{% elif producto.cantidad <= umbral_stock_bajo %}
 <div class="w-2 h-2 rounded-full bg-tertiary-container shadow-[0_0_8px_rgba(169,96,57,0.6)]"></div>
 <span class="font-label-sm text-[11px] text-outline uppercase">Bajo stock ({{ producto.cantidad }})</span>
 {% else %}
@@ -120,7 +139,10 @@
                     </p>
 <div class="flex items-center justify-between border-t border-outline-variant/30 pt-4">
 <span class="font-body-lg text-body-lg text-on-surface font-semibold">${{ producto.precio|moneda_cop }}</span>
+<div class="flex items-center gap-3">
+{% if es_cliente %}<a class="bg-primary text-on-primary px-3 py-1.5 rounded-lg font-label-md text-label-md hover:bg-primary-fixed-dim transition-colors" href="{% url 'kanview:pedido-cliente-crear' %}?producto={{ producto.pk }}">Pedir</a>{% endif %}
 <span class="text-primary font-label-md text-label-md hover:underline cursor-pointer" onclick="openProductDetail('{{ producto.pk }}')">Ver más</span>
+</div>
 </div>
 </div>
 </article>
@@ -150,14 +172,18 @@
 <span class="font-mono text-sm text-outline bg-surface-container-high px-2 py-1 rounded" id="pd-codigo">{{ producto_destacado.codigo_producto }}</span>
 <div class="flex items-center gap-1.5">
 <div class="w-2 h-2 rounded-full bg-primary" id="pd-estado-dot"></div>
-<span class="font-label-sm text-[11px] text-primary uppercase font-bold" id="pd-estado">{% if producto_destacado.cantidad <= umbral_stock_bajo %}Bajo stock{% else %}En stock{% endif %}{% if producto_destacado %} ({{ producto_destacado.cantidad }}){% endif %}</span>
+<span class="font-label-sm text-[11px] text-primary uppercase font-bold" id="pd-estado">{% if es_cliente %}{% if producto_destacado.cantidad %}Disponible{% else %}Agotado{% endif %}{% else %}{% if producto_destacado.cantidad <= umbral_stock_bajo %}Bajo stock{% else %}En stock{% endif %}{% if producto_destacado %} ({{ producto_destacado.cantidad }}){% endif %}{% endif %}</span>
 </div>
 </div>
 <div class="flex gap-2">
-<a class="bg-surface-container-lowest border border-outline-variant/50 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2" href="{% if producto_destacado %}{% url 'kanview:producto-editar' producto_destacado.pk %}{% else %}{% url 'kanview:producto-lista' %}{% endif %}" id="pd-editar">
+{% if es_cliente %}<a class="bg-primary text-on-primary hover:bg-primary-fixed-dim px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2" href="{% url 'kanview:pedido-cliente-crear' %}" id="pd-pedir">
+<span class="material-symbols-outlined text-sm">shopping_cart</span>
+                        Pedir
+                    </a>{% endif %}
+{% if puede_gestionar %}<a class="bg-surface-container-lowest border border-outline-variant/50 hover:bg-surface-container-low text-on-surface px-4 py-2 rounded-lg font-label-md text-label-md transition-colors flex items-center gap-2" href="{% if producto_destacado %}{% url 'kanview:producto-editar' producto_destacado.pk %}{% else %}{% url 'kanview:producto-lista' %}{% endif %}" id="pd-editar">
 <span class="material-symbols-outlined text-sm">edit</span>
                         Editar
-                    </a>
+                    </a>{% endif %}
 <button class="p-2 text-outline hover:text-on-surface transition-colors rounded-full hover:bg-surface-container-high" onclick="closeProductDetail()">
 <span class="material-symbols-outlined">close</span>
 </button>
@@ -190,11 +216,13 @@
 <span class="font-label-sm text-label-sm text-outline mt-1">Precio Unitario</span>
 <span class="font-body-md text-body-md text-on-surface" id="pd-precio-box">${{ producto_destacado.precio|moneda_cop }}</span>
 </div>
+{% if not es_cliente %}
 <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/20 flex flex-col gap-1">
 <span class="material-symbols-outlined text-outline text-[20px]">inventory</span>
 <span class="font-label-sm text-label-sm text-outline mt-1">Inventario Actual</span>
 <span class="font-body-md text-body-md text-on-surface font-semibold text-primary" id="pd-inventario">{% if producto_destacado %}{{ producto_destacado.cantidad }} Unidades{% endif %}</span>
 </div>
+{% endif %}
 </div>
 <!-- Orders History (últimos meses, desde Pedido) -->
 <div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
@@ -269,13 +297,17 @@
         document.getElementById('pd-categoria').textContent = p.categoria;
         document.getElementById('pd-codigo-box').textContent = p.codigo;
         document.getElementById('pd-precio-box').textContent = '$' + p.precio;
-        document.getElementById('pd-inventario').textContent = p.inventario + ' Unidades';
-        document.getElementById('pd-editar').href = p.editar_url;
+        var inventario = document.getElementById('pd-inventario');
+        if (inventario && p.inventario != null) { inventario.textContent = p.inventario + ' Unidades'; }
+        var editar = document.getElementById('pd-editar');
+        if (editar) { editar.href = p.editar_url; }
+        var pedir = document.getElementById('pd-pedir');
+        if (pedir) { pedir.href = p.pedir_url; }
         setEstado(
             document.getElementById('pd-estado'),
             document.getElementById('pd-estado-dot'),
             p.stock_bajo,
-            p.estado + ' (' + p.cantidad + ')'
+            p.estado + (p.cantidad == null ? '' : ' (' + p.cantidad + ')')
         );
         pintarHistorial(p);
         var modal = document.getElementById('product-detail-modal');

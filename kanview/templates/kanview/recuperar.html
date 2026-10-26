@@ -19,7 +19,7 @@
 <h1 class="text-2xl text-primary font-bold tracking-tight">Kanview</h1>
 </div>
 <h2 class="text-2xl md:text-[32px] md:leading-[40px] font-semibold text-on-surface">Recupera tu contraseña</h2>
-<p class="text-on-surface-variant mt-2">Ingresa tu correo de cliente y te enviaremos un código de 6 dígitos.</p>
+<p class="text-on-surface-variant mt-2">Ingresa tu correo registrado y te enviaremos un enlace para restablecer tu contraseña.</p>
 </div>
 {% if messages %}
 <div class="flex flex-col gap-2">
@@ -39,16 +39,15 @@
 <span class="material-symbols-outlined absolute left-4 text-outline z-10 pointer-events-none">mail</span>
 <input class="w-full pl-11 pr-4 py-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-inner-neomorphic placeholder:text-outline/50" id="id_correo" name="correo" placeholder="tu@empresa.com" type="email" value="{{ correo|default:'' }}" required/>
 </div>
-<p class="text-xs text-on-surface-variant">Debe ser el correo registrado en Clientes.</p>
+<p class="text-xs text-on-surface-variant">Debe ser el correo con el que se creó tu cuenta.</p>
 </div>
 <button class="mt-2 w-full bg-primary hover:bg-primary-fixed-dim text-on-primary text-sm font-medium py-3.5 rounded-2xl shadow-[0_12px_24px_rgba(0,128,128,0.2)] transition-all duration-300 active:scale-[0.98] flex justify-center items-center gap-2" type="submit">
-Enviar código
+Enviar enlace
 <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
 </button>
 </form>
 <div class="flex flex-col gap-2 text-center mt-2">
 <a class="text-sm text-primary font-semibold hover:underline underline-offset-4" href="{% url 'kanview:login' %}">Volver al inicio de sesión</a>
-<a class="text-sm text-on-surface-variant hover:text-on-surface" href="{% url 'kanview:login' %}">Volver al inicio de sesión</a>
 </div>
 </div>
 </main>

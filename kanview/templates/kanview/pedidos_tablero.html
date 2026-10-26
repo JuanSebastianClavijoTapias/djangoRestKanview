@@ -152,7 +152,7 @@
 <p class="font-headline-md text-headline-md text-[16px] text-on-surface">Aún no hay procesos registrados</p>
 <p class="font-body-md text-body-md text-[14px] text-on-surface-variant">Crea el primer pedido para verlo en el tablero.</p>
 </div>
-<a class="ml-auto bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors" href="{% url 'kanview:pedido-crear' %}">Nuevo pedido</a>
+<a class="ml-auto bg-primary text-on-primary px-6 py-2 rounded-xl font-label-md text-label-md hover:bg-primary-fixed-variant transition-colors" href="{% if es_cliente %}{% url 'kanview:pedido-cliente-crear' %}{% else %}{% url 'kanview:pedido-crear' %}{% endif %}">Nuevo pedido</a>
 </div>
 {% endif %}
 {% else %}
@@ -192,7 +192,7 @@
 {% endif %}
 </main>
 <!-- Botón flotante: nuevo pedido -->
-<a class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center fab-shadow hover:scale-105 active:scale-95 transition-transform duration-200 z-50 group" href="{% url 'kanview:pedido-crear' %}" title="Crear nuevo pedido">
+<a class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full flex items-center justify-center fab-shadow hover:scale-105 active:scale-95 transition-transform duration-200 z-50 group" href="{% if es_cliente %}{% url 'kanview:pedido-cliente-crear' %}{% else %}{% url 'kanview:pedido-crear' %}{% endif %}" title="Crear nuevo pedido">
 <span class="material-symbols-outlined text-[28px] group-hover:rotate-90 transition-transform duration-300">add</span>
 </a>
 </div>
