@@ -177,6 +177,27 @@ class CrudModulesTestCase(TestCase):
             resp = self.client.get(url)
             self.assertEqual(resp.status_code, 200, url)
 
+    def test_formulario_de_tarea_pide_pedido_antes_de_fechas(self):
+        resp = self.client.get(reverse("kanview:tarea-crear"))
+        html = resp.content.decode()
+        self.assertLess(html.index('name="id_pedido"'), html.index('name="fecha_inicio"'))
+        self.assertContains(resp, 'id="restriccion-fechas"')
+        self.assertContains(resp, '"selector": "id_pedido"')
+        self.assertContains(resp, f'"desde": "{self.pedido.fecha_creacion.isoformat()}"')
+        self.assertContains(resp, f'"hasta": "{self.pedido.fecha_limite.isoformat()}"')
+
+    def test_formulario_de_actividad_pide_tarea_antes_de_fechas(self):
+        resp = self.client.get(reverse("kanview:actividad-crear"))
+        html = resp.content.decode()
+        self.assertLess(html.index('name="id_tarea"'), html.index('name="fecha_inicio"'))
+        self.assertContains(resp, '"selector": "id_tarea"')
+        self.assertContains(resp, f'"desde": "{self.pedido.fecha_creacion.isoformat()}"')
+        self.assertContains(resp, f'"hasta": "{self.pedido.fecha_limite.isoformat()}"')
+
+    def test_otros_formularios_no_cargan_restriccion_de_fechas(self):
+        resp = self.client.get(reverse("kanview:producto-crear"))
+        self.assertNotContains(resp, 'id="restriccion-fechas"')
+
     # ---- Desactivar en vez de borrar --------------------------------------
 
     def test_create_update_desactivar_reactivar(self):
@@ -452,6 +473,73 @@ class CrudModulesTestCase(TestCase):
         resp = self.client.post(reverse("kanview:tarea-crear"), dentro)
         self.assertEqual(resp.status_code, 302)
         self.assertTrue(TareasPedido.objects.filter(nombre="Dentro de límite").exists())
+
+    def test_tarea_no_puede_empezar_antes_del_registro_del_pedido(self):
+        resp = self.client.post(reverse("kanview:tarea-crear"), {
+            "nombre": "Antes del pedido", "descripcion": "x",
+            "fecha_inicio": "2026-10-14", "fecha_fin": "2026-10-15",
+            "estado": "pendiente", "id_pedido": self.pedido.pk,
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(TareasPedido.objects.filter(nombre="Antes del pedido").exists())
+        self.assertContains(resp, "fecha de registro del pedido")
+
+    def test_tarea_no_puede_terminar_antes_de_su_inicio(self):
+        resp = self.client.post(reverse("kanview:tarea-crear"), {
+            "nombre": "Rango invertido", "descripcion": "x",
+            "fecha_inicio": "2026-10-18", "fecha_fin": "2026-10-17",
+            "estado": "pendiente", "id_pedido": self.pedido.pk,
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(TareasPedido.objects.filter(nombre="Rango invertido").exists())
+        self.assertContains(resp, "no puede ser anterior a la fecha de inicio")
+
+    def test_actividad_respeta_las_fechas_del_pedido(self):
+        fuera = {
+            "nombre": "Actividad fuera", "descripcion": "x",
+            "fecha_inicio": "2026-10-14", "fecha_fin": "2026-10-15",
+            "estado": "pendiente", "id_tarea": self.tarea.pk,
+            "id_empleado": self.empleado.pk,
+        }
+        resp = self.client.post(reverse("kanview:actividad-crear"), fuera)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(Actividades.objects.filter(nombre="Actividad fuera").exists())
+        self.assertContains(resp, "fecha de registro del pedido")
+
+        tarde = dict(fuera, nombre="Actividad tarde", fecha_inicio="2026-10-21", fecha_fin="2026-10-22")
+        resp = self.client.post(reverse("kanview:actividad-crear"), tarde)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(Actividades.objects.filter(nombre="Actividad tarde").exists())
+
+        dentro = dict(fuera, nombre="Actividad dentro", fecha_inicio="2026-10-16", fecha_fin="2026-10-17")
+        resp = self.client.post(reverse("kanview:actividad-crear"), dentro)
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Actividades.objects.filter(nombre="Actividad dentro").exists())
+
+    def test_api_valida_las_fechas_de_tareas_y_actividades(self):
+        invalida = {
+            "nombre": "API fuera", "descripcion": "x",
+            "fecha_inicio": "2026-10-14", "fecha_fin": "2026-10-15",
+            "estado": "pendiente", "id_pedido": self.pedido.pk,
+        }
+        resp = self.client.post("/api/tareas-pedido/", invalida)
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(TareasPedido.objects.filter(nombre="API fuera").exists())
+
+        resp = self.client.post("/api/tareas-pedido/", dict(
+            invalida, nombre="API válida", fecha_inicio="2026-10-16", fecha_fin="2026-10-17",
+        ))
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(TareasPedido.objects.filter(nombre="API válida").exists())
+
+        resp = self.client.post("/api/actividades/", {
+            "nombre": "API actividad fuera", "descripcion": "x",
+            "fecha_inicio": "2026-10-21", "fecha_fin": "2026-10-22",
+            "estado": "pendiente", "id_tarea": self.tarea.pk,
+            "id_empleado": self.empleado.pk,
+        })
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(Actividades.objects.filter(nombre="API actividad fuera").exists())
 
     # ---- Roles y API ------------------------------------------------------
 

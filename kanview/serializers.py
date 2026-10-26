@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from .models import (
@@ -12,6 +13,26 @@ from .models import (
     Producto,
     TareasPedido,
 )
+
+
+class ValidacionDeModeloMixin:
+    """Reutiliza ``Model.clean()`` para no duplicar reglas de negocio en la API."""
+
+    def validate(self, attrs):
+        datos = super().validate(attrs)
+        objeto = self.instance or self.Meta.model()
+        campos = {campo.name for campo in objeto._meta.concrete_fields}
+        for campo, valor in datos.items():
+            if campo in campos:
+                setattr(objeto, campo, valor)
+        try:
+            objeto.clean()
+        except DjangoValidationError as exc:
+            errores = getattr(exc, "message_dict", None)
+            if errores is None:
+                errores = {"__all__": list(getattr(exc, "messages", [str(exc)]))}
+            raise serializers.ValidationError(errores)
+        return datos
 
 
 class ClienteSerializer(serializers.ModelSerializer):
@@ -50,13 +71,13 @@ class PedidoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class TareasPedidoSerializer(serializers.ModelSerializer):
+class TareasPedidoSerializer(ValidacionDeModeloMixin, serializers.ModelSerializer):
     class Meta:
         model = TareasPedido
         fields = "__all__"
 
 
-class ActividadesSerializer(serializers.ModelSerializer):
+class ActividadesSerializer(ValidacionDeModeloMixin, serializers.ModelSerializer):
     class Meta:
         model = Actividades
         fields = "__all__"

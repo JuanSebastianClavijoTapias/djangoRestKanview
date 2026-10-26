@@ -15,7 +15,8 @@ Reglas del proyecto que aplican aquí:
   categoría: no hay tablas de Inventario ni de Catálogo.
 - Pedido: código ``PED-0001`` automático, fecha y hora automáticas, fecha límite
   de entrega y galería de imágenes/videos (``EvidenciaPedido``).
-- La fecha fin de tareas y actividades no puede superar la fecha límite del pedido.
+- Las fechas de tareas y actividades deben quedar dentro de la ventana del pedido:
+  desde su fecha de registro hasta su fecha límite de entrega.
 """
 
 import os
@@ -186,7 +187,7 @@ WIDGETS_CALENDARIO = {
 }
 
 CAMPOS_TAREA = (
-    "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_pedido", "id_empleado",
+    "id_pedido", "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_empleado",
 )
 WIDGETS_TAREA = {
     "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -194,7 +195,7 @@ WIDGETS_TAREA = {
 }
 
 CAMPOS_ACTIVIDAD = (
-    "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_tarea", "id_empleado",
+    "id_tarea", "nombre", "descripcion", "fecha_inicio", "fecha_fin", "id_empleado",
 )
 WIDGETS_ACTIVIDAD = {
     "fecha_inicio": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -513,12 +514,49 @@ def _guardar_analisis(request, form):
 
 def _form_tarea(request, instance=None):
     form = _form_vista(TareasPedido, CAMPOS_TAREA, WIDGETS_TAREA, request, instance=instance)
+    form.fields["id_pedido"].help_text = (
+        "Selecciona el pedido para limitar las fechas a su ventana de registro y entrega."
+    )
     return _trabajador_en(form, obligatorio=False, etiqueta="Responsable")
 
 
 def _form_actividad(request, instance=None):
     form = _form_vista(Actividades, CAMPOS_ACTIVIDAD, WIDGETS_ACTIVIDAD, request, instance=instance)
+    form.fields["id_tarea"].help_text = (
+        "Selecciona la tarea para limitar las fechas al pedido al que pertenece."
+    )
     return _trabajador_en(form, obligatorio=True, etiqueta="Trabajador")
+
+
+def _fechas_para_calendario(queryset, prefijo=""):
+    """Mapa pk -> ventana del pedido, para los límites del input date."""
+    return {
+        str(pk): {
+            "desde": inicio.isoformat(),
+            "hasta": limite.isoformat() if limite else "",
+        }
+        for pk, inicio, limite in queryset.values_list(
+            "pk", f"{prefijo}fecha_creacion", f"{prefijo}fecha_limite"
+        )
+    }
+
+
+def _restriccion_fechas(form, selector, prefijo=""):
+    campo = form.fields.get(selector)
+    if campo is None:
+        return None
+    return {
+        "selector": selector,
+        "fechas": _fechas_para_calendario(campo.queryset, prefijo),
+    }
+
+
+def _restriccion_fechas_pedido(form):
+    return _restriccion_fechas(form, "id_pedido")
+
+
+def _restriccion_fechas_tarea(form):
+    return _restriccion_fechas(form, "id_tarea", "id_pedido__")
 
 
 def _fila(obj, valores, detalle_url=None):
@@ -1165,17 +1203,6 @@ def calendario_reactivar(request, pk):
 
 # ---- TareasPedido ---------------------------------------------------------
 
-def _validar_fecha_limite(form, pedido):
-    """La fecha fin no puede superar la fecha límite de entrega del pedido."""
-    fecha_fin = form.cleaned_data.get("fecha_fin")
-    limite = getattr(pedido, "fecha_limite", None) if pedido else None
-    if fecha_fin and limite and fecha_fin > limite:
-        form.add_error(
-            "fecha_fin",
-            f"La fecha de fin no puede superar la fecha límite de entrega del pedido ({limite:%d/%m/%Y}).",
-        )
-
-
 @seccion_requerida("tareas")
 def tarea_lista(request):
     filas = [
@@ -1196,7 +1223,6 @@ def tarea_lista(request):
 def tarea_crear(request):
     form = _form_tarea(request)
     if request.method == "POST" and form.is_valid():
-        _validar_fecha_limite(form, form.cleaned_data.get("id_pedido"))
         if not form.errors:
             tarea = _guardar_con_auditoria(request, form)
             historial.registrar(
@@ -1220,6 +1246,7 @@ def tarea_crear(request):
         "form": form,
         "title": "Nueva tarea",
         "cancel_url": reverse("kanview:tarea-lista"),
+        "restriccion_fechas": _restriccion_fechas_pedido(form),
         **_nav("Actividades", request),
     })
 
@@ -1229,7 +1256,6 @@ def tarea_editar(request, pk):
     tarea = get_object_or_404(TareasPedido, pk=pk)
     form = _form_tarea(request, instance=tarea)
     if request.method == "POST" and form.is_valid():
-        _validar_fecha_limite(form, form.cleaned_data.get("id_pedido"))
         if not form.errors:
             tarea = _guardar_con_auditoria(request, form)
             historial.registrar(
@@ -1243,6 +1269,7 @@ def tarea_editar(request, pk):
         "form": form,
         "title": "Editar tarea",
         "cancel_url": reverse("kanview:tarea-lista"),
+        "restriccion_fechas": _restriccion_fechas_pedido(form),
         **_nav("Actividades", request),
     })
 
@@ -1276,7 +1303,6 @@ def actividad_crear(request):
     form = _form_actividad(request)
     if request.method == "POST" and form.is_valid():
         tarea = form.cleaned_data.get("id_tarea")
-        _validar_fecha_limite(form, tarea.id_pedido if tarea else None)
         if not form.errors:
             actividad = _guardar_con_auditoria(request, form)
             historial.registrar(
@@ -1309,6 +1335,7 @@ def actividad_crear(request):
         "form": form,
         "title": "Nueva actividad",
         "cancel_url": reverse("kanview:actividad-lista"),
+        "restriccion_fechas": _restriccion_fechas_tarea(form),
         **_nav("Actividades", request),
     })
 
@@ -1319,7 +1346,6 @@ def actividad_editar(request, pk):
     form = _form_actividad(request, instance=actividad)
     if request.method == "POST" and form.is_valid():
         tarea = form.cleaned_data.get("id_tarea")
-        _validar_fecha_limite(form, tarea.id_pedido if tarea else None)
         if not form.errors:
             actividad = _guardar_con_auditoria(request, form)
             historial.registrar(
@@ -1344,6 +1370,7 @@ def actividad_editar(request, pk):
         "form": form,
         "title": "Editar actividad",
         "cancel_url": reverse("kanview:actividad-lista"),
+        "restriccion_fechas": _restriccion_fechas_tarea(form),
         **_nav("Actividades", request),
     })
 

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -299,6 +300,33 @@ class Pedido(models.Model):
         return "aprobado"
 
 
+def _errores_fechas_de_trabajo(pedido, fecha_inicio, fecha_fin):
+    """Valida el rango de una tarea/actividad contra las fechas del pedido."""
+    errores = {}
+    if fecha_inicio and fecha_fin and fecha_inicio > fecha_fin:
+        errores["fecha_fin"] = "La fecha de fin no puede ser anterior a la fecha de inicio."
+
+    creacion = getattr(pedido, "fecha_creacion", None) if pedido else None
+    if fecha_inicio and creacion and fecha_inicio < creacion:
+        errores["fecha_inicio"] = (
+            f"La fecha de inicio no puede ser anterior a la fecha de registro "
+            f"del pedido ({creacion:%d/%m/%Y})."
+        )
+    if fecha_fin and creacion and fecha_fin < creacion:
+        errores["fecha_fin"] = (
+            f"La fecha de fin no puede ser anterior a la fecha de registro "
+            f"del pedido ({creacion:%d/%m/%Y})."
+        )
+
+    limite = getattr(pedido, "fecha_limite", None) if pedido else None
+    if fecha_fin and limite and fecha_fin > limite:
+        errores["fecha_fin"] = (
+            f"La fecha de fin no puede superar la fecha límite de entrega "
+            f"del pedido ({limite:%d/%m/%Y})."
+        )
+    return errores
+
+
 class EvidenciaPedido(models.Model):
     """Fotos y videos que se adjuntan al pedido."""
 
@@ -362,6 +390,16 @@ class TareasPedido(models.Model):
     def __str__(self):
         return self.nombre
 
+    def clean(self):
+        super().clean()
+        try:
+            pedido = self.id_pedido if self.id_pedido_id else None
+        except Pedido.DoesNotExist:
+            pedido = None
+        errores = _errores_fechas_de_trabajo(pedido, self.fecha_inicio, self.fecha_fin)
+        if errores:
+            raise ValidationError(errores)
+
 
 class Actividades(models.Model):
     nombre = models.CharField(max_length=50, verbose_name="Nombre")
@@ -392,6 +430,20 @@ class Actividades(models.Model):
 
     def __str__(self):
         return self.nombre
+
+    def clean(self):
+        super().clean()
+        try:
+            tarea = self.id_tarea if self.id_tarea_id else None
+        except TareasPedido.DoesNotExist:
+            tarea = None
+        try:
+            pedido = tarea.id_pedido if tarea and tarea.id_pedido_id else None
+        except Pedido.DoesNotExist:
+            pedido = None
+        errores = _errores_fechas_de_trabajo(pedido, self.fecha_inicio, self.fecha_fin)
+        if errores:
+            raise ValidationError(errores)
 
 
 class Historial(models.Model):

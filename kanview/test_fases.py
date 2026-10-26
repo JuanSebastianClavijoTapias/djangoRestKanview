@@ -879,16 +879,19 @@ class SeguridadHttpTestCase(BaseFasesTestCase):
 
     @override_settings(RATE_LIMIT_EN_PRUEBAS=True)
     def test_rate_limit_en_login(self):
+        from unittest.mock import patch
+
         cache.clear()
-        for intento in range(10):
+        with patch("kanview.security.RATE_LIMITS", (("/login/", 10, 3600),)):
+            for intento in range(10):
+                resp = self.client.post(reverse("kanview:login"), {
+                    "username": "nadie", "password": "incorrecta",
+                })
+                self.assertEqual(resp.status_code, 200, intento)
             resp = self.client.post(reverse("kanview:login"), {
                 "username": "nadie", "password": "incorrecta",
             })
-            self.assertEqual(resp.status_code, 200, intento)
-        resp = self.client.post(reverse("kanview:login"), {
-            "username": "nadie", "password": "incorrecta",
-        })
-        self.assertEqual(resp.status_code, 429)
+            self.assertEqual(resp.status_code, 429)
         cache.clear()
 
     def test_csrf_obligatorio_en_post(self):

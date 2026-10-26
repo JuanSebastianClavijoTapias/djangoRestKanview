@@ -121,4 +121,64 @@
         });
     })();
 </script>
+{% if restriccion_fechas %}
+{{ restriccion_fechas|json_script:"restriccion-fechas" }}
+<script>
+    // Tareas y actividades: el calendario solo permite días dentro del pedido.
+    (function () {
+        const datos = JSON.parse(document.getElementById("restriccion-fechas").textContent);
+        const formulario = document.querySelector("form");
+        if (!formulario) {
+            return;
+        }
+        const selector = formulario.querySelector('select[name="' + datos.selector + '"]');
+        const inicio = formulario.querySelector('input[name="fecha_inicio"]');
+        const fin = formulario.querySelector('input[name="fecha_fin"]');
+        if (!selector || !inicio || !fin) {
+            return;
+        }
+
+        function fueraDeRango(valor, desde, hasta) {
+            return valor && ((desde && valor < desde) || (hasta && valor > hasta));
+        }
+
+        function aplicar(limpiarInvalidas) {
+            const rango = datos.fechas[selector.value] || {};
+            const desde = rango.desde || "";
+            const hasta = rango.hasta || "";
+
+            [inicio, fin].forEach(function (campo) {
+                if (desde) {
+                    campo.min = desde;
+                } else {
+                    campo.removeAttribute("min");
+                }
+                if (hasta) {
+                    campo.max = hasta;
+                } else {
+                    campo.removeAttribute("max");
+                }
+                if (limpiarInvalidas && fueraDeRango(campo.value, desde, hasta)) {
+                    campo.value = "";
+                }
+            });
+
+            if (desde) {
+                fin.min = inicio.value && inicio.value > desde ? inicio.value : desde;
+            } else if (inicio.value) {
+                fin.min = inicio.value;
+            } else {
+                fin.removeAttribute("min");
+            }
+            if (limpiarInvalidas && inicio.value && fin.value && fin.value < inicio.value) {
+                fin.value = "";
+            }
+        }
+
+        selector.addEventListener("change", function () { aplicar(true); });
+        inicio.addEventListener("change", function () { aplicar(true); });
+        aplicar(false);
+    })();
+</script>
+{% endif %}
 {% endblock %}
