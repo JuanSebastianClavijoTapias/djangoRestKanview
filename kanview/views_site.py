@@ -34,6 +34,7 @@ NAV_ITEMS = [
     ("view_kanban", "Procesos", "kanview:pedidos-tablero", "pedidos"),
     ("assignment", "Tareas", "kanview:tareas", "tareas"),
     ("history", "Actividades", "kanview:actividades", "tareas"),
+    ("forum", "Mensajería", "kanview:mensajeria", "mensajeria"),
     ("sell", "Productos", "kanview:producto-lista", "catalogo"),
     ("menu_book", "Catálogo", "kanview:catalogo", "catalogo"),
     ("calendar_today", "Calendario", "kanview:calendario", "calendario"),

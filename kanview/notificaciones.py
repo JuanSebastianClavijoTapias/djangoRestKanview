@@ -193,6 +193,8 @@ def contexto_header(request):
     if not usuario or not usuario.is_authenticated:
         return datos
 
+    from .mensajeria import no_leidos as mensajes_no_leidos
+
     nombre = usuario.get_full_name() or usuario.get_username()
     persistentes = list(
         Notificacion.objects.filter(usuario=usuario, leida=False)
@@ -218,6 +220,7 @@ def contexto_header(request):
         "avisos_restantes": max(0, total - len(avisos)),
         "notificaciones_persistentes": len(persistentes),
         "url_marcar_notificaciones": reverse("kanview:notificaciones-leer"),
+        "mensajes_no_leidos": mensajes_no_leidos(usuario),
         "usuario_nombre": nombre,
         "usuario_correo": usuario.email or usuario.get_username(),
         "rol_usuario": _rol(usuario),

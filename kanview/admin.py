@@ -6,10 +6,12 @@ from .models import (
     AnalisisFinanciero,
     Calendario,
     Cliente,
+    Conversacion,
     Empleado,
     EvidenciaPedido,
     Factura,
     Historial,
+    Mensaje,
     Notificacion,
     Pedido,
     PerfilUsuario,
@@ -36,3 +38,5 @@ admin.site.register(SolicitudModificacionPedido)
 admin.site.register(Factura)
 admin.site.register(PerfilUsuario)
 admin.site.register(RegistroAuditoria)
+admin.site.register(Conversacion)
+admin.site.register(Mensaje)

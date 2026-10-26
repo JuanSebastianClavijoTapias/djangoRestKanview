@@ -65,16 +65,7 @@
 <svg class="absolute bottom-4 right-4 w-24 h-24 text-primary opacity-5 pointer-events-none" fill="currentColor" viewbox="0 0 100 100">
 <path d="M50,0 C77.6142375,0 100,22.3857625 100,50 C100,77.6142375 77.6142375,100 50,100 C22.3857625,100 0,77.6142375 0,50 C0,22.3857625 22.3857625,0 50,0 Z M50,10 C27.90861,10 10,27.90861 10,50 C10,72.09139 27.90861,90 50,90 C72.09139,90 90,72.09139 90,50 C90,27.90861 72.09139,10 50,10 Z M50,25 C63.8071187,25 75,36.1928813 75,50 C75,63.8071187 63.8071187,75 50,75 C36.1928813,75 25,63.8071187 25,50 C25,36.1928813 36.1928813,25 50,25 Z M50,35 C41.7157288,35 35,41.7157288 35,50 C35,58.2842712 41.7157288,65 50,65 C58.2842712,65 65,58.2842712 65,50 C65,41.7157288 58.2842712,35 50,35 Z"></path>
 </svg>
-<div class="w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden">
-<div class="w-full h-full bg-surface-container-low flex items-center justify-center transition-transform duration-700 group-hover:scale-105" aria-hidden="true">
-<span class="material-symbols-outlined text-outline/40 text-[72px]">inventory_2</span>
-</div>
-<div class="absolute top-4 left-4 bg-surface-container-lowest/90 backdrop-blur px-3 py-1 rounded-full border border-outline-variant/20 flex items-center gap-1.5 shadow-sm">
-<span class="material-symbols-outlined text-[16px] text-tertiary">menu_book</span>
-<span class="font-label-sm text-label-sm text-on-surface">{{ producto_destacado.categoria }}</span>
-</div>
-</div>
-<div class="p-8 flex flex-col justify-between w-full md:w-1/2 relative z-10">
+<div class="p-8 flex flex-col justify-between w-full relative z-10">
 <div>
 <div class="flex justify-between items-start mb-2">
 <span class="font-mono text-sm text-outline tracking-wider">{{ producto_destacado.codigo_producto }}</span>
@@ -109,11 +100,6 @@
 <!-- Standard Card -->
 {% for producto in productos_restantes %}
 <article class="bg-surface-container-lowest rounded-xl neomorphic-card overflow-hidden group flex flex-col cursor-pointer transition-transform hover:-translate-y-1">
-<div class="w-full h-56 relative overflow-hidden bg-surface-container-low">
-<div class="w-full h-full bg-surface-container-low flex items-center justify-center transition-transform duration-700 group-hover:scale-105" aria-hidden="true">
-<span class="material-symbols-outlined text-outline/40 text-[56px]">inventory_2</span>
-</div>
-</div>
 <div class="p-6 flex flex-col flex-1">
 <div class="flex justify-between items-center mb-3">
 <span class="font-mono text-[12px] text-outline tracking-wider bg-surface-container py-1 px-2 rounded">{{ producto.codigo_producto }}</span>
@@ -179,13 +165,6 @@
 </div>
 <!-- Panel Content -->
 <div class="p-6 flex-1 flex flex-col gap-8">
-<!-- Product Visual -->
-<div class="w-full h-72 rounded-xl overflow-hidden neomorphic-inner relative bg-surface-container-low flex items-center justify-center" aria-hidden="true">
-<span class="material-symbols-outlined text-outline/40 text-[88px]">inventory_2</span>
-<button class="absolute bottom-4 right-4 bg-surface/80 backdrop-blur p-2 rounded-full text-on-surface shadow-sm hover:bg-surface transition-colors">
-<span class="material-symbols-outlined">fullscreen</span>
-</button>
-</div>
 <!-- Title & Core Info -->
 <div>
 <h2 class="font-display text-display text-on-surface mb-2 leading-tight" id="pd-nombre">{{ producto_destacado.nombre }}</h2>

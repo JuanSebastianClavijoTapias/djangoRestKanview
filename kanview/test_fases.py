@@ -9,8 +9,9 @@ from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -21,10 +22,12 @@ from .models import (
     Administrador,
     AnalisisFinanciero,
     Cliente,
+    Conversacion,
     Empleado,
     EvidenciaPedido,
     Factura,
     Historial,
+    Mensaje,
     Notificacion,
     Pedido,
     Producto,
@@ -564,6 +567,7 @@ class ClienteAccesoTestCase(BaseFasesTestCase):
         html = resp.content.decode()
         sidebar = html[html.index("<aside"):html.index("</aside>")]
         self.assertIn(">Procesos<", sidebar)
+        self.assertIn(">Mensajería<", sidebar)
         for etiqueta in ("Panel", "Productos", "Catálogo", "Tareas", "Actividades", "Finanzas"):
             self.assertNotIn(f">{etiqueta}<", sidebar)
         self.assertEqual(self.client.get(reverse("kanview:producto-lista")).status_code, 302)
@@ -711,7 +715,7 @@ class TrabajadorAccesoTestCase(BaseFasesTestCase):
         self.assertEqual(resp.status_code, 200)
         html = resp.content.decode()
         sidebar = html[html.index("<aside"):html.index("</aside>")]
-        for etiqueta in ("Panel", "Procesos", "Tareas", "Actividades", "Productos", "Catálogo", "Calendario"):
+        for etiqueta in ("Panel", "Procesos", "Tareas", "Actividades", "Mensajería", "Productos", "Catálogo", "Calendario"):
             self.assertIn(f">{etiqueta}<", sidebar)
         for etiqueta in ("Usuarios", "Finanzas", "Auditoría"):
             self.assertNotIn(f">{etiqueta}<", sidebar)
@@ -724,6 +728,221 @@ class TrabajadorAccesoTestCase(BaseFasesTestCase):
         self.assertEqual(self.client.get(reverse("kanview:auditoria")).status_code, 302)
         self.assertEqual(self.client.get(reverse("kanview:usuarios")).status_code, 302)
         self.assertEqual(self.client.get(reverse("kanview:finanzas")).status_code, 302)
+
+
+class MensajeriaTestCase(BaseFasesTestCase):
+    def setUp(self):
+        super().setUp()
+        from .permisos import ROL_CLIENTE, ROL_TRABAJADOR
+
+        self.cliente_user = User.objects.create_user(
+            username="chat.cliente", email="chat.cliente@example.com", password="x"
+        )
+        self.cliente_user.groups.add(Group.objects.get_or_create(name=ROL_CLIENTE)[0])
+        self.cliente.usuario = self.cliente_user
+        self.cliente.correo = "chat.cliente@example.com"
+        self.cliente.save(update_fields=["usuario", "correo"])
+
+        self.trabajador_user = User.objects.create_user(
+            username="chat.trabajador", email="chat.trabajador@example.com", password="x"
+        )
+        self.trabajador_user.groups.add(Group.objects.get_or_create(name=ROL_TRABAJADOR)[0])
+        self.empleado.usuario = self.trabajador_user
+        self.empleado.save(update_fields=["usuario"])
+
+    def test_admin_ve_trabajadores_y_clientes(self):
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("kanview:mensajeria"))
+        self.assertContains(resp, "chat.trabajador")
+        self.assertContains(resp, "chat.cliente")
+
+    def test_cliente_solo_ve_trabajadores_asignados_y_conversaciones_iniciadas(self):
+        from .permisos import ROL_TRABAJADOR
+
+        otro_user = User.objects.create_user(
+            username="otro.trabajador", email="otro.trabajador@example.com", password="x"
+        )
+        otro_user.groups.add(Group.objects.get_or_create(name=ROL_TRABAJADOR)[0])
+        Empleado.objects.create(
+            documento="OTRO-CHAT", nombre="Otro Trabajador", cargo="costr",
+            celular="300", direccion="Calle", salario=1000, usuario=otro_user,
+        )
+        self.client.force_login(self.cliente_user)
+        resp = self.client.get(reverse("kanview:mensajeria"))
+        self.assertContains(resp, "chat.trabajador")
+        self.assertNotContains(resp, "otro.trabajador")
+        self.assertNotContains(resp, "fases.admin")
+
+        self.client.force_login(self.user)
+        self.client.post(reverse("kanview:mensajeria-iniciar", args=[self.cliente_user.pk]))
+        self.client.force_login(self.cliente_user)
+        resp = self.client.get(reverse("kanview:mensajeria"))
+        self.assertContains(resp, "fases.admin")
+
+    def test_trabajador_ve_sus_clientes_y_puede_responder_al_admin(self):
+        self.client.force_login(self.trabajador_user)
+        resp = self.client.get(reverse("kanview:mensajeria"))
+        self.assertContains(resp, "chat.cliente")
+        self.assertNotContains(resp, "fases.admin")
+
+        self.client.force_login(self.user)
+        self.client.post(reverse("kanview:mensajeria-iniciar", args=[self.trabajador_user.pk]))
+        self.client.force_login(self.trabajador_user)
+        resp = self.client.get(reverse("kanview:mensajeria"))
+        self.assertContains(resp, "fases.admin")
+
+    def test_admin_envia_mensaje_http_y_el_cliente_lo_ve(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse("kanview:mensajeria-iniciar", args=[self.cliente_user.pk]))
+        conversacion = Conversacion.objects.get()
+        resp = self.client.post(
+            reverse("kanview:mensajeria-enviar", args=[conversacion.pk]),
+            {"texto": "Hola desde administración"},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(Mensaje.objects.filter(texto="Hola desde administración").exists())
+
+        self.client.force_login(self.cliente_user)
+        resp = self.client.get(reverse("kanview:mensajeria-conversacion", args=[conversacion.pk]))
+        self.assertContains(resp, "Hola desde administración")
+
+    def test_trabajador_no_puede_iniciar_chat_con_cliente_ajeno(self):
+        from .permisos import ROL_CLIENTE
+
+        ajeno = User.objects.create_user(
+            username="cliente.ajeno", email="cliente.ajeno@example.com", password="x"
+        )
+        ajeno.groups.add(Group.objects.get_or_create(name=ROL_CLIENTE)[0])
+        Cliente.objects.create(
+            nombre="Cliente Ajeno", documento="AJENO", correo="cliente.ajeno@example.com",
+            usuario=ajeno,
+        )
+        self.client.force_login(self.trabajador_user)
+        resp = self.client.post(reverse("kanview:mensajeria-iniciar", args=[ajeno.pk]))
+        self.assertEqual(resp.status_code, 302)
+        self.assertFalse(Conversacion.objects.exists())
+
+    def test_el_chat_escapa_html_de_los_mensajes(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse("kanview:mensajeria-iniciar", args=[self.cliente_user.pk]))
+        conversacion = Conversacion.objects.get()
+        Mensaje.objects.create(
+            conversacion=conversacion, autor=self.user,
+            texto="<script>alert('xss')</script>",
+        )
+        resp = self.client.get(reverse("kanview:mensajeria-conversacion", args=[conversacion.pk]))
+        self.assertContains(resp, "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;")
+        self.assertNotContains(resp, "<script>alert('xss')</script>")
+
+    def test_websocket_envia_y_persiste_un_mensaje(self):
+        from asgiref.sync import async_to_sync
+        from channels.testing import WebsocketCommunicator
+
+        from .consumers import ChatConsumer
+
+        self.client.force_login(self.user)
+        self.client.post(reverse("kanview:mensajeria-iniciar", args=[self.cliente_user.pk]))
+        conversacion = Conversacion.objects.get()
+
+        async def comunicar():
+            communicator = WebsocketCommunicator(
+                ChatConsumer.as_asgi(),
+                f"/ws/mensajeria/{conversacion.pk}/",
+            )
+            communicator.scope["user"] = self.user
+            communicator.scope["url_route"] = {"kwargs": {"conversacion_id": conversacion.pk}}
+            conectado, _ = await communicator.connect()
+            self.assertTrue(conectado)
+            await communicator.send_json_to({"tipo": "mensaje", "texto": "Mensaje en vivo"})
+            respuesta = await communicator.receive_json_from(timeout=2)
+            while respuesta.get("tipo") != "mensaje":
+                respuesta = await communicator.receive_json_from(timeout=2)
+            await communicator.disconnect()
+            return respuesta
+
+        respuesta = async_to_sync(comunicar)()
+        self.assertEqual(respuesta["tipo"], "mensaje")
+        self.assertEqual(respuesta["mensaje"]["texto"], "Mensaje en vivo")
+        self.assertTrue(Mensaje.objects.filter(texto="Mensaje en vivo").exists())
+
+
+class SeguridadHttpTestCase(BaseFasesTestCase):
+    def test_login_requerido_en_paginas_privadas(self):
+        self.client.logout()
+        resp = self.client.get(reverse("kanview:pedidos-tablero"))
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/login/", resp["Location"])
+        self.assertIn("next=", resp["Location"])
+        self.assertEqual(self.client.get(reverse("kanview:login")).status_code, 200)
+        self.assertEqual(self.client.get(reverse("kanview:terminos")).status_code, 200)
+        self.assertIn(self.client.get("/api/pedidos/").status_code, (401, 403))
+
+    @override_settings(RATE_LIMIT_EN_PRUEBAS=True)
+    def test_rate_limit_en_login(self):
+        cache.clear()
+        for intento in range(10):
+            resp = self.client.post(reverse("kanview:login"), {
+                "username": "nadie", "password": "incorrecta",
+            })
+            self.assertEqual(resp.status_code, 200, intento)
+        resp = self.client.post(reverse("kanview:login"), {
+            "username": "nadie", "password": "incorrecta",
+        })
+        self.assertEqual(resp.status_code, 429)
+        cache.clear()
+
+    def test_csrf_obligatorio_en_post(self):
+        cliente = Client(enforce_csrf_checks=True)
+        cliente.force_login(self.user)
+        resp = cliente.post(reverse("kanview:pedido-crear"), {
+            "estado": "activo", "cantidad": 1, "descripcion": "sin csrf",
+            "id_cliente": self.cliente.pk, "id_empleado": self.empleado.pk,
+            "id_producto": self.producto.pk,
+        })
+        self.assertEqual(resp.status_code, 403)
+
+    def test_cabeceras_csp_y_seguridad(self):
+        resp = self.client.get(reverse("kanview:login"))
+        self.assertIn("default-src 'self'", resp["Content-Security-Policy"])
+        self.assertEqual(resp["X-Frame-Options"], "DENY")
+        self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(resp["Referrer-Policy"], "same-origin")
+
+    def test_jwt_permite_acceder_a_la_api(self):
+        from rest_framework.test import APIClient
+
+        api = APIClient()
+        resp = api.post("/api/token/", {
+            "username": "fases.admin", "password": "ClaveSegura123",
+        }, format="json")
+        self.assertEqual(resp.status_code, 200, resp.content)
+        self.assertIn("access", resp.data)
+        self.assertIn("refresh", resp.data)
+        api.credentials(HTTP_AUTHORIZATION="Bearer " + resp.data["access"])
+        self.assertEqual(api.get("/api/pedidos/").status_code, 200)
+
+    def test_jwt_exige_2fa_si_esta_habilitado(self):
+        import pyotp
+        from rest_framework.test import APIClient
+
+        from .seguridad import perfil_de
+
+        perfil = perfil_de(self.user)
+        perfil.totp_secret = pyotp.random_base32()
+        perfil.totp_habilitado = True
+        perfil.save(update_fields=["totp_secret", "totp_habilitado"])
+
+        api = APIClient()
+        sin_codigo = api.post("/api/token/", {
+            "username": "fases.admin", "password": "ClaveSegura123",
+        }, format="json")
+        self.assertEqual(sin_codigo.status_code, 401)
+        con_codigo = api.post("/api/token/", {
+            "username": "fases.admin", "password": "ClaveSegura123",
+            "otp": pyotp.TOTP(perfil.totp_secret).now(),
+        }, format="json")
+        self.assertEqual(con_codigo.status_code, 200, con_codigo.content)
+        self.assertIn("access", con_codigo.data)
 
 
 class SeguridadFase3TestCase(BaseFasesTestCase):

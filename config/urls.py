@@ -15,7 +15,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -29,6 +28,5 @@ urlpatterns = [
     path('', include('kanview.urls_site')),
 ]
 
-# En desarrollo, Django sirve las imágenes subidas (evidencias de pedidos).
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Los archivos subidos se sirven con la vista protegida `evidencia-archivo`;
+# no se exponen directamente bajo MEDIA_URL.

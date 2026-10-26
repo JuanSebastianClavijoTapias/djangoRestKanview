@@ -63,7 +63,7 @@ menú móvil del sidebar.
 <span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-error text-on-error text-[10px] font-bold leading-[18px] text-center" id="contador-avisos">{{ avisos_total }}</span>
 {% endif %}
 </button>
-<div aria-label="Avisos del taller" class="hidden absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl bg-surface border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50" data-panel id="panel-avisos" role="region">
+<div aria-label="Avisos del taller" class="hidden absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50" data-panel id="panel-avisos" role="region">
 <div class="px-4 py-3 border-b border-outline-variant/30 flex items-center justify-between gap-2">
 <p class="font-label-md text-label-md font-semibold text-on-surface">Avisos del taller</p>
 <div class="flex items-center gap-2">
@@ -93,12 +93,17 @@ menú móvil del sidebar.
 {% endif %}
 </div>
 </div>
+<!-- Mensajería: acceso directo al chat interno. -->
+<a aria-label="Mensajería{% if mensajes_no_leidos %} ({{ mensajes_no_leidos }} sin leer){% endif %}" class="relative w-10 h-10 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant transition-all" href="{% url 'kanview:mensajeria' %}" id="btn-chat">
+<span class="material-symbols-outlined">forum</span>
+{% if mensajes_no_leidos %}<span class="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-on-primary text-[10px] font-bold leading-[18px] text-center">{{ mensajes_no_leidos }}</span>{% endif %}
+</a>
 <!-- Cuenta: nombre, rol real, Configuración y Cerrar sesión (POST). -->
 <div class="relative">
 <button aria-controls="panel-cuenta" aria-expanded="false" aria-label="Menú de la cuenta{% if usuario_nombre %} de {{ usuario_nombre }}{% endif %}" class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-white/80 transition-all" data-abre-panel id="btn-cuenta" type="button">
 <span class="material-symbols-outlined">account_circle</span>
 </button>
-<div aria-label="Cuenta" class="hidden absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-2xl bg-surface border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50 overflow-hidden" data-panel id="panel-cuenta" role="region">
+<div aria-label="Cuenta" class="hidden absolute right-0 top-full mt-2 w-64 max-w-[calc(100vw-2rem)] rounded-2xl bg-surface-container-lowest border border-outline-variant/40 shadow-[0_24px_48px_rgba(0,0,0,0.12)] z-50 overflow-hidden" data-panel id="panel-cuenta" role="region">
 <div class="px-4 py-3 border-b border-outline-variant/30">
 <p class="font-label-md text-label-md font-semibold text-on-surface truncate">{{ usuario_nombre|default:"Sesión" }}</p>
 <p class="font-label-sm text-label-sm text-on-surface-variant truncate">{{ usuario_correo|default:"" }}</p>

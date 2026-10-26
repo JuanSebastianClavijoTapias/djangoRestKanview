@@ -1,4 +1,7 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenBlacklistView, TokenRefreshView
+
+from .jwt_auth import KanviewTokenObtainPairView
 from . import views
 
 from .views import (
@@ -25,6 +28,9 @@ from .views import (
 )
 
 urlpatterns = [
+    path("token/", KanviewTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("token/blacklist/", TokenBlacklistView.as_view(), name="token_blacklist"),
     path("clientes/", clientes_lista, name="clientes-lista"),
     path("clientes/<int:pk>/", cliente_detalle, name="cliente-detalle"),
 

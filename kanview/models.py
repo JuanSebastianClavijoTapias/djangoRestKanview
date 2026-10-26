@@ -616,3 +616,73 @@ class RegistroAuditoria(models.Model):
 
     def __str__(self):
         return f"{self.fecha_creacion:%Y-%m-%d %H:%M} · {self.accion} · {self.entidad}"
+
+
+class Conversacion(models.Model):
+    """Conversación directa entre dos usuarios."""
+
+    usuario_a = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="conversaciones_iniciadas",
+        verbose_name="Usuario A",
+    )
+    usuario_b = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="conversaciones_recibidas",
+        verbose_name="Usuario B",
+    )
+    creada = models.DateTimeField(auto_now_add=True, verbose_name="Creada")
+    actualizada = models.DateTimeField(auto_now=True, verbose_name="Actualizada")
+
+    class Meta:
+        verbose_name = "Conversación"
+        verbose_name_plural = "Conversaciones"
+        ordering = ["-actualizada"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["usuario_a", "usuario_b"],
+                name="conversacion_directa_unica",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.usuario_a} ↔ {self.usuario_b}"
+
+    def otro(self, usuario):
+        return self.usuario_b if self.usuario_a_id == usuario.pk else self.usuario_a
+
+    def incluye(self, usuario):
+        return usuario.pk in (self.usuario_a_id, self.usuario_b_id)
+
+
+class Mensaje(models.Model):
+    """Mensaje enviado dentro de una conversación directa."""
+
+    conversacion = models.ForeignKey(
+        Conversacion,
+        on_delete=models.CASCADE,
+        related_name="mensajes",
+        verbose_name="Conversación",
+    )
+    autor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="mensajes_chat",
+        verbose_name="Autor",
+    )
+    texto = models.TextField(verbose_name="Mensaje")
+    creado = models.DateTimeField(auto_now_add=True, verbose_name="Fecha")
+    leido = models.BooleanField(default=False, verbose_name="Leído")
+
+    class Meta:
+        verbose_name = "Mensaje"
+        verbose_name_plural = "Mensajes"
+        ordering = ["creado", "id"]
+        indexes = [
+            models.Index(fields=["conversacion", "creado"]),
+        ]
+
+    def __str__(self):
+        return f"{self.autor}: {self.texto[:40]}"

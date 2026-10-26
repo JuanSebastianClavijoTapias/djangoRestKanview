@@ -31,6 +31,19 @@ Dependencias nuevas para PDF y 2FA: `reportlab`, `pyotp` y `qrcode` (incluidas e
 
 La factura se genera en PDF y se envía por correo desde el detalle del pedido. Las copias de seguridad se guardan en `backups/` (configurable con `BACKUP_DIR`) y solo las gestiona Administración.
 
+El chat usa Django Channels y WebSockets. `runserver` funciona con Daphne; en desarrollo se usa un canal en memoria. Para producción con varios procesos configura `CHANNEL_LAYERS` con `channels_redis`.
+
+## Seguridad
+
+- La API acepta JWT: `POST /api/token/`, `POST /api/token/refresh/` y `POST /api/token/blacklist/`. Si la cuenta tiene 2FA, `/api/token/` exige el campo `otp`.
+- Las páginas privadas exigen sesión; login, recuperación, términos y evidencias firmadas son públicos.
+- Rate limit por IP para login, recuperación, API y tráfico general.
+- Cabeceras CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy` y `Permissions-Policy`.
+- CSRF obligatorio en formularios web; cookies de sesión/CSRF con `HttpOnly` y `SameSite=Lax`.
+- Variables útiles: `CSRF_TRUSTED_ORIGINS`, `CSRF_COOKIE_SECURE`, `SESSION_COOKIE_SECURE`, `SECURE_SSL_REDIRECT`, `SECURE_HSTS_SECONDS` y `CSP_REPORT_ONLY`.
+- Para varias instancias, configura `CACHE_BACKEND`/`CACHE_LOCATION` con un cache compartido; el rate limit en memoria solo protege un proceso.
+- La CSP permite scripts inline porque la interfaz actual los usa; al migrarlos a archivos estáticos se puede endurecer con nonces y quitar `'unsafe-inline'`.
+
 Variables de entorno útiles: `EMPRESA_NOMBRE`, `EMPRESA_NIT`, `EMPRESA_DIRECCION`, `EMPRESA_TELEFONO`, `EMPRESA_CORREO`, `FACTURA_IVA`, `TERMINOS_VERSION`, `BACKUP_DIR`, `BACKUP_RETENCION`, `MAX_VIDEO_BYTES` y `MAX_BYTES_MULTIMEDIA`.
 
 Opcional, para poder entrar a `/admin/`:
@@ -89,6 +102,7 @@ Todas bajo el prefijo `/api/`. Cada recurso tiene una ruta de lista (`GET` para 
 /finanzas/         Análisis financiero
 /auditoria/        Historial de pedidos
 /auditoria/log/    Log de acciones del sistema
+/mensajeria/       Chat interno en tiempo real
 /perfil/           Perfil, contraseña y 2FA
 /terminos/         Términos y condiciones
 /configuracion/backups/  Copias de seguridad (solo Administración)

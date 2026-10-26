@@ -1,0 +1,209 @@
+{% extends "kanview/crud_base.html" %}
+{% block title %}Kanview - Mensajería{% endblock %}
+{% block content %}
+<div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+<div>
+<h2 class="text-2xl font-bold text-on-surface">Mensajería</h2>
+<p class="text-sm text-on-surface-variant mt-1">Conversaciones internas del taller, en tiempo real.</p>
+</div>
+{% if total_no_leidos %}
+<span class="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">{{ total_no_leidos }} mensaje{{ total_no_leidos|pluralize }} sin leer</span>
+{% endif %}
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-4 h-[calc(100vh-12rem)] min-h-[560px]">
+  <aside class="bg-surface rounded-2xl border border-outline-variant/30 shadow-neomorphic-lift overflow-hidden {% if conversacion %}hidden lg:flex{% endif %} flex-col">
+    <div class="px-4 py-4 border-b border-outline-variant/30 bg-primary text-white">
+      <div class="flex items-center justify-between gap-2">
+        <h3 class="font-semibold">Conversaciones</h3>
+        <span class="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px]">forum</span>
+        </span>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+      {% for item in conversaciones %}
+      <a class="flex items-center gap-3 px-4 py-3 border-b border-outline-variant/20 transition-colors {% if item.activa %}bg-primary/10 border-l-4 border-l-primary{% else %}hover:bg-surface-container-low{% endif %}" href="{% url 'kanview:mensajeria-conversacion' item.conversacion.pk %}">
+        <span class="w-10 h-10 shrink-0 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm">{{ item.otro.iniciales }}</span>
+        <span class="min-w-0 flex-1">
+          <span class="flex items-center justify-between gap-2">
+            <span class="font-semibold text-sm text-on-surface truncate">{{ item.otro.nombre }}</span>
+            {% if item.no_leidos %}<span class="min-w-[20px] h-5 px-1 rounded-full bg-primary text-on-primary text-[10px] font-bold flex items-center justify-center">{{ item.no_leidos }}</span>{% endif %}
+          </span>
+          <span class="block text-xs text-on-surface-variant truncate">{{ item.otro.rol }}</span>
+          <span class="block text-xs text-on-surface-variant truncate mt-0.5">{% if item.ultimo %}{{ item.ultimo.texto }}{% else %}Sin mensajes todavía{% endif %}</span>
+        </span>
+      </a>
+      {% empty %}
+      <div class="px-4 py-8 text-center">
+        <span class="material-symbols-outlined text-outline text-3xl">chat_bubble_outline</span>
+        <p class="text-sm text-on-surface-variant mt-2">Todavía no tienes conversaciones.</p>
+      </div>
+      {% endfor %}
+      {% if contactos %}
+      <div class="px-4 pt-4 pb-2 text-[11px] uppercase tracking-wider font-semibold text-on-surface-variant">Iniciar conversación</div>
+      {% for contacto in contactos %}
+      <form class="flex items-center gap-3 px-4 py-3 border-b border-outline-variant/20" method="post" action="{% url 'kanview:mensajeria-iniciar' contacto.usuario.pk %}">
+        {% csrf_token %}
+        <span class="w-9 h-9 shrink-0 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-xs">{{ contacto.iniciales }}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-medium text-sm text-on-surface truncate">{{ contacto.nombre }}</span>
+          <span class="block text-xs text-on-surface-variant truncate">{{ contacto.rol }}</span>
+        </span>
+        <button class="w-8 h-8 shrink-0 rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors flex items-center justify-center" type="submit" title="Chatear con {{ contacto.nombre }}">
+          <span class="material-symbols-outlined text-[18px]">chat</span>
+        </button>
+      </form>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </aside>
+
+  <section class="bg-surface rounded-2xl border border-outline-variant/30 shadow-neomorphic-lift overflow-hidden {% if not conversacion %}hidden lg:flex{% endif %} flex-col min-w-0">
+    {% if conversacion %}
+    <div class="px-4 lg:px-6 py-4 border-b border-outline-variant/30 bg-surface-container-lowest flex items-center gap-3">
+      <a class="lg:hidden w-9 h-9 rounded-full hover:bg-surface-container-low flex items-center justify-center text-on-surface-variant" href="{% url 'kanview:mensajeria' %}" aria-label="Volver a conversaciones">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </a>
+      <span class="w-10 h-10 rounded-full bg-primary/15 text-primary flex items-center justify-center font-bold text-sm">{{ otro.iniciales }}</span>
+      <div class="min-w-0 flex-1">
+        <h3 class="font-semibold text-on-surface truncate">{{ otro.nombre }}</h3>
+        <p class="text-xs text-on-surface-variant truncate">{{ otro.rol }}</p>
+      </div>
+      <span class="flex items-center gap-1.5 text-xs text-on-surface-variant">
+        <span class="w-2 h-2 rounded-full bg-amber-400" id="chat-estado-punto"></span>
+        <span id="chat-estado">Conectando…</span>
+      </span>
+    </div>
+    <div class="flex-1 overflow-y-auto p-4 lg:p-6 flex flex-col gap-3 bg-[#f8fbfc]" data-usuario-id="{{ request.user.pk }}" data-conversacion-id="{{ conversacion.pk }}" id="chat-mensajes">
+      {% for mensaje in mensajes %}
+      {% if mensaje.autor_id == request.user.pk %}
+      <div class="flex justify-end" data-mensaje-id="{{ mensaje.pk }}">
+        <div class="max-w-[82%] lg:max-w-[68%] rounded-2xl rounded-br-md bg-primary text-on-primary px-4 py-2.5 shadow-sm">
+          <p class="text-sm whitespace-pre-wrap break-words">{{ mensaje.texto }}</p>
+          <span class="block text-[10px] text-on-primary/70 text-right mt-1">{{ mensaje.creado|date:"d/m/Y H:i" }}</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="flex justify-start" data-mensaje-id="{{ mensaje.pk }}">
+        <div class="max-w-[82%] lg:max-w-[68%] rounded-2xl rounded-bl-md bg-white text-on-surface border border-outline-variant/30 px-4 py-2.5 shadow-sm">
+          <p class="text-[11px] font-semibold text-primary mb-1">{{ mensaje.autor.get_full_name|default:mensaje.autor.get_username }}</p>
+          <p class="text-sm whitespace-pre-wrap break-words">{{ mensaje.texto }}</p>
+          <span class="block text-[10px] text-on-surface-variant text-right mt-1">{{ mensaje.creado|date:"d/m/Y H:i" }}</span>
+        </div>
+      </div>
+      {% endif %}
+      {% empty %}
+      <div class="m-auto text-center max-w-sm">
+        <span class="material-symbols-outlined text-outline text-4xl">waving_hand</span>
+        <p class="font-semibold text-on-surface mt-2">Empieza la conversación</p>
+        <p class="text-sm text-on-surface-variant mt-1">Escribe el primer mensaje a {{ otro.nombre }}.</p>
+      </div>
+      {% endfor %}
+    </div>
+    <form class="p-3 lg:p-4 border-t border-outline-variant/30 bg-surface-container-lowest flex items-end gap-2" id="chat-form" method="post" action="{% url 'kanview:mensajeria-enviar' conversacion.pk %}">
+      {% csrf_token %}
+      <label class="sr-only" for="chat-input">Mensaje</label>
+      <input autocomplete="off" class="flex-1 min-w-0 rounded-full border border-outline-variant/50 bg-white px-4 py-3 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/25" id="chat-input" maxlength="2000" name="texto" placeholder="Escribe un mensaje…" required type="text"/>
+      <button class="shrink-0 bg-primary hover:bg-primary-fixed-variant text-on-primary px-4 lg:px-5 py-3 rounded-full text-sm font-semibold flex items-center gap-2 transition-colors" type="submit">
+        <span class="hidden sm:inline">Enviar</span>
+        <span class="material-symbols-outlined text-[20px]">send</span>
+      </button>
+    </form>
+    {% else %}
+    <div class="m-auto text-center max-w-sm px-6">
+      <div class="w-16 h-16 mx-auto rounded-full bg-primary/10 text-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-3xl">forum</span>
+      </div>
+      <h3 class="font-headline-md text-headline-md text-on-surface mt-4">Selecciona una conversación</h3>
+      <p class="text-sm text-on-surface-variant mt-2">Elige una conversación existente o inicia una nueva desde la lista.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+{% if conversacion %}
+<script>
+(function () {
+    const contenedor = document.getElementById('chat-mensajes');
+    const formulario = document.getElementById('chat-form');
+    const campo = document.getElementById('chat-input');
+    const estado = document.getElementById('chat-estado');
+    const punto = document.getElementById('chat-estado-punto');
+    const usuarioId = Number(contenedor.dataset.usuarioId);
+    const conversacionId = contenedor.dataset.conversacionId;
+    const protocolo = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    let socket = null;
+
+    function alFinal() { contenedor.scrollTop = contenedor.scrollHeight; }
+
+    function crearMensaje(datos) {
+        if (document.querySelector('[data-mensaje-id="' + datos.id + '"]')) { return; }
+        const propio = Number(datos.autor_id) === usuarioId;
+        const fila = document.createElement('div');
+        fila.className = propio ? 'flex justify-end' : 'flex justify-start';
+        fila.dataset.mensajeId = datos.id;
+        const burbuja = document.createElement('div');
+        burbuja.className = propio
+            ? 'max-w-[82%] lg:max-w-[68%] rounded-2xl rounded-br-md bg-primary text-on-primary px-4 py-2.5 shadow-sm'
+            : 'max-w-[82%] lg:max-w-[68%] rounded-2xl rounded-bl-md bg-white text-on-surface border border-outline-variant/30 px-4 py-2.5 shadow-sm';
+        if (!propio) {
+            const autor = document.createElement('p');
+            autor.className = 'text-[11px] font-semibold text-primary mb-1';
+            autor.textContent = datos.autor;
+            burbuja.appendChild(autor);
+        }
+        const texto = document.createElement('p');
+        texto.className = 'text-sm whitespace-pre-wrap break-words';
+        texto.textContent = datos.texto;
+        const hora = document.createElement('span');
+        hora.className = propio
+            ? 'block text-[10px] text-on-primary/70 text-right mt-1'
+            : 'block text-[10px] text-on-surface-variant text-right mt-1';
+        const fecha = new Date(datos.creado);
+        hora.textContent = fecha.toLocaleDateString('es-CO') + ' ' + fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+        burbuja.appendChild(texto);
+        burbuja.appendChild(hora);
+        fila.appendChild(burbuja);
+        contenedor.appendChild(fila);
+        alFinal();
+    }
+
+    function conectar() {
+        socket = new WebSocket(protocolo + '://' + window.location.host + '/ws/mensajeria/' + conversacionId + '/');
+        socket.addEventListener('open', function () {
+            estado.textContent = 'En línea';
+            punto.className = 'w-2 h-2 rounded-full bg-green-500';
+        });
+        socket.addEventListener('close', function () {
+            estado.textContent = 'Desconectado';
+            punto.className = 'w-2 h-2 rounded-full bg-red-400';
+        });
+        socket.addEventListener('error', function () {
+            estado.textContent = 'Sin conexión';
+            punto.className = 'w-2 h-2 rounded-full bg-red-400';
+        });
+        socket.addEventListener('message', function (evento) {
+            try {
+                const datos = JSON.parse(evento.data);
+                if (datos.tipo === 'mensaje') { crearMensaje(datos.mensaje); }
+            } catch (error) { /* mensaje no válido */ }
+        });
+    }
+
+    formulario.addEventListener('submit', function (evento) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) { return; }
+        evento.preventDefault();
+        const texto = campo.value.trim();
+        if (!texto) { return; }
+        socket.send(JSON.stringify({ tipo: 'mensaje', texto: texto }));
+        campo.value = '';
+        campo.focus();
+    });
+
+    alFinal();
+    conectar();
+})();
+</script>
+{% endif %}
+{% endblock %}

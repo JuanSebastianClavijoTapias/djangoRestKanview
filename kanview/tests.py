@@ -957,12 +957,11 @@ class TandaUiTestCase(TestCase):
         self.assertIn("bg-[#004f4f]", bloque(sidebar, "Catálogo"))
         self.assertNotIn("bg-[#004f4f]", bloque(sidebar, "Productos"))
 
-    def test_el_sidebar_no_tiene_mensajeria(self):
+    def test_el_sidebar_tiene_mensajeria(self):
         sidebar = self._sidebar(self.client.get(reverse("kanview:dashboard")))
-        self.assertNotIn(">Mensajería<", sidebar)
-        with self.assertRaises(NoReverseMatch):
-            reverse("kanview:mensajeria")
-        self.assertEqual(self.client.get("/mensajeria/").status_code, 404)
+        self.assertIn(">Mensajería<", sidebar)
+        self.assertIn(reverse("kanview:mensajeria"), sidebar)
+        self.assertEqual(self.client.get(reverse("kanview:mensajeria")).status_code, 200)
 
     def test_el_sidebar_tiene_procesos_y_tareas(self):
         resp = self.client.get(reverse("kanview:dashboard"))
@@ -1038,46 +1037,39 @@ class TandaUiTestCase(TestCase):
 
     # ---- Kanban único: modal de detalle de la actividad ----------------------
 
-    def test_las_actividades_del_tablero_abren_un_modal_con_su_detalle(self):
+    def test_las_tareas_del_tablero_abren_su_modal_de_actividades(self):
         resp = self.client.get(reverse("kanview:pedidos-tablero"))
         self.assertEqual(resp.status_code, 200)
         html = resp.content.decode()
 
-        # La actividad de la tarjeta es un abridor accesible del modal.
+        # La tarea de la tarjeta abre el modal de sus actividades.
         self.assertIn('aria-haspopup="dialog"', html)
-        self.assertIn('aria-label="Ver el detalle de la actividad «Actividad UI»"', html)
-        self.assertIn(f'data-detalle="actividad-{self.actividad.pk}"', html)
+        self.assertIn(f'data-tarea-detalle="tarea-{self.tarea.pk}"', html)
+        self.assertIn("abrirTarea(event, this)", html)
+        self.assertIn('id="modal-tarea"', html)
+        self.assertIn('id="datos-tareas"', html)
+        self.assertIn('id="modal-tarea-grupos"', html)
+        self.assertIn("Pendientes", html)
+        self.assertIn("En progreso", html)
+        self.assertIn("Completadas", html)
+        self.assertIn('"Actividad UI"', html)
+        self.assertIn('"Empleado UI"', html)
+        self.assertIn('"Tapicero"', html)
 
-        # El diálogo es modal y se cierra con la X, con Esc y clicando fuera.
-        self.assertIn('aria-modal="true"', html)
-        self.assertIn("cerrarDetalle()", html)
-        self.assertIn('id="modal-detalle-cerrar"', html)
-        self.assertIn("if (evento.key === 'Escape')", html)
-        self.assertIn("event.target === this", html)
-
-        # El detalle lleva nombre, descripción, estado, fechas, pedido, cliente,
-        # trabajador y el formulario para cambiar el estado.
-        for clave in ('"nombre"', '"descripcion"', '"estado"', '"fecha_inicio"',
-                      '"fecha_fin"', '"pedido"', '"cliente"', '"empleado"', '"url_estado"'):
-            self.assertIn(clave, html, clave)
-        self.assertIn('"pedido": "UI0001"', html)
-        self.assertIn('"cliente": "Cliente UI"', html)
-        self.assertIn('"empleado": "Empleado UI"', html)
-        self.assertIn('"nombre": "Actividad UI"', html)
+        # El modal de actividad sigue disponible para cambiar el estado.
         self.assertIn('id="datos-detalle"', html)
         self.assertIn('id="form-estado-actividad"', html)
         self.assertIn('name="estado"', html)
-        self.assertIn("csrfmiddlewaretoken", html)
 
-    def test_la_tarjeta_agrupa_las_actividades_por_trabajador(self):
+    def test_la_tarjeta_muestra_las_tareas_y_su_responsable(self):
         resp = self.client.get(reverse("kanview:pedidos-tablero"))
         html = resp.content.decode()
         cuerpo = html[html.index("</header>"):]
-        self.assertIn("Empleado UI", cuerpo)          # grupo del trabajador
-        self.assertIn("Tapicero", cuerpo)             # su cargo
-        self.assertIn("Actividad UI", cuerpo)         # su actividad
-        self.assertIn("0/1 actividades completadas", cuerpo)
-        # El pedido está en la columna «En proceso» (su actividad va en progreso).
+        self.assertIn("Tarea UI", cuerpo)
+        self.assertIn("Empleado UI", cuerpo)
+        self.assertIn("Tapicero", cuerpo)
+        self.assertIn("0/1 actividades", cuerpo)
+        self.assertIn(f'data-tarea-detalle="tarea-{self.tarea.pk}"', cuerpo)
         self.assertIn('data-columna="en proceso"', html)
 
     # ---- B4: los menores ------------------------------------------------------

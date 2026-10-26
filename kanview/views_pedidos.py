@@ -217,10 +217,15 @@ def _tareas_del_pedido(pedido):
             responsable = next((a.id_empleado for a in actividades if a.id_empleado), None)
         cargo = responsable.get_cargo_display() if responsable else "Sin trabajador asignado"
         iniciales = responsable.nombre[:2].upper() if responsable else "?"
+        titulos_grupo = {
+            "pendiente": "Pendientes",
+            "en progreso": "En progreso",
+            "completado": "Completadas",
+        }
         grupos = [
             {
                 "clave": clave,
-                "titulo": titulo,
+                "titulo": titulos_grupo[clave],
                 "actividades": [
                     {
                         "pk": actividad.pk,

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -75,6 +76,8 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -82,24 +85,41 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     'kanview',
 ]
 
 # API (DRF): por defecto exige sesión iniciada. Sin esto, toda la API respondía
 # 200 a cualquiera, incluidos los datos de clientes, pedidos y finanzas.
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'kanview.security.SecurityHeadersMiddleware',
+    'kanview.security.RateLimitMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'kanview.security.LoginRequiredMiddleware',
     'kanview.seguridad.TerminosMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -126,6 +146,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Canal en memoria: suficiente para desarrollo y para una sola instancia.
+# Para producción con varios procesos usa channels_redis.
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 
 # Auth
@@ -252,3 +281,38 @@ MAX_BYTES_MULTIMEDIA = int(os.environ.get("MAX_BYTES_MULTIMEDIA", str(60 * 1024 
 
 # ---- Recuperación de contraseña -------------------------------------------
 PASSWORD_RESET_TIMEOUT = int(os.environ.get("PASSWORD_RESET_TIMEOUT", "86400"))
+
+
+# ---- Seguridad HTTP --------------------------------------------------------
+# Rate limit y sesiones. En producción con varias instancias configura
+# CACHE_BACKEND/CACHE_LOCATION apuntando a un cache compartido (por ejemplo
+# django-redis); LocMemCache solo protege un proceso.
+CACHES = {
+    "default": {
+        "BACKEND": os.environ.get(
+            "CACHE_BACKEND", "django.core.cache.backends.locmem.LocMemCache"
+        ),
+        "LOCATION": os.environ.get("CACHE_LOCATION", "kanview"),
+    }
+}
+
+CSRF_TRUSTED_ORIGINS = [
+    origen.strip()
+    for origen in (os.environ.get("CSRF_TRUSTED_ORIGINS") or "").split(",")
+    if origen.strip()
+]
+CSRF_COOKIE_HTTPONLY = _bool_env("CSRF_COOKIE_HTTPONLY", True)
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SECURE = _bool_env("CSRF_COOKIE_SECURE", False)
+SESSION_COOKIE_SECURE = _bool_env("SESSION_COOKIE_SECURE", False)
+SECURE_SSL_REDIRECT = _bool_env("SECURE_SSL_REDIRECT", False)
+SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "0"))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = _bool_env("SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
+SECURE_HSTS_PRELOAD = _bool_env("SECURE_HSTS_PRELOAD", False)
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+CSP_REPORT_ONLY = _bool_env("CSP_REPORT_ONLY", False)
+RATE_LIMIT_EN_PRUEBAS = _bool_env("RATE_LIMIT_EN_PRUEBAS", False)
