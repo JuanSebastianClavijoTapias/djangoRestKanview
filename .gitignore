@@ -8,6 +8,7 @@ db.sqlite3
 .DS_Store
 media/
 backups/
+staticfiles/
 node_modules/
 package.json
 package-lock.json
@@ -16,3 +17,4 @@ cypress/
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
+.env.render

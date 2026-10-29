@@ -72,6 +72,12 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+#: Render inyecta este valor en los servicios web. Se agrega automáticamente
+#: para que el despliegue funcione aun si ALLOWED_HOSTS no trae el dominio.
+RENDER_EXTERNAL_HOSTNAME = (os.environ.get("RENDER_EXTERNAL_HOSTNAME") or "").strip()
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 
 # Application definition
 
@@ -112,6 +118,7 @@ SIMPLE_JWT = {
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'kanview.security.SecurityHeadersMiddleware',
     'kanview.security.RateLimitMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -177,7 +184,7 @@ AUTHENTICATION_BACKENDS = [
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': Path(os.environ.get("DATABASE_PATH", BASE_DIR / 'db.sqlite3')),
     }
 }
 
@@ -216,13 +223,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+
+#: Destino de `collectstatic`. WhiteNoise sirve estos archivos en producción.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Archivos subidos por el usuario (evidencias en imágenes de los pedidos)
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / 'media'))
 
 
 # Idioma de la interfaz de administración de Django
@@ -301,6 +311,13 @@ CSRF_TRUSTED_ORIGINS = [
     for origen in (os.environ.get("CSRF_TRUSTED_ORIGINS") or "").split(",")
     if origen.strip()
 ]
+if RENDER_EXTERNAL_HOSTNAME:
+    origen_render = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    if origen_render not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origen_render)
+
+# Render termina TLS en su proxy y reenvía HTTP al contenedor.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_COOKIE_HTTPONLY = _bool_env("CSRF_COOKIE_HTTPONLY", True)
 CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
