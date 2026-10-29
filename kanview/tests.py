@@ -1193,7 +1193,7 @@ class TandaUiTestCase(TestCase):
     def test_el_logo_local_existe_y_reemplaza_a_la_imagen_rota(self):
         from django.contrib.staticfiles import finders
 
-        self.assertIsNotNone(finders.find("kanview/img/logo-kanview.png"))
+        self.assertIsNotNone(finders.find("kanview/img/logo-kanview-icono.png"))
         for url in (reverse("kanview:dashboard"), reverse("kanview:clientes")):
             resp = self.client.get(url)
             self.assertNotContains(resp, "lh3.googleusercontent.com/aida/AEtjO1")
