@@ -2,6 +2,10 @@
 {% block title %}Kanview - Eliminar pedido{% endblock %}
 {% block content %}
 <div class="max-w-md">
+<a class="border border-gray-300 text-gray-700 hover:bg-gray-100 px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-colors mb-4" href="{{ cancel_url|default:'/' }}" onclick="if (document.referrer) { history.back(); return false; }">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    Regresar
+</a>
 <div class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-4">
 <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
 <span class="material-symbols-outlined text-red-600">delete</span>

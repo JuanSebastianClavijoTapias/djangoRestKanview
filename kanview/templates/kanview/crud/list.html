@@ -6,12 +6,18 @@
 <h2 class="text-2xl font-bold">{{ title }}</h2>
 <p class="text-sm text-gray-500 mt-1">{{ filas|length }} registro{{ filas|length|pluralize }}</p>
 </div>
+<div class="flex items-center gap-3">
+<a class="border border-gray-300 text-gray-700 hover:bg-gray-100 px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors" href="{{ cancel_url|default:'/' }}" onclick="if (document.referrer) { history.back(); return false; }">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+    Regresar
+</a>
 {% if crear_url %}
 <a class="bg-[#006565] hover:bg-[#004f4f] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors" href="{{ crear_url }}">
 <span class="material-symbols-outlined text-[18px]">add</span>
     Nuevo
 </a>
 {% endif %}
+</div>
 </div>
 <div class="bg-white rounded-2xl shadow-neomorphic-lift overflow-hidden overflow-x-auto">
 <table class="w-full text-left border-collapse">
