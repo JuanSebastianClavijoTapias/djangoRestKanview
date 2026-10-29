@@ -1,7 +1,7 @@
 {% extends "kanview/crud_base.html" %}
 {% block title %}Kanview - {{ titulo }}{% endblock %}
 {% block content %}
-<div class="max-w-2xl">
+<div class="max-w-2xl w-full mx-auto">
 <h2 class="text-2xl font-bold mb-2">{{ titulo }}</h2>
 <p class="text-sm text-gray-500 mb-6">Elige un producto del catálogo y dinos cuántas unidades necesitas. Tu pedido quedará pendiente de aprobación: el taller lo revisará y asignará un trabajador.</p>
 <form class="bg-white rounded-2xl shadow-neomorphic-lift p-8 flex flex-col gap-5" method="post" enctype="multipart/form-data">
