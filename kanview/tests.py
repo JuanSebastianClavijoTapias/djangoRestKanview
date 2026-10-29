@@ -303,6 +303,17 @@ class CrudModulesTestCase(TestCase):
         self.assertContains(resp, 'data-solo-numeros="1"')
         self.assertContains(resp, 'pattern="[0-9]*"')
 
+    def test_el_regresar_de_los_modulos_de_usuarios_vuelve_a_usuarios(self):
+        destino = reverse("kanview:usuarios")
+        for nombre in ("cliente", "empleado", "administrador"):
+            resp = self.client.get(reverse(f"kanview:{nombre}-lista"))
+            self.assertEqual(resp.context["regresar_url"], destino, nombre)
+            resp = self.client.get(reverse(f"kanview:{nombre}-crear"))
+            self.assertEqual(resp.context["regresar_url"], destino, nombre)
+        # Los demás módulos conservan el regreso al historial del navegador.
+        resp = self.client.get(reverse("kanview:producto-lista"))
+        self.assertIsNone(resp.context["regresar_url"])
+
     # ---- Formularios construidos en las vistas (formas.py eliminado) --------
 
     def test_no_existe_el_modulo_forms(self):

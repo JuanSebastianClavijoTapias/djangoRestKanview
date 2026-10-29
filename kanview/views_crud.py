@@ -64,6 +64,9 @@ SECCIONES_GESTION = {
     "catalogo": SECCION_ESCRITURA["catalogo"],
 }
 
+#: Módulos del módulo Usuarios: su botón «Regresar» vuelve a la vista de Usuarios.
+VOLVER_USUARIOS = ("cliente", "empleado", "administrador")
+
 #: Validación de los archivos que se adjuntan a un pedido.
 EXTENSIONES_IMAGEN = {".jpg", ".jpeg", ".png", ".webp"}
 CONTENT_TYPES_IMAGEN = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
@@ -101,6 +104,8 @@ def _contexto_lista(request, nombre, titulo, columnas, filas, activo, crear=True
         "editar_url": f"kanview:{nombre}-editar" if puede_gestionar else None,
         "eliminar_url": f"kanview:{nombre}-eliminar" if puede_gestionar else None,
         "reactivar_url": f"kanview:{nombre}-reactivar" if puede_gestionar else None,
+        # El «Regresar» de los módulos de usuarios vuelve a la vista de Usuarios.
+        "regresar_url": reverse("kanview:usuarios") if nombre in VOLVER_USUARIOS else None,
         **busqueda.contexto(request, f"Buscar en {titulo.lower()}...", titulo.lower()),
         **_nav(activo, request),
     }
@@ -652,6 +657,8 @@ def _desactivar(request, obj, nombre, etiqueta, activo):
         "object": obj,
         "title": f"Desactivar {etiqueta.lower()}",
         "cancel_url": url_lista,
+        # El «Regresar» de los módulos de usuarios vuelve a la vista de Usuarios.
+        "regresar_url": reverse("kanview:usuarios") if nombre in VOLVER_USUARIOS else None,
         **_nav(activo, request),
     })
 
@@ -701,6 +708,7 @@ def cliente_crear(request):
         "form": form,
         "title": "Nuevo cliente",
         "cancel_url": reverse("kanview:cliente-lista"),
+        "regresar_url": reverse("kanview:usuarios"),
         **_nav("Usuarios", request),
     })
 
@@ -718,6 +726,7 @@ def cliente_editar(request, pk):
         "form": form,
         "title": "Editar cliente",
         "cancel_url": reverse("kanview:cliente-lista"),
+        "regresar_url": reverse("kanview:usuarios"),
         **_nav("Usuarios", request),
     })
 
@@ -758,6 +767,7 @@ def empleado_crear(request):
         "form": form,
         "title": "Nuevo empleado",
         "cancel_url": reverse("kanview:empleado-lista"),
+        "regresar_url": reverse("kanview:usuarios"),
         **_nav("Usuarios", request),
     })
 
@@ -775,6 +785,7 @@ def empleado_editar(request, pk):
         "form": form,
         "title": "Editar empleado",
         "cancel_url": reverse("kanview:empleado-lista"),
+        "regresar_url": reverse("kanview:usuarios"),
         **_nav("Usuarios", request),
     })
 
@@ -814,6 +825,7 @@ def administrador_crear(request):
         "form": form,
         "title": "Nuevo administrador",
         "cancel_url": reverse("kanview:administrador-lista"),
+        "regresar_url": reverse("kanview:usuarios"),
         **_nav("Panel", request),
     })
 
@@ -830,6 +842,7 @@ def administrador_editar(request, pk):
         "form": form,
         "title": "Editar administrador",
         "cancel_url": reverse("kanview:administrador-lista"),
+        "regresar_url": reverse("kanview:usuarios"),
         **_nav("Panel", request),
     })
 

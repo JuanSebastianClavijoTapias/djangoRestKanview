@@ -2,7 +2,7 @@
 {% block title %}Kanview - {{ title }}{% endblock %}
 {% block content %}
 <div class="max-w-md">
-<a class="border border-gray-300 text-gray-700 hover:bg-gray-100 px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-colors mb-4" href="{{ cancel_url|default:'/' }}" onclick="if (document.referrer) { history.back(); return false; }">
+<a class="border border-gray-300 text-gray-700 hover:bg-gray-100 px-5 py-2.5 rounded-xl text-sm font-semibold inline-flex items-center gap-2 transition-colors mb-4" href="{{ regresar_url|default:cancel_url|default:'/' }}" {% if not regresar_url %}onclick="if (document.referrer) { history.back(); return false; }"{% endif %}>
 <span class="material-symbols-outlined text-[18px]">arrow_back</span>
     Regresar
 </a>
