@@ -64,8 +64,15 @@ SECCIONES_GESTION = {
     "catalogo": SECCION_ESCRITURA["catalogo"],
 }
 
-#: Módulos del módulo Usuarios: su botón «Regresar» vuelve a la vista de Usuarios.
-VOLVER_USUARIOS = ("cliente", "empleado", "administrador")
+#: Destino del botón «Regresar» de los módulos del CRUD (módulo → vista).
+#: Los módulos de usuarios vuelven a la vista de Usuarios y los productos al
+#: Catálogo de Productos; el resto usa el historial del navegador.
+VOLVER_A = {
+    "cliente": "kanview:usuarios",
+    "empleado": "kanview:usuarios",
+    "administrador": "kanview:usuarios",
+    "producto": "kanview:catalogo",
+}
 
 #: Validación de los archivos que se adjuntan a un pedido.
 EXTENSIONES_IMAGEN = {".jpg", ".jpeg", ".png", ".webp"}
@@ -104,8 +111,8 @@ def _contexto_lista(request, nombre, titulo, columnas, filas, activo, crear=True
         "editar_url": f"kanview:{nombre}-editar" if puede_gestionar else None,
         "eliminar_url": f"kanview:{nombre}-eliminar" if puede_gestionar else None,
         "reactivar_url": f"kanview:{nombre}-reactivar" if puede_gestionar else None,
-        # El «Regresar» de los módulos de usuarios vuelve a la vista de Usuarios.
-        "regresar_url": reverse("kanview:usuarios") if nombre in VOLVER_USUARIOS else None,
+        # El «Regresar» de cada módulo vuelve a su vista principal (ver VOLVER_A).
+        "regresar_url": reverse(VOLVER_A[nombre]) if nombre in VOLVER_A else None,
         **busqueda.contexto(request, f"Buscar en {titulo.lower()}...", titulo.lower()),
         **_nav(activo, request),
     }
@@ -657,8 +664,8 @@ def _desactivar(request, obj, nombre, etiqueta, activo):
         "object": obj,
         "title": f"Desactivar {etiqueta.lower()}",
         "cancel_url": url_lista,
-        # El «Regresar» de los módulos de usuarios vuelve a la vista de Usuarios.
-        "regresar_url": reverse("kanview:usuarios") if nombre in VOLVER_USUARIOS else None,
+        # El «Regresar» de cada módulo vuelve a su vista principal (ver VOLVER_A).
+        "regresar_url": reverse(VOLVER_A[nombre]) if nombre in VOLVER_A else None,
         **_nav(activo, request),
     })
 
@@ -912,6 +919,7 @@ def producto_crear(request):
         "form": form,
         "title": "Nuevo producto",
         "cancel_url": reverse("kanview:producto-lista"),
+        "regresar_url": reverse("kanview:catalogo"),
         **_nav("Productos", request),
     })
 
@@ -930,6 +938,7 @@ def producto_editar(request, pk):
         "form": form,
         "title": "Editar producto",
         "cancel_url": reverse("kanview:producto-lista"),
+        "regresar_url": reverse("kanview:catalogo"),
         **_nav("Productos", request),
     })
 
