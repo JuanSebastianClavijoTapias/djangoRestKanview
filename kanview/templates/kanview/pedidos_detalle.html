@@ -248,7 +248,15 @@ Sin fecha límite definida
 </div>
 <div class="mt-6 flex flex-col gap-card-gap">
 <div class="neomorphic-card rounded-2xl p-6">
-<h3 class="font-headline-md text-headline-md text-on-surface mb-3">Tareas y actividades del pedido</h3>
+<div class="flex flex-wrap justify-between items-center gap-3 mb-3">
+<h3 class="font-headline-md text-headline-md text-on-surface">Tareas y actividades del pedido</h3>
+{% if puede_gestionar %}
+<div class="flex flex-wrap gap-2">
+<a class="px-4 py-2 rounded-xl bg-primary text-on-primary text-sm font-semibold hover:brightness-110 transition-colors" href="{% url 'kanview:tarea-crear' %}?pedido={{ pedido.pk }}">Agregar tarea</a>
+<a class="px-4 py-2 rounded-xl border border-outline-variant text-on-surface text-sm font-semibold hover:bg-surface-container-low transition-colors" href="{% url 'kanview:actividad-crear' %}">Agregar actividad</a>
+</div>
+{% endif %}
+</div>
 <div class="flex flex-col gap-4">
 {% for tarea in pedido.tareaspedido_set.all %}
 {% if tarea.activo %}

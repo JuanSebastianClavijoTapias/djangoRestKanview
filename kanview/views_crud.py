@@ -50,6 +50,7 @@ from .models import (
 from . import busqueda, historial
 from .auditoria import registrar as registrar_auditoria
 from .notificaciones import notificar_area, notificar_cliente, notificar_staff
+from .plantillas_proceso import crear_proceso_predefinido
 from .permisos import ROL_CLIENTE, ROL_TRABAJADOR, SECCION_ESCRITURA, asignar_rol, es_solo_cliente, seccion_requerida
 from .views_site import _nav
 
@@ -525,6 +526,11 @@ def _form_tarea(request, instance=None):
     form.fields["id_pedido"].help_text = (
         "Selecciona el pedido para limitar las fechas a su ventana de registro y entrega."
     )
+    # Con ?pedido= el formulario llega con el pedido ya elegido (p. ej. al
+    # agregar una tarea extra desde el detalle de un pedido).
+    pedido_id = (getattr(request, "GET", {}).get("pedido") or "").strip()
+    if instance is None and pedido_id.isdigit() and Pedido.objects.filter(pk=int(pedido_id)).exists():
+        form.initial["id_pedido"] = int(pedido_id)
     # Cada tarea se asigna a un trabajador: el responsable es obligatorio.
     form = _trabajador_en(form, obligatorio=True, etiqueta="Responsable")
     form.fields["id_empleado"].help_text = "Trabajador responsable de esta tarea."
@@ -536,6 +542,10 @@ def _form_actividad(request, instance=None):
     form.fields["id_tarea"].help_text = (
         "Selecciona la tarea para limitar las fechas al pedido al que pertenece."
     )
+    # Con ?tarea= la actividad llega con su tarea ya elegida.
+    tarea_id = (getattr(request, "GET", {}).get("tarea") or "").strip()
+    if instance is None and tarea_id.isdigit() and TareasPedido.objects.filter(pk=int(tarea_id)).exists():
+        form.initial["id_tarea"] = int(tarea_id)
     return _trabajador_en(form, obligatorio=True, etiqueta="Trabajador")
 
 
@@ -1110,8 +1120,16 @@ def pedido_crear(request):
             pedido.evidencias = ""
             pedido.fecha_limite = form.cleaned_data.get("fecha_limite")
             _guardar_pedido_con_codigo(pedido)
+            # Al crear el pedido se carga su proceso típico de tapicería
+            # (tareas y actividades comunes para ese producto).
+            tareas_creadas, actividades_creadas = crear_proceso_predefinido(pedido)
             imagenes = _guardar_evidencias(pedido, archivos)
             aviso = f" con {imagenes} archivo{'s' if imagenes != 1 else ''}" if imagenes else ""
+            if tareas_creadas:
+                aviso += (
+                    f" Se cargó su proceso con {tareas_creadas} tarea(s) "
+                    f"y {actividades_creadas} actividad(es)."
+                )
             historial.registrar(
                 pedido, "pedido_creado",
                 f"Pedido {pedido.codigo_pedido} creado con {pedido.cantidad} unidad(es).",
@@ -1221,8 +1239,16 @@ def pedido_cliente_crear(request):
             pedido.evidencias = ""
             pedido.fecha_limite = form.cleaned_data.get("fecha_limite")
             _guardar_pedido_con_codigo(pedido)
+            # Al crear el pedido se carga su proceso típico de tapicería
+            # (tareas y actividades comunes para ese producto).
+            tareas_creadas, actividades_creadas = crear_proceso_predefinido(pedido)
             imagenes = _guardar_evidencias(pedido, archivos)
             aviso = f" con {imagenes} archivo{'s' if imagenes != 1 else ''}" if imagenes else ""
+            if tareas_creadas:
+                aviso += (
+                    f" Su proceso quedó cargado con {tareas_creadas} tarea(s) "
+                    f"y {actividades_creadas} actividad(es)."
+                )
             historial.registrar(
                 pedido, "pedido_creado",
                 f"Pedido {pedido.codigo_pedido} creado por el cliente con {pedido.cantidad} unidad(es).",

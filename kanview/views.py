@@ -17,6 +17,7 @@ from .models import (
     TareasPedido,
 )
 from .permisos import es_solo_cliente, puede
+from .plantillas_proceso import crear_proceso_predefinido
 from .serializers import (
     ActividadesSerializer,
     AdministradorSerializer,
@@ -295,7 +296,9 @@ def pedidos_lista(request):
 
     serializer = PedidoSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
+        pedido = serializer.save()
+        # Al crear el pedido se carga su proceso típico de tapicería.
+        crear_proceso_predefinido(pedido)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

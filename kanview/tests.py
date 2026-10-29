@@ -2162,3 +2162,121 @@ class ReglasDelTallerTestCase(TestCase):
         )
         resp = self.client.get("/api/pedidos/")
         self.assertNotIn("RT-0001", resp.content.decode())
+
+
+class ProcesoPredefinidoTestCase(TestCase):
+    """Al crear un pedido se carga su proceso típico de tapicería.
+
+    Cada producto recibe sus tareas y actividades comunes (mesa, sofá, silla,
+    restauración, carro, moto o proceso general) y sobre esa base se pueden
+    agregar tareas o actividades extra desde el CRUD.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(
+            username="proceso.admin", password="pass12345", is_staff=True
+        )
+        cls.user.groups.add(_grupo(ROL_ADMINISTRADOR))
+        cls.cliente = Cliente.objects.create(
+            nombre="Cliente Proceso", documento="PR-1",
+            correo="proceso.cliente@example.com",
+        )
+        cls.cliente_user = User.objects.create_user(
+            username="proceso.cliente", password="pass12345",
+            email="proceso.cliente@example.com",
+        )
+        cls.cliente_user.groups.add(_grupo(ROL_CLIENTE))
+        cls.empleado = Empleado.objects.create(
+            documento="PR-2", nombre="Trabajador Proceso", cargo="tapcr",
+            celular="300", direccion="Calle", salario=1000,
+        )
+        cls.mesa = Producto.objects.create(
+            nombre="Mesa de comedor", categoria="madera", cantidad=5,
+            precio=500000, codigo_producto="PR0001",
+        )
+
+    def _datos(self, **extra):
+        datos = {
+            "estado": "activo", "cantidad": 1, "descripcion": "pedido de proceso",
+            "id_cliente": self.cliente.pk, "id_empleado": self.empleado.pk,
+            "id_producto": self.mesa.pk,
+            "fecha_limite": (timezone.localdate() + timedelta(days=10)).isoformat(),
+        }
+        datos.update(extra)
+        return datos
+
+    def test_crear_un_pedido_carga_su_proceso_tipico(self):
+        self.client.force_login(self.user)
+        resp = self.client.post(reverse("kanview:pedido-crear"), self._datos())
+        self.assertEqual(resp.status_code, 302)
+        pedido = Pedido.objects.get(descripcion="pedido de proceso")
+        nombres = list(pedido.tareaspedido_set.values_list("nombre", flat=True))
+        self.assertIn("Diseño y rectificado", nombres)
+        self.assertIn("Corte y cepillado", nombres)
+        self.assertIn("Lijado progresivo", nombres)
+        self.assertIn("Acabado y sellado", nombres)
+        self.assertTrue(Actividades.objects.filter(id_tarea__id_pedido=pedido).exists())
+        # Las fechas del trabajo quedan dentro de la ventana del pedido.
+        for tarea in pedido.tareaspedido_set.all():
+            self.assertGreaterEqual(tarea.fecha_inicio, pedido.fecha_creacion)
+            self.assertLessEqual(tarea.fecha_fin, pedido.fecha_limite)
+
+    def test_el_cliente_tambien_recibe_el_proceso_de_su_pedido(self):
+        Producto.objects.create(
+            nombre="Sofá de terciopelo", categoria="tela", cantidad=3,
+            precio=2000000, codigo_producto="PR0002",
+        )
+        sofa = Producto.objects.get(codigo_producto="PR0002")
+        self.client.force_login(self.cliente_user)
+        resp = self.client.post(reverse("kanview:pedido-cliente-crear"), {
+            "id_producto": sofa.pk, "cantidad": "1", "descripcion": "sofa nuevo",
+        })
+        self.assertEqual(resp.status_code, 302)
+        pedido = Pedido.objects.get(descripcion="sofa nuevo")
+        nombres = list(pedido.tareaspedido_set.values_list("nombre", flat=True))
+        self.assertIn("Cincha e hilado (suspensión)", nombres)
+        self.assertIn("Tapizado y engrapado", nombres)
+
+    def test_cada_producto_recibe_su_proceso(self):
+        from .plantillas_proceso import plantilla_para
+
+        casos = {
+            "Mesa de comedor": "Fabricación de mesa",
+            "Sofá de terciopelo": "Fabricación de sofá desde cero",
+            "Silla de comedor": "Fabricación y tapizado de sillas",
+            "Sillón reclinable": "Fabricación de sofá desde cero",
+            "Mueble usado para retapizar": "Tapicería general (restauración de muebles)",
+            "Asiento de carro": "Tapicería de silla/asiento de carro",
+            "Sillín de moto": "Tapicería de asiento de moto",
+            "Alfombra persa": "Proceso general de tapicería",
+        }
+        for producto, esperado in casos.items():
+            self.assertEqual(plantilla_para(producto)["nombre"], esperado, producto)
+
+    def test_se_pueden_agregar_tareas_y_actividades_extra_desde_el_crud(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse("kanview:pedido-crear"), self._datos())
+        pedido = Pedido.objects.get(descripcion="pedido de proceso")
+        base = pedido.tareaspedido_set.count()
+        self.assertGreater(base, 0)
+
+        # Una tarea extra (lo que pida el cliente) se agrega desde el CRUD.
+        resp = self.client.post(reverse("kanview:tarea-crear"), {
+            "nombre": "Tarea extra pedida por el cliente",
+            "descripcion": "adicional al proceso típico",
+            "fecha_inicio": timezone.localdate().isoformat(),
+            "fecha_fin": (timezone.localdate() + timedelta(days=2)).isoformat(),
+            "estado": "pendiente",
+            "id_pedido": pedido.pk,
+            "id_empleado": self.empleado.pk,
+        })
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(pedido.tareaspedido_set.count(), base + 1)
+
+        # Los formularios llegan con el pedido/tarea preseleccionados.
+        resp = self.client.get(reverse("kanview:tarea-crear"), {"pedido": pedido.pk})
+        self.assertEqual(resp.context["form"].initial.get("id_pedido"), pedido.pk)
+        tarea_extra = TareasPedido.objects.get(nombre="Tarea extra pedida por el cliente")
+        resp = self.client.get(reverse("kanview:actividad-crear"), {"tarea": tarea_extra.pk})
+        self.assertEqual(resp.context["form"].initial.get("id_tarea"), tarea_extra.pk)
