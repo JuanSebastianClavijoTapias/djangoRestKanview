@@ -8,19 +8,8 @@
 {% load static %}
 <aside aria-label="Menú principal" class="hidden lg:flex w-64 h-screen fixed left-0 top-0 bg-[#006565] z-50 flex-col py-6 px-4" id="sidebar">
     <div class="flex items-center gap-3 px-4 py-2 mb-8">
-        <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-[#e3fffe]/20 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="36" height="36" role="img" aria-label="Sello de Kanview">
-                <defs>
-                    <radialGradient id="cera" cx="36%" cy="30%" r="78%">
-                        <stop offset="0%" stop-color="#0a8f8f"/>
-                        <stop offset="60%" stop-color="#008080"/>
-                        <stop offset="100%" stop-color="#005c5c"/>
-                    </radialGradient>
-                </defs>
-                <circle cx="32" cy="32" r="30" fill="url(#cera)"/>
-                <circle cx="32" cy="32" r="23.5" fill="none" stroke="#e3fffe" stroke-opacity="0.75" stroke-width="1.6"/>
-                <path d="M25 18.5v27h6.2v-8.1l3.1-3.4 6.2 11.5h6.4L38.2 30.4l8-11.9h-6.7l-8.3 12.6V18.5z" fill="#e3fffe"/>
-            </svg>
+        <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-white flex items-center justify-center p-1">
+            <img alt="Logo de Kanview" class="w-full h-full object-contain" src="{% static 'kanview/img/logo-kanview.png' %}"/>
         </div>
         <div class="flex flex-col">
             <span class="text-xl font-bold text-white tracking-tight">Kanview</span>

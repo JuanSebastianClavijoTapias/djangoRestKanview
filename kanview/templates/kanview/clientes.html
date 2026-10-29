@@ -126,7 +126,7 @@
 {% for cliente in clientes|slice:":1" %}
 <div class="bg-surface-bright rounded-2xl shadow-neomorphic-lift overflow-hidden relative flex flex-col h-full border border-outline-variant/10">
 <!-- Subtle Wax Seal Watermark Background -->
-<div class="absolute -bottom-10 -right-10 w-64 h-64 opacity-10 pointer-events-none z-0 mix-blend-multiply" style="background-image: url('{% static 'kanview/img/sello-kanview.svg' %}'); background-size: cover; background-position: center;">
+<div class="absolute -bottom-10 -right-10 w-64 h-64 opacity-10 pointer-events-none z-0 mix-blend-multiply" style="background-image: url('{% static 'kanview/img/logo-kanview.png' %}'); background-size: cover; background-position: center;">
 </div>
 <!-- Top Colored Bar -->
 <div class="h-24 bg-surface-container-low w-full relative z-10">
@@ -148,7 +148,7 @@
 </div>
 <!-- Wax Seal Verified Badge -->
 <div class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-surface-bright shadow-sm p-[2px]">
-<img alt="Verified Customer" class="w-full h-full object-cover rounded-full" src="{% static 'kanview/img/sello-kanview.svg' %}"/>
+<img alt="Verified Customer" class="w-full h-full object-contain rounded-full bg-white p-[2px]" src="{% static 'kanview/img/logo-kanview.png' %}"/>
 </div>
 </div>
 <h2 class="font-headline-md text-headline-md text-on-surface mt-4 text-center">{{ cliente.nombre }}</h2>

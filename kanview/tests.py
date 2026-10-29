@@ -1190,14 +1190,14 @@ class TandaUiTestCase(TestCase):
                     reverse("kanview:pedidos-tablero")):
             self.assertContains(self.client.get(url), 'aria-label="Buscar')
 
-    def test_el_sello_local_existe_y_reemplaza_a_la_imagen_rota(self):
+    def test_el_logo_local_existe_y_reemplaza_a_la_imagen_rota(self):
         from django.contrib.staticfiles import finders
 
-        self.assertIsNotNone(finders.find("kanview/img/sello-kanview.svg"))
+        self.assertIsNotNone(finders.find("kanview/img/logo-kanview.png"))
         for url in (reverse("kanview:dashboard"), reverse("kanview:clientes")):
             resp = self.client.get(url)
             self.assertNotContains(resp, "lh3.googleusercontent.com/aida/AEtjO1")
-            self.assertContains(resp, "Sello de Kanview")
+            self.assertContains(resp, "Logo de Kanview")
 
     # ---- Una sola configuración de Tailwind para todas las pantallas -------
 
