@@ -32,8 +32,9 @@ from .permisos import (
 NAV_ITEMS = [
     ("dashboard", "Panel", "kanview:dashboard", "panel"),
     ("view_kanban", "Procesos", "kanview:pedidos-tablero", "pedidos"),
+    ("history", "Histórico", "kanview:historico", "pedidos"),
     ("assignment", "Tareas", "kanview:tareas", "tareas"),
-    ("history", "Actividades", "kanview:actividades", "tareas"),
+    ("checklist", "Actividades", "kanview:actividades", "tareas"),
     ("forum", "Mensajería", "kanview:mensajeria", "mensajeria"),
     ("sell", "Productos", "kanview:producto-lista", "gestion-catalogo"),
     ("menu_book", "Catálogo", "kanview:catalogo", "catalogo"),

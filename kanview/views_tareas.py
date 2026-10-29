@@ -19,7 +19,7 @@ from .auditoria import registrar as registrar_auditoria
 from .historial import registrar as registrar_historial
 from .models import ESTADOS_KANBAN, Actividades, Empleado, TareasPedido
 from .notificaciones import notificar_area, notificar_cliente, notificar_staff
-from .permisos import es_administrador, es_solo_cliente, puede, seccion_requerida
+from .permisos import es_administrador, es_solo_cliente, es_trabajador, puede, seccion_requerida
 from .views_site import _nav
 
 
@@ -331,6 +331,15 @@ def actividad_estado(request, pk):
             return JsonResponse({"error": mensaje}, status=403)
         messages.error(request, mensaje)
         return redirect("kanview:pedidos-tablero")
+    elif es_trabajador(request.user):
+        # El trabajador solo manipula SUS actividades: no las de sus compañeros.
+        empleado = getattr(request.user, "empleado_kanview", None)
+        if empleado is None or actividad.id_empleado_id != empleado.pk:
+            mensaje = "Solo puedes cambiar el estado de tus propias actividades asignadas."
+            if _json_solicitado(request):
+                return JsonResponse({"error": mensaje}, status=403)
+            messages.error(request, mensaje)
+            return redirect("kanview:actividades")
     estado = (request.POST.get("estado") or "").strip()
     if not es_cliente and estado == "completado" and not es_administrador(request.user):
         empleado = getattr(request.user, "empleado_kanview", None)

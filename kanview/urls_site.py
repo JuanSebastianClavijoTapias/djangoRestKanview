@@ -10,6 +10,7 @@ from . import (
     views_cuenta,
     views_empleados,
     views_finanzas,
+    views_historico,
     views_inventario,
     views_mensajeria,
     views_pedido_acciones,
@@ -99,6 +100,7 @@ urlpatterns = [
 
     # Pantallas de diseño (Stitch) conectadas a datos reales
     path("pedidos/", views_pedidos.pedidos_tablero, name="pedidos-tablero"),
+    path("historico/", views_historico.historico, name="historico"),
     path("pedidos/nuevo/", pedido_cliente_crear, name="pedido-cliente-crear"),
     path("pedidos/<int:pk>/estado/", views_pedidos.pedido_estado, name="pedido-estado"),
     path("pedidos/<int:pk>/", views_pedidos.pedido_detalle, name="pedido-detalle"),

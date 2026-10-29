@@ -7,7 +7,9 @@ Reglas acordadas:
 
     Administrador -> todo
     Secretaria    -> todo, incluidos usuarios
-    Trabajador    -> todo menos finanzas, auditoría y gestión de usuarios
+    Trabajador    -> todo menos finanzas, auditoría y gestión de usuarios;
+                    mueve las tarjetas de SUS procesos y solo ve y ejecuta
+                    SUS actividades (no las de sus compañeros)
     Cliente       -> solo su panel y sus pedidos
 """
 
@@ -69,6 +71,13 @@ def es_administracion(usuario):
     if not usuario or not usuario.is_authenticated:
         return False
     return es_administrador(usuario) or ROL_SECRETARIA in roles_de(usuario)
+
+
+def es_trabajador(usuario):
+    """True para el rol Trabajador (operario del taller)."""
+    if not usuario or not usuario.is_authenticated:
+        return False
+    return ROL_TRABAJADOR in roles_de(usuario)
 
 
 def es_solo_cliente(usuario):

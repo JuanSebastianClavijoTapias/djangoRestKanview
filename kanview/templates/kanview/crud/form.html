@@ -36,6 +36,32 @@
 </form>
 </div>
 <script>
+    // El precio del pedido se llama al inventario: se muestra al elegir el
+    // producto y nunca se escribe a mano (campo de solo lectura).
+    (function () {
+        const precio = document.getElementById("id_precio_inventario");
+        const producto = document.getElementById("id_producto");
+        if (!precio || !producto) {
+            return;
+        }
+        function formatear(valor) {
+            const numero = parseFloat(valor);
+            if (isNaN(numero)) {
+                return "Selecciona un producto para ver su precio";
+            }
+            return new Intl.NumberFormat("es-CO", {
+                style: "currency", currency: "COP", maximumFractionDigits: 0
+            }).format(numero);
+        }
+        function actualizar() {
+            const opcion = producto.options[producto.selectedIndex];
+            precio.value = formatear(opcion ? opcion.dataset.precio : "");
+        }
+        producto.addEventListener("change", actualizar);
+        actualizar();
+    })();
+</script>
+<script>
     // Dinero con separador de miles (250.000) mientras se escribe, y número
     // limpio (250000) al enviar. Se aplica por el `name` del input, así que sirve
     // para los cuatro campos de dinero: precio, salario, gastos y fuentes de ingresos.

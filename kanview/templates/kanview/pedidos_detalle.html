@@ -30,6 +30,13 @@
 {% include "kanview/_header.html" %}
 <!-- Main Content -->
 <main class="flex-1 lg:ml-64 pt-16 min-h-screen min-w-0">
+{% if messages %}
+<div class="px-container-padding-mobile md:px-container-padding-desktop pt-4 flex flex-col gap-2">
+{% for message in messages %}
+<div class="px-4 py-3 rounded-xl {% if message.tags == 'error' %}bg-red-50 text-red-700{% else %}bg-[#e3fffe] text-[#004f4f]{% endif %} text-sm font-medium break-words">{{ message }}</div>
+{% endfor %}
+</div>
+{% endif %}
 {% if pedido %}
 <!-- Banner de estado -->
 <div class="border-b py-4 px-container-padding-mobile md:px-container-padding-desktop flex flex-wrap items-center justify-between gap-3 {% if pedido.estado_aprobacion == 'aprobado' %}bg-green-50 border-green-200{% elif pedido.estado_aprobacion == 'rechazado' %}bg-red-50 border-red-200{% else %}bg-amber-50 border-amber-200{% endif %}">

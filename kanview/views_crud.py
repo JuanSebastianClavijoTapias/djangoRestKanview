@@ -166,7 +166,7 @@ CAMPOS_PRODUCTO = ("nombre", "categoria", "codigo_producto", "cantidad", "precio
 
 CAMPOS_PEDIDO = (
     "codigo_pedido", "estado", "cantidad", "id_cliente", "id_empleado", "id_producto",
-    "fecha_creacion", "hora_creacion", "descripcion", "evidencias",
+    "fecha_creacion", "hora_creacion", "fecha_limite", "descripcion", "evidencias",
 )
 WIDGETS_PEDIDO = {
     "fecha_creacion": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -210,7 +210,7 @@ WIDGETS_HISTORIAL = {
 
 CAMPOS_ANALISIS = (
     "fecha", "fuentes_ingresos", "gastos", "fuente_ingreso",
-    "productos_vendidos", "id_administrador",
+    "productos_vendidos", "id_pedido", "id_administrador",
 )
 WIDGETS_ANALISIS = {
     "fecha": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
@@ -492,6 +492,14 @@ def _form_analisis(request, instance=None):
     )
     form.fields["fecha"].required = False
     form.fields["fuente_ingreso"].required = False
+    # El pedido amarra el pago con su venta: se llena solo al finalizar el
+    # pedido (se genera su factura), pero se puede vincular a mano.
+    form.fields["id_pedido"].required = False
+    form.fields["id_pedido"].label = "Pedido pagado"
+    form.fields["id_pedido"].help_text = (
+        "Pedido que pagó el cliente. Los pedidos finalizados crean este registro "
+        "automáticamente con su factura."
+    )
     if instance is None:
         administrador = _administrador_actual(getattr(request, "user", None))
         if administrador is not None:
@@ -517,7 +525,10 @@ def _form_tarea(request, instance=None):
     form.fields["id_pedido"].help_text = (
         "Selecciona el pedido para limitar las fechas a su ventana de registro y entrega."
     )
-    return _trabajador_en(form, obligatorio=False, etiqueta="Responsable")
+    # Cada tarea se asigna a un trabajador: el responsable es obligatorio.
+    form = _trabajador_en(form, obligatorio=True, etiqueta="Responsable")
+    form.fields["id_empleado"].help_text = "Trabajador responsable de esta tarea."
+    return form
 
 
 def _form_actividad(request, instance=None):
@@ -991,24 +1002,75 @@ def _guardar_evidencias(pedido, archivos):
     return creadas
 
 
+class SelectConPrecio(forms.Select):
+    """Selector de producto que lleva ``data-precio`` (el precio del inventario).
+
+    El precio NO se escribe al hacer el pedido: se llama al precio
+    predeterminado que tiene el producto en el inventario.
+    """
+
+    def _mapa_precios(self):
+        if not hasattr(self, "_precios_cache"):
+            self._precios_cache = dict(Producto.objects.values_list("pk", "precio"))
+        return self._precios_cache
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        opcion = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+        pk = getattr(value, "value", value)
+        if pk not in (None, ""):
+            try:
+                opcion["attrs"]["data-precio"] = str(self._mapa_precios().get(int(pk), ""))
+            except (TypeError, ValueError):
+                pass
+        return opcion
+
+
+def _precio_del_inventario(form, producto=None):
+    """Añade al formulario del pedido el precio que viene del inventario.
+
+    Es un campo de solo lectura: muestra el precio predeterminado del producto
+    elegido (y se actualiza con el selector); el pedido nunca se precio a mano.
+    """
+    campo_producto = form.fields.get("id_producto")
+    if campo_producto is None:
+        return form
+    # Se conservan los attrs y las choices que ya cargó el ModelChoiceField.
+    campo_producto.widget = SelectConPrecio(
+        attrs=campo_producto.widget.attrs, choices=campo_producto.widget.choices
+    )
+    form.fields["precio_inventario"] = forms.CharField(
+        required=False,
+        disabled=True,
+        label="Precio unitario (del inventario)",
+        widget=forms.TextInput(attrs={"readonly": "readonly", "id": "id_precio_inventario"}),
+        initial=moneda_cop(producto.precio) if producto is not None else "Selecciona un producto para ver su precio",
+        help_text="El precio se toma del inventario: no se escribe al hacer el pedido.",
+    )
+    return form
+
+
 def _form_pedido(request, instance=None):
     """Pedido sin código, fechas de creación ni evidencias (los pone la vista).
 
     ``fecha_limite`` se añade aquí como DateField para que se pueda capturar
     desde la interfaz y para que una fecha inválida avise en vez de ignorarse.
+    No se aceptan fechas límite anteriores a hoy.
     """
     form = _form_vista(
         Pedido, CAMPOS_PEDIDO, WIDGETS_PEDIDO, request, instance=instance, con_archivos=True
     )
     for campo in ("codigo_pedido", "fecha_creacion", "hora_creacion", "evidencias"):
         form.fields.pop(campo, None)
+    hoy = timezone.localdate().isoformat()
     form.fields["fecha_limite"] = forms.DateField(
         required=False,
         label="Fecha límite de entrega",
-        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        widget=forms.DateInput(attrs={"type": "date", "min": hoy}, format="%Y-%m-%d"),
         input_formats=["%Y-%m-%d"],
         error_messages={"invalid": "Ingresa una fecha límite válida (año-mes-día)."},
     )
+    producto = getattr(instance, "id_producto", None) if instance is not None else None
+    _precio_del_inventario(form, producto)
     return form
 
 
@@ -1109,10 +1171,19 @@ def _form_pedido_cliente(request):
     form.fields["fecha_limite"] = forms.DateField(
         required=False,
         label="Fecha límite de entrega (opcional)",
-        widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+        widget=forms.DateInput(
+            attrs={"type": "date", "min": timezone.localdate().isoformat()}, format="%Y-%m-%d"
+        ),
         input_formats=["%Y-%m-%d"],
         error_messages={"invalid": "Ingresa una fecha límite válida (año-mes-día)."},
     )
+    # El precio viene del inventario (precio predeterminado del producto).
+    producto_id = (request.GET.get("producto") or "").strip()
+    producto = (
+        Producto.objects.filter(pk=int(producto_id), activo=True).first()
+        if producto_id.isdigit() else None
+    )
+    _precio_del_inventario(form, producto)
     return form
 
 
@@ -1552,14 +1623,15 @@ def analisis_financiero_lista(request):
         _fila(
             obj,
             [obj.fecha, obj.get_fuente_ingreso_display(), moneda_cop(obj.fuentes_ingresos),
-             moneda_cop(obj.gastos), obj.productos_vendidos, obj.id_administrador],
+             moneda_cop(obj.gastos), obj.productos_vendidos,
+             obj.id_pedido or "Sin pedido vinculado", obj.id_administrador],
         )
-        for obj in AnalisisFinanciero.objects.select_related("id_administrador").order_by("-fecha", "-id")
+        for obj in AnalisisFinanciero.objects.select_related("id_administrador", "id_pedido").order_by("-fecha", "-id")
     ]
     return render(request, "kanview/crud/list.html", _contexto_lista(
         request,
         "analisis-financiero", "Análisis financiero",
-        ["Fecha", "Fuente", "Ingresos", "Gastos", "Productos vendidos", "Administrador"],
+        ["Fecha", "Fuente", "Ingresos", "Gastos", "Productos vendidos", "Pedido pagado", "Administrador"],
         filas, "Finanzas",
     ))
 

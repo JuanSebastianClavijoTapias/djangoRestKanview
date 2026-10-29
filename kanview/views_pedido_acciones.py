@@ -5,6 +5,7 @@ import os
 
 from django.contrib import messages
 from django.core import signing
+from django.core.exceptions import ValidationError
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -60,6 +61,15 @@ def pedido_aprobar(request, pk):
     pedido.motivo_rechazo = ""
     pedido.aprobado_por = request.user
     pedido.fecha_aprobacion = timezone.now()
+    # Al aprobar se descuenta el inventario: se valida antes de guardar que
+    # siga habiendo unidades disponibles.
+    try:
+        pedido.full_clean()
+    except ValidationError as error:
+        errores = getattr(error, "message_dict", None) or {"pedido": getattr(error, "messages", [])}
+        mensaje = " ".join(texto for textos in errores.values() for texto in textos)
+        messages.error(request, f"No se pudo aprobar el pedido: {mensaje}")
+        return redirect("kanview:pedido-detalle", pk=pedido.pk)
     pedido.save(update_fields=[
         "estado_aprobacion", "motivo_rechazo", "aprobado_por", "fecha_aprobacion", "id_empleado",
     ])

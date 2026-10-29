@@ -3,13 +3,16 @@
 Misma lógica que ``views_tareas`` pero mostrando únicamente las actividades
 (``Actividades``), agrupadas por estado (pendiente / en progreso / completado)
 y con el pedido y el empleado responsable de cada una.
+
+El rol Trabajador solo ve SUS actividades (las que tiene asignadas): no puede
+ver las tareas de sus compañeros.
 """
 
 from . import busqueda
 from django.db.models import Q
 
 from .models import ESTADOS_KANBAN, Actividades, Empleado
-from .permisos import puede, seccion_requerida
+from .permisos import es_trabajador, puede, seccion_requerida
 from .views_site import _render
 
 # Columnas del tablero, en el orden real de ESTADOS_KANBAN.
@@ -55,6 +58,10 @@ def actividades(request):
     )
     if cargo:
         actividades_qs = actividades_qs.filter(id_empleado__cargo=cargo)
+    # El trabajador solo ve SUS actividades asignadas: no las de sus compañeros.
+    empleado = getattr(request.user, "empleado_kanview", None)
+    if es_trabajador(request.user) and empleado is not None:
+        actividades_qs = actividades_qs.filter(id_empleado=empleado)
     if trabajador.isdigit():
         actividades_qs = actividades_qs.filter(
             Q(id_empleado_id=int(trabajador))
@@ -76,6 +83,11 @@ def actividades(request):
         puede_mover=puede(request.user, "tareas"),
         cargos=Empleado.CARGOS,
         cargo_activo=cargo,
-        trabajadores=Empleado.objects.filter(activo=True).order_by("nombre"),
+        # El trabajador solo se filtra a sí mismo: no ve a sus compañeros.
+        trabajadores=(
+            Empleado.objects.filter(pk=empleado.pk)
+            if es_trabajador(request.user) and empleado is not None
+            else Empleado.objects.filter(activo=True).order_by("nombre")
+        ),
         trabajador_activo=trabajador,
     )

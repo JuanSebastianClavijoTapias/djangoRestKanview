@@ -17,8 +17,15 @@ Reglas que aplican aquí:
 
 - Solo se muestran pedidos ``activo=True``: desactivar un pedido lo saca del
   tablero.
+- Los pedidos de clientes desactivados tampoco se muestran: al desactivar un
+  cliente, sus pedidos anteriores desaparecen de tableros y listados.
 - El rol Cliente solo ve SUS pedidos (por el correo de su cuenta); si intenta
   abrir el detalle de un pedido ajeno recibe 404.
+- Las tarjetas las mueve el Administrador (todas) y el Trabajador (solo las de
+  sus procesos).
+- Un pedido solo pasa a «Completado» si ya se realizaron sus tareas: al
+  finalizar se genera su factura, su pago se refleja en Finanzas y el pedido
+  queda en el histórico.
 - Las tareas y sus actividades se gestionan en el módulo «Tareas».
 """
 
@@ -28,13 +35,24 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from . import busqueda, historial
 from .auditoria import registrar as registrar_auditoria
-from .models import ESTADOS_KANBAN, ESTADOS_PEDIDO_KANBAN, Empleado, Pedido
+from .facturacion import crear_factura
+from .formato import moneda_cop
+from .models import ESTADOS_KANBAN, ESTADOS_PEDIDO_KANBAN, Actividades, Administrador, AnalisisFinanciero, Empleado, Pedido
 from .notificaciones import notificar_cliente, notificar_staff
-from .permisos import SECCION_ESCRITURA, es_administracion, es_administrador, es_solo_cliente, puede, seccion_requerida
+from .permisos import (
+    SECCION_ESCRITURA,
+    es_administracion,
+    es_administrador,
+    es_solo_cliente,
+    es_trabajador,
+    puede,
+    seccion_requerida,
+)
 from .views_site import _render
 
 #: Columnas del tablero de pedidos, en orden.
@@ -83,12 +101,99 @@ def estado_visible(pedido):
     return pedido.estado_kanban or estado_del_pedido(pedido)
 
 
+# ---- Reglas de movimiento y finalización ---------------------------------
+
+
+def _empleado_de(usuario):
+    """Registro de Empleado vinculado a la cuenta (o ``None``)."""
+    return getattr(usuario, "empleado_kanview", None)
+
+
+def _proceso_del_trabajador(empleado, pedido):
+    """True si el trabajador participa del pedido (asignado o con trabajo en él)."""
+    if empleado is None:
+        return False
+    if pedido.id_empleado_id == empleado.pk:
+        return True
+    return pedido.tareaspedido_set.filter(
+        Q(id_empleado=empleado) | Q(actividades__id_empleado=empleado)
+    ).exists()
+
+
+def _puede_mover_tarjeta(usuario, pedido):
+    """El Administrador mueve cualquier tarjeta; el Trabajador solo las suyas."""
+    if es_administrador(usuario):
+        return True
+    if not es_trabajador(usuario):
+        return False
+    return _proceso_del_trabajador(_empleado_de(usuario), pedido)
+
+
+def error_de_finalizacion(pedido):
+    """Mensaje si el pedido aún no puede marcarse como completado.
+
+    Un proceso solo se marca completado si ya se realizaron sus tareas (y las
+    actividades de cada tarea).
+    """
+    tareas = pedido.tareaspedido_set.filter(activo=True)
+    if not tareas.exists():
+        return (
+            "El pedido no tiene tareas registradas: registra y completa sus "
+            "tareas antes de marcarlo como completado."
+        )
+    pendientes = tareas.exclude(estado="completado").count()
+    if pendientes:
+        return (
+            f"El pedido tiene {pendientes} tarea(s) sin completar. "
+            "Completa y confirma cada tarea antes de marcarlo como completado."
+        )
+    actividades = Actividades.objects.filter(id_tarea__in=tareas, activo=True).exclude(estado="completado").count()
+    if actividades:
+        return (
+            f"El pedido tiene {actividades} actividad(es) sin completar. "
+            "Completa cada actividad antes de marcarlo como completado."
+        )
+    return ""
+
+
+def _registrar_finalizacion(request, pedido):
+    """Al finalizar un pedido: factura, pago reflejado en Finanzas e histórico.
+
+    Cada vez que una tarjeta pasa a «Completado» se genera su factura y un
+    ingreso amarrado al pedido en el módulo Finanzas, y el pedido queda en el
+    histórico de usuarios.
+    """
+    factura, _creada = crear_factura(pedido, request.user)
+    if not pedido.registros_financieros.filter(activo=True).exists():
+        AnalisisFinanciero.objects.create(
+            fecha=timezone.localdate(),
+            gastos=0,
+            fuentes_ingresos=factura.total,
+            fuente_ingreso="directa",
+            productos_vendidos=pedido.cantidad or 1,
+            id_pedido=pedido,
+            id_administrador=Administrador.objects.filter(usuario=request.user).first(),
+        )
+    historial.registrar(
+        pedido,
+        "pedido_completado",
+        f"Pedido {pedido.codigo_pedido} finalizado: todas sus tareas fueron realizadas. "
+        f"Factura {factura.numero} generada por {moneda_cop(factura.total)}.",
+        request.user,
+    )
+    registrar_auditoria(
+        request, "finalizar", "Pedido", pedido,
+        f"Pedido {pedido.codigo_pedido} finalizado y facturado ({factura.numero}).",
+    )
+    return factura
+
+
 # ---- Helpers (funciones, no clases) --------------------------------------
 
 def _pedidos_queryset(request=None):
     """Pedidos vigentes con sus relaciones, tareas y actividades precargadas."""
     consulta = (
-        Pedido.objects.filter(activo=True)
+        Pedido.objects.filter(activo=True, id_cliente__activo=True)
         .select_related("id_cliente", "id_empleado", "id_producto")
         .prefetch_related(
             "galeria",
@@ -352,7 +457,9 @@ def pedidos_tablero(request):
 
     tarjetas = [_tarjeta(pedido) for pedido in pedidos]
     tareas_modales = {}
-    for tarjeta in tarjetas:
+    for tarjeta, pedido in zip(tarjetas, pedidos):
+        # Solo el administrador mueve todas; el trabajador, las de SUS procesos.
+        tarjeta["puede_mover"] = _puede_mover_tarjeta(request.user, pedido)
         tareas_modales.update(tarjeta.pop("tareas_modal", {}))
     columnas = [
         {
@@ -385,7 +492,8 @@ def pedidos_tablero(request):
         detalle_modales=detalles,
         tareas_modales=tareas_modales,
         puede_gestionar=puede(request.user, SECCION_ESCRITURA["pedidos"]),
-        puede_mover=es_administrador(request.user),
+        puede_mover=es_administrador(request.user) or es_trabajador(request.user),
+        es_trabajador=es_trabajador(request.user),
         es_cliente=es_solo_cliente(request.user),
         estados_kanban=ESTADOS_KANBAN,
         **busqueda.contexto(request, "Buscar procesos, clientes o trabajadores...", "procesos"),
@@ -397,12 +505,18 @@ def pedidos_tablero(request):
 def pedido_estado(request, pk):
     """Cambia el estado manual del pedido desde el tablero (drag & drop).
 
-    Solo el Administrador puede mover las tarjetas; el resto de roles (incluido
-    el Cliente) ven el tablero sin arrastre.
+    El Administrador mueve cualquier tarjeta y el Trabajador solo las de SUS
+    procesos; el resto de roles (incluido el Cliente) ven el tablero sin
+    arrastre. Pasar a «Completado» exige que las tareas del pedido ya se hayan
+    realizado: al finalizar se factura el pedido, su pago se refleja en
+    Finanzas y queda registrado en el histórico.
     """
-    if not es_administrador(request.user):
-        return JsonResponse({"error": "Solo el administrador puede mover las tarjetas."}, status=403)
     pedido = get_object_or_404(Pedido, pk=pk)
+    if not _puede_mover_tarjeta(request.user, pedido):
+        return JsonResponse(
+            {"error": "Solo el administrador y el trabajador asignado pueden mover esta tarjeta."},
+            status=403,
+        )
     try:
         cuerpo = json.loads(request.body or "{}")
     except (TypeError, ValueError, json.JSONDecodeError):
@@ -411,6 +525,11 @@ def pedido_estado(request, pk):
     validos = dict(ESTADOS_PEDIDO_KANBAN)
     if estado not in validos:
         return JsonResponse({"error": "Estado no válido."}, status=400)
+    if estado == "completado":
+        error = error_de_finalizacion(pedido)
+        if error:
+            return JsonResponse({"error": error}, status=400)
+    ya_finalizado = pedido.historial.filter(accion="pedido_completado").exists()
     anterior = estado_visible(pedido)
     pedido.estado_kanban = estado
     pedido.save(update_fields=["estado_kanban"])
@@ -437,6 +556,10 @@ def pedido_estado(request, pk):
             f"Pedido {pedido.codigo_pedido}: {etiqueta_estado(estado)}.",
             reverse("kanview:pedido-detalle", args=[pedido.pk]),
         )
+    # Al pasar a «Completado» se factura el pedido, su pago se refleja en
+    # Finanzas y el pedido queda en el histórico (una sola vez).
+    if estado == "completado" and not ya_finalizado:
+        _registrar_finalizacion(request, pedido)
     return JsonResponse({
         "ok": True,
         "pedido": pedido.pk,

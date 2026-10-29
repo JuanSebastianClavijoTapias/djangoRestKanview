@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="es">{% load kanview_extras %}
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Kanview - Histórico</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+{% include "kanview/_tailwind_config.html" %}
+<style>
+        .neo-shadow {
+            box-shadow: 8px 8px 16px rgba(0,0,0,0.03), -8px -8px 16px #FFFFFF;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
+<div class="flex min-h-screen w-full relative">
+{% include "kanview/_sidebar.html" %}
+<div class="flex-1 lg:ml-64 min-w-0 flex flex-col min-h-screen relative">
+{% include "kanview/_header.html" %}
+<main class="flex-1 pt-24 px-container-padding-mobile lg:px-container-padding-desktop pb-section-margin flex flex-col relative min-w-0">
+{% if messages %}
+<div class="mb-6 flex flex-col gap-2">
+{% for message in messages %}
+<div class="px-4 py-3 rounded-xl bg-[#e3fffe] text-[#004f4f] text-sm font-medium break-words">{{ message }}</div>
+{% endfor %}
+</div>
+{% endif %}
+<!-- Encabezado -->
+<div class="mb-8 flex flex-wrap justify-between items-end gap-4">
+<div class="min-w-0">
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">{% if es_cliente %}Mi histórico de pedidos{% else %}Histórico de pedidos{% endif %}</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">{% if es_cliente %}Tus pedidos completados y la bitácora de cada uno.{% else %}Log de los pedidos completados del taller, con la bitácora de cada uno.{% endif %}</p>
+</div>
+<span class="shrink-0 bg-surface-variant text-on-surface-variant px-3 py-1.5 rounded-full font-label-md text-label-md">{{ total }} pedido{{ total|pluralize }} completado{{ total|pluralize }}</span>
+</div>
+{% for registro in registros %}
+<article class="bg-surface-container-lowest rounded-2xl p-5 lg:p-6 neo-shadow mb-6 min-w-0">
+<div class="flex flex-wrap justify-between items-start gap-3 mb-3">
+<div class="min-w-0">
+<div class="flex flex-wrap items-center gap-2">
+<span class="px-2 py-1 rounded bg-green-100 text-green-800 font-label-sm text-label-sm font-semibold">Completado</span>
+<a class="font-label-md text-label-md text-primary font-semibold hover:underline" href="{% url 'kanview:pedido-detalle' registro.pedido.pk %}">{{ registro.pedido.codigo_pedido }}</a>
+{% if registro.factura_numero %}
+<span class="px-2 py-1 rounded bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">Factura {{ registro.factura_numero }}</span>
+{% endif %}
+</div>
+<h3 class="font-headline-md text-headline-md text-[16px] text-on-surface mt-2 break-words">{{ registro.pedido.id_producto.nombre }} · {{ registro.pedido.cantidad }} unidad{{ registro.pedido.cantidad|pluralize:"es" }}</h3>
+<p class="font-body-md text-body-md text-on-surface-variant break-words">{% if not es_cliente %}Cliente: {{ registro.pedido.id_cliente.nombre }} · {% endif %}Registrado el {{ registro.pedido.fecha_creacion|date:"d/m/Y" }} · Entrega: {{ registro.pedido.fecha_limite|date:"d/m/Y"|default:"Sin fecha límite" }}</p>
+</div>
+<div class="text-right shrink-0">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Total facturado</p>
+<p class="font-headline-md text-headline-md text-primary font-bold">{{ registro.total|moneda_cop }}</p>
+</div>
+</div>
+<!-- Bitácora: el histórico de usuarios del pedido -->
+<details class="mt-2">
+<summary class="cursor-pointer font-label-md text-label-md text-on-surface-variant hover:text-on-surface select-none">Ver bitácora del pedido ({{ registro.entradas|length }} registro{{ registro.entradas|length|pluralize }})</summary>
+<ol class="mt-3 flex flex-col gap-2 border-l-2 border-outline-variant/40 pl-4">
+{% for entrada in registro.entradas %}
+<li class="min-w-0">
+<p class="font-label-sm text-label-sm text-on-surface-variant">{{ entrada.fecha }} · {{ entrada.hora }} · {{ entrada.usuario }} · <span class="text-primary font-semibold">{{ entrada.accion }}</span></p>
+<p class="font-body-md text-body-md text-on-surface break-words">{{ entrada.detalle }}</p>
+</li>
+{% empty %}
+<li class="font-body-md text-body-md text-on-surface-variant">Sin registros en el histórico.</li>
+{% endfor %}
+</ol>
+</details>
+</article>
+{% empty %}
+<div class="bg-surface-container-lowest rounded-2xl p-6 neo-shadow flex flex-wrap items-center gap-4">
+<span class="material-symbols-outlined text-outline text-[32px]">history</span>
+<div class="min-w-0">
+<p class="font-headline-md text-headline-md text-[16px] text-on-surface">Todavía no hay pedidos completados</p>
+<p class="font-body-md text-body-md text-[14px] text-on-surface-variant">Cuando un proceso se marque como completado quedará registrado aquí, con su factura y su bitácora.</p>
+</div>
+</div>
+{% endfor %}
+</main>
+</div>
+</div>
+</body>
+</html>

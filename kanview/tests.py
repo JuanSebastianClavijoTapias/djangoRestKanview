@@ -464,6 +464,7 @@ class CrudModulesTestCase(TestCase):
             "nombre": "Fuera de límite", "descripcion": "x",
             "fecha_inicio": "2026-10-16", "fecha_fin": "2026-11-30",
             "estado": "pendiente", "id_pedido": self.pedido.pk,
+            "id_empleado": self.empleado.pk,
         }
         resp = self.client.post(reverse("kanview:tarea-crear"), fuera)
         self.assertEqual(resp.status_code, 200)
@@ -479,6 +480,7 @@ class CrudModulesTestCase(TestCase):
             "nombre": "Antes del pedido", "descripcion": "x",
             "fecha_inicio": "2026-10-14", "fecha_fin": "2026-10-15",
             "estado": "pendiente", "id_pedido": self.pedido.pk,
+            "id_empleado": self.empleado.pk,
         })
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(TareasPedido.objects.filter(nombre="Antes del pedido").exists())
@@ -489,6 +491,7 @@ class CrudModulesTestCase(TestCase):
             "nombre": "Rango invertido", "descripcion": "x",
             "fecha_inicio": "2026-10-18", "fecha_fin": "2026-10-17",
             "estado": "pendiente", "id_pedido": self.pedido.pk,
+            "id_empleado": self.empleado.pk,
         })
         self.assertEqual(resp.status_code, 200)
         self.assertFalse(TareasPedido.objects.filter(nombre="Rango invertido").exists())
@@ -1287,8 +1290,9 @@ class NotificacionesTestCase(TestCase):
             nombre="Tarea vencida", descripcion="cortar", fecha_inicio=hoy - timedelta(days=9),
             fecha_fin=hoy - timedelta(days=1), estado="pendiente", id_pedido=cls.pedido_vencido,
         )
-        # Producto por debajo del umbral de stock bajo (queda 1: el pedido de
-        # abajo descuenta 1 unidad de las 2 del stock al crearse).
+        # Producto por debajo del umbral de stock bajo (cantidad 2, que está
+        # por debajo de UMBRAL_STOCK_BAJO: el pedido de arriba no descuenta
+        # inventario porque aún no está aprobado).
 
     def setUp(self):
         self.client.force_login(self.user)
@@ -1881,3 +1885,280 @@ class CalendarioEventosTestCase(TestCase):
         notif = Notificacion.objects.filter(usuario=self.user, tipo="calendario").first()
         self.assertIsNotNone(notif)
         self.assertIn("Reunión de producción", notif.mensaje)
+
+
+class ReglasDelTallerTestCase(TestCase):
+    """Reglas de negocio señaladas en la revisión del proyecto.
+
+    - El trabajador mueve las tarjetas (solo las de SUS procesos) y en el módulo
+      Actividades no ve las tareas de sus compañeros.
+    - No se permiten pedidos con fecha límite en días anteriores.
+    - El precio del pedido se toma del inventario.
+    - El inventario se disminuye al aprobar el pedido (y se devuelve al
+      desactivarlo o rechazarlo).
+    - Un proceso solo se marca completado si ya se realizaron sus tareas, y al
+      finalizar queda en el histórico (con su factura reflejada en Finanzas).
+    - Al desactivar un cliente no se muestran sus pedidos anteriores.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(
+            username="reglas.admin", password="pass12345", is_staff=True
+        )
+        cls.admin.groups.add(_grupo(ROL_ADMINISTRADOR))
+
+        cls.trabajador_user = User.objects.create_user(
+            username="reglas.trabajador", password="pass12345"
+        )
+        cls.trabajador_user.groups.add(_grupo(ROL_TRABAJADOR))
+        cls.empleado = Empleado.objects.create(
+            documento="RT-1", nombre="Taller Uno", cargo="tapcr", celular="300",
+            direccion="Calle 1", salario=1000, usuario=cls.trabajador_user,
+        )
+        cls.companero = Empleado.objects.create(
+            documento="RT-2", nombre="Taller Dos", cargo="costur", celular="301",
+            direccion="Calle 2", salario=1000,
+        )
+
+        cls.cliente = Cliente.objects.create(
+            nombre="Cliente Reglas", documento="RT-3", correo="reglas.cliente@example.com",
+        )
+        cls.cliente_user = User.objects.create_user(
+            username="reglas.cliente", password="pass12345",
+            email="reglas.cliente@example.com",
+        )
+        cls.cliente_user.groups.add(_grupo(ROL_CLIENTE))
+
+        cls.producto = Producto.objects.create(
+            nombre="Cuero Reglas", categoria="tela", cantidad=10, precio=250000,
+            descripcion="x", codigo_producto="RT0001",
+        )
+        cls.pedido = Pedido.objects.create(
+            codigo_pedido="RT-0001", fecha_creacion=timezone.localdate(),
+            hora_creacion=timezone.now(), fecha_limite=timezone.localdate() + timedelta(days=5),
+            descripcion="pedido propio", id_cliente=cls.cliente,
+            id_empleado=cls.empleado, id_producto=cls.producto, cantidad=2,
+        )
+        cls.pedido_ajeno = Pedido.objects.create(
+            codigo_pedido="RT-0002", fecha_creacion=timezone.localdate(),
+            hora_creacion=timezone.now(), fecha_limite=timezone.localdate() + timedelta(days=5),
+            descripcion="pedido del compañero", id_cliente=cls.cliente,
+            id_empleado=cls.companero, id_producto=cls.producto, cantidad=1,
+        )
+        cls.tarea = TareasPedido.objects.create(
+            nombre="Tarea propia", descripcion="x",
+            fecha_inicio=timezone.localdate(), fecha_fin=timezone.localdate() + timedelta(days=1),
+            id_pedido=cls.pedido, id_empleado=cls.empleado,
+        )
+        cls.actividad_propia = Actividades.objects.create(
+            nombre="Actividad propia", descripcion="x",
+            fecha_inicio=timezone.localdate(), fecha_fin=timezone.localdate() + timedelta(days=1),
+            id_tarea=cls.tarea, id_empleado=cls.empleado,
+        )
+        cls.tarea_ajena = TareasPedido.objects.create(
+            nombre="Tarea ajena", descripcion="x",
+            fecha_inicio=timezone.localdate(), fecha_fin=timezone.localdate() + timedelta(days=1),
+            id_pedido=cls.pedido_ajeno, id_empleado=cls.companero,
+        )
+        cls.actividad_ajena = Actividades.objects.create(
+            nombre="Actividad ajena", descripcion="x",
+            fecha_inicio=timezone.localdate(), fecha_fin=timezone.localdate() + timedelta(days=1),
+            id_tarea=cls.tarea_ajena, id_empleado=cls.companero,
+        )
+
+    def _datos(self, **extra):
+        datos = {
+            "estado": "activo", "cantidad": 1, "descripcion": "pedido de prueba",
+            "id_cliente": self.cliente.pk, "id_empleado": self.empleado.pk,
+            "id_producto": self.producto.pk,
+            "fecha_limite": (timezone.localdate() + timedelta(days=5)).isoformat(),
+        }
+        datos.update(extra)
+        return datos
+
+    # ---- Fechas límite ----------------------------------------------------
+
+    def test_no_se_permite_un_pedido_con_fecha_limite_en_dias_anteriores(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse("kanview:pedido-crear"),
+            self._datos(fecha_limite=(timezone.localdate() - timedelta(days=1)).isoformat()),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(Pedido.objects.filter(descripcion="pedido de prueba").exists())
+        self.assertContains(resp, "no puede ser anterior a hoy")
+
+        # En edición tampoco se acepta retroceder la fecha límite.
+        resp = self.client.post(
+            reverse("kanview:pedido-editar", args=[self.pedido.pk]),
+            self._datos(fecha_limite=(timezone.localdate() - timedelta(days=3)).isoformat()),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(
+            self.pedido.fecha_limite, timezone.localdate() + timedelta(days=5)
+        )
+
+    # ---- Precio del inventario -------------------------------------------
+
+    def test_el_precio_del_pedido_se_toma_del_inventario(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("kanview:pedido-crear"))
+        self.assertContains(resp, "Precio unitario (del inventario)")
+        self.assertContains(resp, 'data-precio="250000')
+
+        self.client.force_login(self.cliente_user)
+        resp = self.client.get(reverse("kanview:pedido-cliente-crear"))
+        self.assertContains(resp, "Precio unitario (del inventario)")
+        self.assertContains(resp, 'data-precio="250000')
+
+    # ---- Inventario ------------------------------------------------------
+
+    def test_el_inventario_se_descuenta_al_aprobar_y_no_al_crear(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse("kanview:pedido-crear"), self._datos())
+        self.assertEqual(resp.status_code, 302)
+        nuevo = Pedido.objects.get(descripcion="pedido de prueba")
+        self.assertEqual(nuevo.estado_aprobacion, "pendiente")
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad, 10, "crear el pedido no descuenta inventario")
+
+        # Al aprobar sí se disminuye el inventario.
+        resp = self.client.post(
+            reverse("kanview:pedido-aprobar", args=[nuevo.pk]),
+            {"empleado": self.empleado.pk},
+        )
+        self.assertEqual(resp.status_code, 302)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad, 9)
+
+        # Desactivar el pedido devuelve las unidades al inventario.
+        self.client.post(reverse("kanview:pedido-eliminar", args=[nuevo.pk]))
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad, 10)
+
+    def test_no_se_aprueba_un_pedido_sin_stock_suficiente(self):
+        sin_stock = Pedido.objects.create(
+            codigo_pedido="RT-0003", fecha_creacion=timezone.localdate(),
+            hora_creacion=timezone.now(), fecha_limite=timezone.localdate() + timedelta(days=5),
+            descripcion="pedido enorme", id_cliente=self.cliente,
+            id_empleado=self.empleado, id_producto=self.producto, cantidad=50,
+        )
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse("kanview:pedido-aprobar", args=[sin_stock.pk]),
+            {"empleado": self.empleado.pk}, follow=True,
+        )
+        sin_stock.refresh_from_db()
+        self.assertEqual(sin_stock.estado_aprobacion, "pendiente")
+        self.assertContains(resp, "No hay suficientes unidades disponibles")
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.cantidad, 10)
+
+    # ---- Mover tarjetas --------------------------------------------------
+
+    def test_el_trabajador_mueve_solo_las_tarjetas_de_sus_procesos(self):
+        self.client.force_login(self.trabajador_user)
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido.pk]),
+            {"estado": "en proceso"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.pedido.refresh_from_db()
+        self.assertEqual(self.pedido.estado_kanban, "en proceso")
+
+        # El proceso de su compañero no lo puede mover.
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido_ajeno.pk]),
+            {"estado": "en proceso"},
+        )
+        self.assertEqual(resp.status_code, 403)
+
+    def test_el_cliente_no_mueve_tarjetas(self):
+        self.client.force_login(self.cliente_user)
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido.pk]),
+            {"estado": "en proceso"},
+        )
+        self.assertEqual(resp.status_code, 403)
+
+    # ---- Módulo Actividades ----------------------------------------------
+
+    def test_el_trabajador_solo_ve_sus_actividades(self):
+        self.client.force_login(self.trabajador_user)
+        resp = self.client.get(reverse("kanview:actividades"))
+        self.assertContains(resp, "Actividad propia")
+        self.assertNotContains(resp, "Actividad ajena")
+        self.assertNotContains(resp, "Taller Dos")
+
+        # El administrador sí ve todas.
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("kanview:actividades"))
+        self.assertContains(resp, "Actividad propia")
+        self.assertContains(resp, "Actividad ajena")
+
+    def test_el_trabajador_no_cambia_actividades_de_sus_companeros(self):
+        self.client.force_login(self.trabajador_user)
+        resp = self.client.post(
+            reverse("kanview:actividad-estado", args=[self.actividad_ajena.pk]),
+            {"estado": "en progreso"},
+        )
+        # La vista responde con un aviso y redirección (el cambio no se aplica).
+        self.assertEqual(resp.status_code, 302)
+        self.actividad_ajena.refresh_from_db()
+        self.assertEqual(self.actividad_ajena.estado, "pendiente")
+
+    # ---- Finalización e histórico ----------------------------------------
+
+    def test_completar_el_proceso_exige_las_tareas_realizadas(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido.pk]),
+            {"estado": "completado"},
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("tarea", resp.json()["error"].lower())
+
+        # Con la tarea y su actividad realizadas, el proceso queda en el
+        # histórico y su pago se refleja en Finanzas (amarrado al pedido).
+        self.actividad_propia.estado = "completado"
+        self.actividad_propia.save(update_fields=["estado"])
+        self.tarea.estado = "completado"
+        self.tarea.save(update_fields=["estado"])
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido.pk]),
+            {"estado": "completado"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            Historial.objects.filter(id_pedido=self.pedido, accion="pedido_completado").exists()
+        )
+        pago = AnalisisFinanciero.objects.filter(id_pedido=self.pedido).first()
+        self.assertIsNotNone(pago)
+        self.assertEqual(pago.fuentes_ingresos, self.pedido.factura.total)
+
+        # Y el cliente lo ve en su histórico (log de pedidos completados).
+        self.client.force_login(self.cliente_user)
+        resp = self.client.get(reverse("kanview:historico"))
+        self.assertContains(resp, "RT-0001")
+        self.assertContains(resp, "pedido_completado".replace("_", " ").capitalize())
+
+    # ---- Cliente desactivado ---------------------------------------------
+
+    def test_desactivar_un_cliente_oculta_sus_pedidos(self):
+        self.client.force_login(self.admin)
+        resp = self.client.post(reverse("kanview:cliente-eliminar", args=[self.cliente.pk]))
+        self.assertEqual(resp.status_code, 302)
+
+        resp = self.client.get(reverse("kanview:pedidos-tablero"))
+        codigos = [tarjeta["codigo"] for tarjeta in resp.context["tarjetas"]]
+        self.assertNotIn("RT-0001", codigos)
+        self.assertNotIn("RT-0002", codigos)
+
+        self.assertEqual(
+            self.client.get(reverse("kanview:pedido-detalle", args=[self.pedido.pk])).status_code,
+            404,
+        )
+        resp = self.client.get("/api/pedidos/")
+        self.assertNotIn("RT-0001", resp.content.decode())

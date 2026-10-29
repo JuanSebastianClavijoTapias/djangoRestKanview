@@ -157,8 +157,20 @@ class AnalisisFinanciero(models.Model):
         verbose_name="Fuente de ingreso",
     )
     productos_vendidos = models.IntegerField(verbose_name="Productos vendidos")
+    # El pedido pagado: amarra cada ingreso con el pedido que lo originó. El
+    # pago se registra solo al finalizar el pedido (ver views_pedidos).
+    id_pedido = models.ForeignKey(
+        "Pedido",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="registros_financieros",
+        verbose_name="Pedido pagado",
+    )
+    # Puede quedar vacío: un pago registrado desde el taller no siempre nace
+    # de un administrador (p. ej. un trabajador que finaliza el pedido).
     id_administrador = models.ForeignKey(
-        Administrador, on_delete=models.PROTECT, verbose_name="Administrador"
+        Administrador, null=True, blank=True, on_delete=models.PROTECT, verbose_name="Administrador"
     )
     activo = models.BooleanField(default=True, verbose_name="Activo")
 
@@ -288,9 +300,34 @@ class Pedido(models.Model):
     def __str__(self):
         return self.codigo_pedido
 
+    def _reserva_stock(self):
+        """True si este pedido ya descontó unidades del inventario.
+
+        El inventario se disminuye al APROBAR el pedido (no al crearlo) y sus
+        unidades vuelven al inventario al desactivarlo o rechazarlo.
+        """
+        return self.activo and self.estado_aprobacion == "aprobado"
+
     def clean(self):
-        """La cantidad pedida no puede superar el stock del producto."""
+        """Valida la fecha límite y que la cantidad no supere el stock."""
         super().clean()
+        # Un pedido nuevo no puede pedirse con una fecha límite ya vencida.
+        if self.fecha_limite:
+            hoy = timezone.localdate()
+            if self.fecha_limite < hoy:
+                cambiada = True
+                if self.pk:
+                    guardada = Pedido.objects.filter(pk=self.pk).values_list("fecha_limite", flat=True).first()
+                    # Las fechas límite viejas se conservan: solo se exige la
+                    # regla cuando se escribe o se cambia la fecha.
+                    cambiada = guardada != self.fecha_limite
+                if cambiada:
+                    raise ValidationError({
+                        "fecha_limite": (
+                            f"La fecha límite de entrega no puede ser anterior a hoy "
+                            f"({hoy:%d/%m/%Y})."
+                        )
+                    })
         if not self.id_producto_id or not self.cantidad:
             return
         disponible = self.id_producto.cantidad
@@ -298,9 +335,9 @@ class Pedido(models.Model):
             anterior = Pedido.objects.filter(pk=self.pk).select_related("id_producto").first()
             # Las unidades que este mismo pedido ya descontó vuelven a estar
             # disponibles al editar su cantidad o su producto.
-            if anterior is not None and anterior.id_producto_id == self.id_producto_id and anterior.activo:
+            if anterior is not None and anterior.id_producto_id == self.id_producto_id and anterior._reserva_stock():
                 disponible += anterior.cantidad
-        if self.cantidad > disponible:
+        if self.activo and self.cantidad > disponible:
             # Mensaje sin cifras de stock: el cliente no debe ver el inventario.
             raise ValidationError({
                 "cantidad": (
@@ -310,20 +347,21 @@ class Pedido(models.Model):
             })
 
     def _ajustar_stock(self, anterior):
-        """Descuenta el stock al crear el pedido y lo devuelve al cancelarlo.
+        """Descuenta el stock al aprobar el pedido y lo devuelve al cancelarlo.
 
         ``anterior`` es el estado guardado antes del ``save`` (None al crear).
-        Solo cuentan los pedidos activos: desactivar un pedido devuelve sus
-        unidades al inventario y reactivarlo las vuelve a descontar.
+        Solo cuentan los pedidos activos y aprobados: desactivar o rechazar un
+        pedido devuelve sus unidades al inventario y reactivarlo las vuelve a
+        descontar.
         """
         movimientos = {}
         if anterior is not None and anterior.id_producto_id:
             movimientos[anterior.id_producto_id] = (
-                movimientos.get(anterior.id_producto_id, 0) + (anterior.cantidad if anterior.activo else 0)
+                movimientos.get(anterior.id_producto_id, 0) + (anterior.cantidad if anterior._reserva_stock() else 0)
             )
         if self.id_producto_id:
             movimientos[self.id_producto_id] = (
-                movimientos.get(self.id_producto_id, 0) - (self.cantidad if self.activo else 0)
+                movimientos.get(self.id_producto_id, 0) - (self.cantidad if self._reserva_stock() else 0)
             )
         for producto_id, delta in movimientos.items():
             if delta:
@@ -331,7 +369,9 @@ class Pedido(models.Model):
 
     def save(self, *args, **kwargs):
         update_fields = kwargs.get("update_fields")
-        afecta_stock = update_fields is None or bool(set(update_fields) & {"id_producto", "cantidad", "activo"})
+        afecta_stock = update_fields is None or bool(
+            set(update_fields) & {"id_producto", "cantidad", "activo", "estado_aprobacion"}
+        )
         anterior = None
         if afecta_stock and self.pk:
             anterior = Pedido.objects.filter(pk=self.pk).select_related("id_producto").first()
@@ -341,7 +381,7 @@ class Pedido(models.Model):
 
     def delete(self, *args, **kwargs):
         # Un pedido borrado devuelve sus unidades al inventario.
-        if self.id_producto_id and self.activo:
+        if self.id_producto_id and self._reserva_stock():
             Producto.objects.filter(pk=self.id_producto_id).update(
                 cantidad=F("cantidad") + self.cantidad
             )

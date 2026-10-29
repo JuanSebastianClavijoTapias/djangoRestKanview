@@ -67,13 +67,21 @@
 <a aria-pressed="{% if vista == 'lista' %}true{% else %}false{% endif %}" class="px-4 py-2 rounded font-label-md text-label-md transition-colors{% if vista == 'lista' %} bg-surface shadow-sm text-primary font-bold{% else %} text-on-surface-variant hover:text-on-surface{% endif %}" href="{{ url_lista }}" id="vista-lista">Lista</a>
 </div>
 {% if puede_mover and vista == 'kanban' %}
-<p class="w-full text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">drag_indicator</span>Arrastra una tarjeta a otra columna para cambiar su estado.</p>
+<p class="w-full text-xs text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">drag_indicator</span>Arrastra una tarjeta a otra columna para cambiar su estado{% if es_trabajador %} (solo tus procesos){% endif %}. Para marcarla como completada, primero realiza todas sus tareas.</p>
 {% endif %}
 </div>
 {% if vista == "kanban" %}
-<!-- Tablero: una columna por estado calculado del pedido -->
-<div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-gutter items-start min-w-0" id="tablero-procesos" data-kanban-board>
+<!-- Tablero: una columna por estado calculado del pedido.
+     Los completados se muestran aparte del resto de los procesos. -->
+<div id="tablero-procesos" data-kanban-board>
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start min-w-0">
 {% for columna in columnas %}
+{% if columna.clave == "completado" %}
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant/30 min-w-0">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-4 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">task_alt</span>Procesos completados: se muestran aparte y quedan registrados en el <a class="text-primary hover:underline" href="{% url 'kanview:historico' %}">Histórico</a>.</p>
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-gutter items-start min-w-0">
+{% endif %}
 <section class="kanban-col-bg rounded-2xl p-4 lg:p-card-gap flex flex-col min-w-0" data-kanban-column data-columna="{{ columna.clave }}" data-vacio-texto="Sin pedidos en esta columna.">
 <div class="flex justify-between items-center gap-2 mb-4">
 <h3 class="text-[15px] font-semibold text-on-surface min-w-0 break-words">{{ columna.titulo }}</h3>
@@ -82,7 +90,7 @@
 <div class="flex flex-col gap-4 min-w-0" data-kanban-cards>
 {% for pedido in columna.pedidos %}
 <!-- Tarjeta = un pedido -->
-<article class="tarjeta-pedido kanban-drag-card bg-surface-container-lowest rounded-xl p-4 lg:p-5 neo-shadow min-w-0" data-kanban-card data-pedido="{{ pedido.pk }}" data-estado="{{ pedido.estado }}" data-url-estado="{{ pedido.url_estado }}"{% if puede_mover %} draggable="true"{% endif %}>
+<article class="tarjeta-pedido kanban-drag-card bg-surface-container-lowest rounded-xl p-4 lg:p-5 neo-shadow min-w-0" data-kanban-card data-pedido="{{ pedido.pk }}" data-estado="{{ pedido.estado }}" data-url-estado="{{ pedido.url_estado }}"{% if pedido.puede_mover %} draggable="true"{% endif %}>
 <div class="flex flex-wrap justify-between items-start gap-2 mb-3">
 <span class="font-label-sm text-label-sm px-2 py-1 rounded max-w-full break-words {% if pedido.estado_aprobacion == 'aprobado' %}bg-green-100 text-green-800{% elif pedido.estado_aprobacion == 'rechazado' %}bg-red-100 text-red-800{% else %}bg-amber-100 text-amber-800{% endif %}">{{ pedido.estado_aprobacion_etiqueta }}</span>
 <a class="font-label-sm text-label-sm text-primary hover:underline" href="{{ pedido.url_detalle }}">{{ pedido.codigo }}</a>
@@ -144,6 +152,8 @@
 </div>
 </section>
 {% endfor %}
+</div>
+</div>
 </div>
 {% if not total_pedidos %}
 <div class="mt-6 bg-surface-container-lowest rounded-2xl p-6 neo-shadow flex flex-wrap items-center gap-4">

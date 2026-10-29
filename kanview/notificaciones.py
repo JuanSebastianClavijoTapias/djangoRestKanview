@@ -165,7 +165,7 @@ def notificaciones(usuario):
     hoy = timezone.localdate()
     solo_cliente = es_solo_cliente(usuario)
 
-    pedidos = Pedido.objects.filter(activo=True, estado="activo")
+    pedidos = Pedido.objects.filter(activo=True, estado="activo", id_cliente__activo=True)
     if solo_cliente:
         pedidos = pedidos.filter(id_cliente__correo__iexact=usuario.email)
 

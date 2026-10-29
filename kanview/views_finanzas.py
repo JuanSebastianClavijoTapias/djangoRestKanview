@@ -94,13 +94,32 @@ def finanzas(request):
     vigentes = busqueda.filtrar(
         AnalisisFinanciero.objects.filter(activo=True),
         q,
-        ("id_administrador__nombre", "id_administrador__documento", "fuente_ingreso"),
+        ("id_administrador__nombre", "id_administrador__documento", "fuente_ingreso", "id_pedido__codigo_pedido"),
     )
     registros = list(
         vigentes.select_related("id_administrador")
         .annotate(balance=F("fuentes_ingresos") - F("gastos"))
         .order_by("-fecha", "-id")
     )
+
+    # Pagos amarrados a un pedido: al finalizar un pedido se genera su factura
+    # y su ingreso queda vinculado aquí (campo «Pedido pagado»).
+    pagos = []
+    for registro in vigentes.filter(id_pedido__isnull=False).select_related(
+        "id_pedido", "id_pedido__id_cliente", "id_pedido__id_producto"
+    ).order_by("-fecha", "-id"):
+        try:
+            numero_factura = registro.id_pedido.factura.numero
+        except Exception:
+            numero_factura = ""
+        pagos.append({
+            "fecha": registro.fecha,
+            "pedido": registro.id_pedido,
+            "cliente": registro.id_pedido.id_cliente.nombre,
+            "productos_vendidos": registro.productos_vendidos,
+            "ingreso": registro.fuentes_ingresos,
+            "factura": numero_factura,
+        })
 
     agregados = vigentes.aggregate(
         total_gastos=Sum("gastos"),
@@ -127,6 +146,8 @@ def finanzas(request):
         margen=margen,
         flujo_caja=_flujo_caja(registros, hoy, periodo),
         fuentes_ingresos_datos=_fuentes_ingreso(registros),
+        pagos=pagos,
+        total_pagos=sum((pago["ingreso"] for pago in pagos), Decimal("0")),
         periodos=PERIODOS,
         periodo_activo=periodo,
         **busqueda.contexto(request, "Buscar movimientos...", "finanzas"),

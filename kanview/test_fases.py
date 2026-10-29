@@ -455,7 +455,23 @@ class KanbanDragTestCase(BaseFasesTestCase):
         resp = self.client.get(reverse("kanview:pedidos-tablero"))
         self.assertIn("En proceso", resp.content.decode())
 
-    def test_mover_pedido_a_completado(self):
+    def test_mover_pedido_a_completado_exige_las_tareas_realizadas(self):
+        # Con tareas sin realizar NO se puede marcar el proceso como completado.
+        resp = self.client.post(
+            reverse("kanview:pedido-estado", args=[self.pedido.pk]),
+            {"estado": "completado"},
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("tarea", resp.json()["error"].lower())
+        self.pedido.refresh_from_db()
+        self.assertIsNone(self.pedido.estado_kanban)
+
+        # Con las tareas (y actividades) realizadas sí: se factura, el pago
+        # queda en Finanzas y el pedido pasa al histórico.
+        self.actividad.estado = "completado"
+        self.actividad.save(update_fields=["estado"])
+        self.tarea.estado = "completado"
+        self.tarea.save(update_fields=["estado"])
         resp = self.client.post(
             reverse("kanview:pedido-estado", args=[self.pedido.pk]),
             {"estado": "completado"},
@@ -463,6 +479,12 @@ class KanbanDragTestCase(BaseFasesTestCase):
         self.assertEqual(resp.status_code, 200)
         self.pedido.refresh_from_db()
         self.assertEqual(self.pedido.estado_kanban, "completado")
+        self.assertTrue(
+            Historial.objects.filter(id_pedido=self.pedido, accion="pedido_completado").exists()
+        )
+        pago = AnalisisFinanciero.objects.filter(id_pedido=self.pedido).first()
+        self.assertIsNotNone(pago, "el pago del pedido queda amarrado al pedido en Finanzas")
+        self.assertEqual(pago.fuentes_ingresos, Factura.objects.get(pedido=self.pedido).total)
 
     def test_estado_invalido_no_cambia_el_pedido(self):
         resp = self.client.post(
@@ -634,7 +656,9 @@ class ClienteAccesoTestCase(BaseFasesTestCase):
         self.assertEqual(pedido.id_producto, producto)
         self.assertTrue(pedido.codigo_pedido.startswith("PED-"))
         producto.refresh_from_db()
-        self.assertEqual(producto.cantidad, 3)  # descuenta del stock
+        # El inventario NO se disminuye al crear el pedido: se descuenta al
+        # aprobarlo (ver test_aprobar_el_pedido_del_cliente_asigna_al_trabajador).
+        self.assertEqual(producto.cantidad, 5)
 
     def test_cliente_no_puede_pedir_mas_unidades_de_las_que_hay(self):
         producto = Producto.objects.create(
@@ -676,6 +700,9 @@ class ClienteAccesoTestCase(BaseFasesTestCase):
         pedido.refresh_from_db()
         self.assertEqual(pedido.estado_aprobacion, "aprobado")
         self.assertEqual(pedido.id_empleado, self.empleado)
+        # Al aprobar se disminuye el inventario.
+        producto.refresh_from_db()
+        self.assertEqual(producto.cantidad, 3)
 
     def test_el_cliente_no_ve_el_stock_del_catalogo(self):
         self.client.force_login(self.cliente_usuario)

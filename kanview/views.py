@@ -285,8 +285,9 @@ def producto_detalle(request, pk):
 @permission_classes([permiso_de("pedidos", "gestion-pedidos")])
 def pedidos_lista(request):
     if request.method == "GET":
-        pedidos = Pedido.objects.all()
-        # El rol Cliente solo ve sus propios pedidos.
+        # No se muestran los pedidos de clientes desactivados (ni los propios
+        # del rol Cliente que no le pertenecen).
+        pedidos = Pedido.objects.filter(activo=True, id_cliente__activo=True)
         if es_solo_cliente(request.user):
             pedidos = pedidos.filter(id_cliente__correo__iexact=request.user.email)
         serializer = PedidoSerializer(pedidos, many=True)
@@ -303,7 +304,7 @@ def pedidos_lista(request):
 @permission_classes([permiso_de("pedidos", "gestion-pedidos")])
 def pedido_detalle(request, pk):
     try:
-        pedido = Pedido.objects.get(pk=pk)
+        pedido = Pedido.objects.get(pk=pk, activo=True, id_cliente__activo=True)
     except Pedido.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
