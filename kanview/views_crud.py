@@ -28,6 +28,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.forms import modelform_factory
+from django.core.validators import RegexValidator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -121,6 +122,27 @@ def _etiquetas_en_espanol(form):
     for campo in form.fields.values():
         if isinstance(campo, forms.ModelChoiceField):
             campo.empty_label = "Selecciona una opción"
+    return form
+
+
+def _documento_solo_numeros(form):
+    """El documento solo acepta números (en el formulario y en el navegador).
+
+    El input lleva ``inputmode/pattern`` y un filtro JavaScript que borra las
+    letras mientras se escribe; el servidor vuelve a validarlo por si acaso.
+    """
+    campo = form.fields.get("documento")
+    if campo is None:
+        return form
+    campo.widget.attrs.update({
+        "inputmode": "numeric",
+        "pattern": "[0-9]*",
+        "title": "Solo se permiten números",
+        "data-solo-numeros": "1",
+    })
+    campo.validators.append(
+        RegexValidator(r"^[0-9]*$", "El documento solo puede contener números.")
+    )
     return form
 
 
@@ -245,6 +267,7 @@ def _form_vista(modelo, campos, widgets, request, instance=None, con_archivos=Fa
     form = _form(modelo, campos, widgets, instance=instance, data=datos, files=archivos)
     _etiquetas_en_espanol(form)
     _montos_como_texto(form)
+    _documento_solo_numeros(form)
     for nombre, mensaje in errores.items():
         if nombre in form.fields:
             form.add_error(nombre, mensaje)

@@ -66,6 +66,20 @@
     })();
 </script>
 <script>
+    // Documento: solo números. El navegador borra las letras mientras se
+    // escribe (y al pegar texto); el servidor vuelve a validarlo.
+    (function () {
+        document.querySelectorAll("input[data-solo-numeros]").forEach(function (input) {
+            input.addEventListener("input", function () {
+                const limpio = input.value.replace(/\D/g, "");
+                if (input.value !== limpio) {
+                    input.value = limpio;
+                }
+            });
+        });
+    })();
+</script>
+<script>
     // Dinero con separador de miles (250.000) mientras se escribe, y número
     // limpio (250000) al enviar. Se aplica por el `name` del input, así que sirve
     // para los cuatro campos de dinero: precio, salario, gastos y fuentes de ingresos.

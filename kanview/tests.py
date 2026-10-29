@@ -268,25 +268,40 @@ class CrudModulesTestCase(TestCase):
     def test_crear_dos_clientes_sin_correo_desde_la_interfaz(self):
         for indice in (1, 2):
             resp = self.client.post(reverse("kanview:cliente-crear"), {
-                "nombre": f"Cliente sin correo {indice}", "documento": f"SC-UI-{indice}",
+                "nombre": f"Cliente sin correo {indice}", "documento": f"900{indice}",
                 "celular": "300", "direccion": "Calle", "fecha_nacimiento": "1990-01-01",
                 "correo": "",
             })
             self.assertEqual(resp.status_code, 302, f"cliente {indice}")
         self.assertEqual(
-            Cliente.objects.filter(documento__in=["SC-UI-1", "SC-UI-2"], correo="").count(), 2
+            Cliente.objects.filter(documento__in=["9001", "9002"], correo="").count(), 2
         )
 
         # Y el correo repetido se avisa en el formulario, sin 500.
         datos = {
-            "nombre": "Repetido UI", "documento": "SC-UI-R",
+            "nombre": "Repetido UI", "documento": "9100",
             "celular": "300", "direccion": "Calle", "fecha_nacimiento": "1990-01-01",
             "correo": "repetido-ui@example.com",
         }
         self.assertEqual(self.client.post(reverse("kanview:cliente-crear"), datos).status_code, 302)
-        resp = self.client.post(reverse("kanview:cliente-crear"), dict(datos, documento="SC-UI-R2"))
+        resp = self.client.post(reverse("kanview:cliente-crear"), dict(datos, documento="9101"))
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, "Ya existe")
+
+    def test_el_documento_solo_acepta_numeros(self):
+        resp = self.client.post(reverse("kanview:cliente-crear"), {
+            "nombre": "Cliente con letras", "documento": "ABC-123",
+            "celular": "300", "direccion": "Calle", "fecha_nacimiento": "1990-01-01",
+            "correo": "",
+        })
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "solo puede contener números")
+        self.assertFalse(Cliente.objects.filter(nombre="Cliente con letras").exists())
+
+        # El input del formulario también pide solo números al navegador.
+        resp = self.client.get(reverse("kanview:empleado-crear"))
+        self.assertContains(resp, 'data-solo-numeros="1"')
+        self.assertContains(resp, 'pattern="[0-9]*"')
 
     # ---- Formularios construidos en las vistas (formas.py eliminado) --------
 
@@ -940,22 +955,22 @@ class DineroConSeparadorTestCase(TestCase):
         self.assertNotContains(resp, 'name="tareas_realizadas"')
 
         resp = self.client.post(reverse("kanview:empleado-crear"), {
-            "nombre": "Sin edad", "documento": "DIN-SIN", "cargo": "tapcr",
+            "nombre": "Sin edad", "documento": "9876201", "cargo": "tapcr",
             "celular": "300", "direccion": "Calle", "salario": "1000000",
             "fecha_nacimiento": "1995-01-01",
         })
         self.assertEqual(resp.status_code, 302)
-        empleado = Empleado.objects.get(documento="DIN-SIN")
+        empleado = Empleado.objects.get(documento="9876201")
         self.assertEqual(empleado.tareas_realizadas, 0)
 
     def test_salario_acepta_puntos_de_miles(self):
         resp = self.client.post(reverse("kanview:empleado-crear"), {
-            "nombre": "Tapicero", "documento": "DIN-4", "cargo": "tapcr", "celular": "301",
+            "nombre": "Tapicero", "documento": "9876202", "cargo": "tapcr", "celular": "301",
             "direccion": "Calle 4", "salario": "2.500.000", "edad": "30",
             "fecha_nacimiento": "1995-01-01", "tareas_realizadas": "0",
         })
         self.assertEqual(resp.status_code, 302)
-        empleado = Empleado.objects.get(documento="DIN-4")
+        empleado = Empleado.objects.get(documento="9876202")
         self.assertEqual(str(empleado.salario), "2500000.00")
 
         resp = self.client.get(reverse("kanview:empleado-lista"))

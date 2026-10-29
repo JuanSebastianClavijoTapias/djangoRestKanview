@@ -581,19 +581,19 @@ class ClienteAccesoTestCase(BaseFasesTestCase):
         from .permisos import ROL_CLIENTE
 
         resp = self.client.post(reverse("kanview:cliente-crear"), {
-            "nombre": "Cliente Nuevo", "documento": "CLI-NEW", "celular": "300",
+            "nombre": "Cliente Nuevo", "documento": "9876001", "celular": "300",
             "direccion": "Calle", "fecha_nacimiento": "1995-01-01",
             "correo": "cliente.nuevo@example.com", "contrasena": "NuevaClave123",
         })
         self.assertEqual(resp.status_code, 302)
-        cliente = Cliente.objects.get(documento="CLI-NEW")
+        cliente = Cliente.objects.get(documento="9876001")
         self.assertIsNotNone(cliente.usuario)
         self.assertTrue(cliente.usuario.check_password("NuevaClave123"))
         self.assertEqual(cliente.usuario.groups.first().name, ROL_CLIENTE)
         self.assertTrue(self.client.login(username="cliente.nuevo@example.com", password="NuevaClave123"))
 
     def test_admin_agrega_contrasena_al_editar_cliente(self):
-        cliente = Cliente.objects.create(nombre="Sin acceso", documento="CLI-EDIT", correo="cliente.edit@example.com")
+        cliente = Cliente.objects.create(nombre="Sin acceso", documento="9876002", correo="cliente.edit@example.com")
         resp = self.client.post(reverse("kanview:cliente-editar", args=[cliente.pk]), {
             "nombre": cliente.nombre, "documento": cliente.documento, "celular": "",
             "direccion": "", "fecha_nacimiento": "", "correo": cliente.correo,
@@ -763,27 +763,27 @@ class TrabajadorAccesoTestCase(BaseFasesTestCase):
         from .permisos import ROL_TRABAJADOR
 
         resp = self.client.post(reverse("kanview:empleado-crear"), {
-            "nombre": "Trabajador Login", "documento": "EMP-9001", "cargo": "tapcr",
+            "nombre": "Trabajador Login", "documento": "9876101", "cargo": "tapcr",
             "celular": "300", "direccion": "Calle", "salario": "1000000",
             "fecha_nacimiento": "1995-01-01", "correo": "trabajador.login@example.com",
             "contrasena": "Trabajador123!",
         })
         self.assertEqual(resp.status_code, 302)
-        empleado = Empleado.objects.get(documento="EMP-9001")
+        empleado = Empleado.objects.get(documento="9876101")
         self.assertIsNotNone(empleado.usuario)
         self.assertTrue(empleado.usuario.check_password("Trabajador123!"))
         self.assertEqual(empleado.usuario.groups.first().name, ROL_TRABAJADOR)
 
         self.client.logout()
         resp = self.client.post(reverse("kanview:login"), {
-            "username": "EMP-9001", "password": "Trabajador123!",
+            "username": "9876101", "password": "Trabajador123!",
         })
         self.assertEqual(resp.status_code, 302)
         self.assertIn("_auth_user_id", self.client.session)
 
     def test_editar_trabajador_agrega_contrasena(self):
         empleado = Empleado.objects.create(
-            nombre="Trabajador Sin Clave", documento="EMP-9002", cargo="costr",
+            nombre="Trabajador Sin Clave", documento="9876102", cargo="costr",
             celular="300", direccion="Calle", salario=1000,
             fecha_nacimiento=date(1995, 1, 1),
         )
