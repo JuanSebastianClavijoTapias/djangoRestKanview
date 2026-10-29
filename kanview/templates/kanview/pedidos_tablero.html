@@ -39,6 +39,10 @@
             outline-offset: -5px;
             background-color: #e3fffe !important;
         }
+        /* Acordeón de tareas dentro de la tarjeta del tablero. */
+        .tareas-acordeon summary::-webkit-details-marker { display: none; }
+        .tareas-acordeon summary { list-style: none; }
+        .tareas-acordeon[open] .details-acordeon { transform: rotate(180deg); }
     </style>
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden">
@@ -111,25 +115,35 @@
 {% if pedido.sin_tareas %}
 <p class="font-label-sm text-label-sm text-outline mb-3">Sin tareas cargadas</p>
 {% else %}
-<div class="flex flex-col gap-2 mb-3">
-<p class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Tareas del pedido</p>
+<!-- Acordeón de tareas: la tarjeta queda corta; al abrirlo se ve qué falta. -->
+<details class="tareas-acordeon mb-3 rounded-xl border border-outline-variant/30 bg-surface-container-low/60 overflow-hidden">
+<summary class="cursor-pointer select-none px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant">Tareas del pedido</span>
+<span class="flex items-center gap-2">
+{% if pedido.tareas_pendientes %}
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">Faltan {{ pedido.tareas_pendientes }} de {{ pedido.tareas_total }}</span>
+{% else %}
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-800">Todas realizadas</span>
+{% endif %}
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform details-acordeon">expand_more</span>
+</span>
+</summary>
+<div class="flex flex-col gap-2 px-3 pb-3 max-h-72 overflow-y-auto">
 {% for tarea in pedido.tareas %}
-<button aria-haspopup="dialog" aria-label="Ver las actividades de la tarea «{{ tarea.nombre }}»" class="w-full text-left rounded-xl bg-surface-container-low hover:bg-surface-container p-3 transition-colors" data-tarea-detalle="{{ tarea.detalle_id }}" onclick="abrirTarea(event, this)" type="button">
-<div class="flex flex-wrap items-start justify-between gap-2">
-<span class="font-label-md text-label-md font-semibold text-on-surface break-words min-w-0">{{ tarea.nombre }}</span>
-<span class="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-semibold {% if tarea.estado == 'completado' %}bg-green-100 text-green-800{% elif tarea.estado == 'en progreso' %}bg-sky-100 text-sky-800{% else %}bg-gray-100 text-gray-700{% endif %}">{{ tarea.estado_etiqueta }}</span>
+<button aria-haspopup="dialog" aria-label="Ver las actividades de la tarea «{{ tarea.nombre }}»" class="w-full text-left rounded-xl bg-surface-container-low hover:bg-surface-container px-3 py-2 transition-colors" data-tarea-detalle="{{ tarea.detalle_id }}" onclick="abrirTarea(event, this)" type="button">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<span class="text-[13px] font-semibold text-on-surface break-words min-w-0">{{ tarea.nombre }}</span>
+<span class="flex items-center gap-2 shrink-0">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold {% if tarea.estado == 'completado' %}bg-green-100 text-green-800{% elif tarea.estado == 'en progreso' %}bg-sky-100 text-sky-800{% else %}bg-gray-100 text-gray-700{% endif %}">{{ tarea.estado_etiqueta }}</span>
+<span class="text-[11px] text-on-surface-variant">{{ tarea.completadas }}/{{ tarea.total }} act.</span>
+<span class="text-[11px] font-semibold text-primary">Ver →</span>
+</span>
 </div>
-<div class="flex items-center gap-2 mt-2 min-w-0">
-<span class="w-7 h-7 shrink-0 rounded-full bg-secondary-container text-on-secondary-container font-bold text-[11px] flex items-center justify-center">{{ tarea.iniciales }}</span>
-<span class="font-label-sm text-label-sm text-on-surface-variant break-words min-w-0">{{ tarea.responsable }} · {{ tarea.cargo }}</span>
-</div>
-<div class="flex flex-wrap items-center justify-between gap-1 mt-2 text-[11px] text-on-surface-variant">
-<span>{{ tarea.completadas }}/{{ tarea.total }} actividades</span>
-<span class="font-semibold text-primary">Ver actividades →</span>
-</div>
+<p class="text-[11px] text-on-surface-variant mt-1 break-words">{{ tarea.responsable }} · {{ tarea.cargo }}</p>
 </button>
 {% endfor %}
 </div>
+</details>
 {% endif %}
 <div class="flex flex-wrap justify-between items-center gap-2 pt-3 border-t border-outline-variant/20">
 <div class="flex flex-wrap items-center gap-3">

@@ -11,12 +11,27 @@ ver las tareas de sus compañeros.
 from . import busqueda
 from django.db.models import Q
 
-from .models import ESTADOS_KANBAN, Actividades, Empleado
+from .models import ESTADOS_KANBAN, Actividades, Empleado, Pedido
 from .permisos import es_trabajador, puede, seccion_requerida
 from .views_site import _render
 
 # Columnas del tablero, en el orden real de ESTADOS_KANBAN.
 COLUMNAS = tuple(estado for estado, _etiqueta in ESTADOS_KANBAN)
+
+#: Colores por pedido para distinguir las actividades de cada uno: todas las
+#: actividades de un mismo pedido comparten color en su chip.
+COLORES_PEDIDO = (
+    "#006565", "#8b4823", "#2f6f8f", "#6b4a2f", "#5b6e2f",
+    "#7a3b6e", "#35635b", "#8a6d1f", "#4c4f8a", "#a1462c",
+)
+
+
+def _pintar_por_pedido(actividades):
+    """Marca cada actividad con el color de su pedido (para el chip)."""
+    for actividad in actividades:
+        pedido_id = actividad.id_tarea.id_pedido_id if actividad.id_tarea else 0
+        actividad.color_pedido = COLORES_PEDIDO[(pedido_id or 0) % len(COLORES_PEDIDO)]
+    return actividades
 
 
 def _agrupar(queryset):
@@ -67,7 +82,22 @@ def actividades(request):
             Q(id_empleado_id=int(trabajador))
             | Q(id_tarea__id_empleado_id=int(trabajador))
         )
+    # Filtro por pedido: cada tarjeta lleva el chip de su pedido y aquí se
+    # puede ver solo uno (útil cuando hay varios pedidos en curso).
+    pedido = (request.GET.get("pedido") or "").strip()
+    pedidos = (
+        Pedido.objects.filter(
+            pk__in=actividades_qs.values_list("id_tarea__id_pedido", flat=True).distinct()
+        )
+        .select_related("id_producto", "id_cliente")
+        .order_by("-id")
+    )
+    if pedido.isdigit():
+        actividades_qs = actividades_qs.filter(id_tarea__id_pedido_id=int(pedido))
     grupos, otras = _agrupar(actividades_qs)
+    # Chip de color por pedido para distinguir de qué pedido es cada actividad.
+    for lista in list(grupos.values()) + [otras]:
+        _pintar_por_pedido(lista)
 
     return _render(
         request,
@@ -90,4 +120,6 @@ def actividades(request):
             else Empleado.objects.filter(activo=True).order_by("nombre")
         ),
         trabajador_activo=trabajador,
+        pedidos=pedidos,
+        pedido_activo=pedido,
     )

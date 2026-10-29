@@ -1124,8 +1124,11 @@ def _form_pedido(request, instance=None):
         input_formats=["%Y-%m-%d"],
         error_messages={"invalid": "Ingresa una fecha límite válida (año-mes-día)."},
     )
+    # Al EDITAR se muestra el precio que viene del inventario; al crear no se
+    # muestra el campo (el precio igual se toma del inventario en la factura).
     producto = getattr(instance, "id_producto", None) if instance is not None else None
-    _precio_del_inventario(form, producto)
+    if producto is not None:
+        _precio_del_inventario(form, producto)
     return form
 
 
@@ -1240,13 +1243,8 @@ def _form_pedido_cliente(request):
         input_formats=["%Y-%m-%d"],
         error_messages={"invalid": "Ingresa una fecha límite válida (año-mes-día)."},
     )
-    # El precio viene del inventario (precio predeterminado del producto).
-    producto_id = (request.GET.get("producto") or "").strip()
-    producto = (
-        Producto.objects.filter(pk=int(producto_id), activo=True).first()
-        if producto_id.isdigit() else None
-    )
-    _precio_del_inventario(form, producto)
+    # El precio NO se pide al crear el pedido: se toma del inventario
+    # (precio predeterminado del producto) al facturarlo.
     return form
 
 

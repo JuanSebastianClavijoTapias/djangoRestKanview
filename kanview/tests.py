@@ -6,6 +6,7 @@ el código automático del pedido, la galería, la fecha límite, la API cerrada
 el tablero único de procesos con su estado calculado.
 """
 
+import re
 import shutil
 import tempfile
 from datetime import date, timedelta
@@ -1249,6 +1250,14 @@ class TandaUiTestCase(TestCase):
                       '"label-md": ["14px"', '"headline-md": ["24px"'):
             self.assertIn(token, canonica)
 
+        # La paleta debe declararse UNA sola vez: una segunda clave «colors» en
+        # el mismo objeto sobrescribe a la primera y deja fondos (como el de los
+        # modales) sin color, transparentes.
+        self.assertEqual(
+            len(re.findall(r"\bcolors\s*:", canonica)), 1,
+            "la paleta «colors» está declarada más de una vez",
+        )
+
         # Todas las pantallas (y la base del CRUD, que hereda el Panel) la incluyen.
         for obligada in ("crud_base.html", "pedidos_tablero.html", "catalogo.html", "calendario.html",
                          "login.html"):
@@ -2034,13 +2043,19 @@ class ReglasDelTallerTestCase(TestCase):
     # ---- Precio del inventario -------------------------------------------
 
     def test_el_precio_del_pedido_se_toma_del_inventario(self):
+        # Al crear NO se muestra el campo de precio: el precio se toma igual
+        # del inventario (precio predeterminado del producto) al facturar.
         self.client.force_login(self.admin)
         resp = self.client.get(reverse("kanview:pedido-crear"))
-        self.assertContains(resp, "Precio unitario (del inventario)")
-        self.assertContains(resp, 'data-precio="250000')
+        self.assertNotContains(resp, "Precio unitario (del inventario)")
 
         self.client.force_login(self.cliente_user)
         resp = self.client.get(reverse("kanview:pedido-cliente-crear"))
+        self.assertNotContains(resp, "Precio unitario (del inventario)")
+
+        # Al EDITAR sí se muestra, con el precio que viene del inventario.
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("kanview:pedido-editar", args=[self.pedido.pk]))
         self.assertContains(resp, "Precio unitario (del inventario)")
         self.assertContains(resp, 'data-precio="250000')
 
@@ -2139,6 +2154,22 @@ class ReglasDelTallerTestCase(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.actividad_ajena.refresh_from_db()
         self.assertEqual(self.actividad_ajena.estado, "pendiente")
+
+    def test_las_actividades_muestran_a_que_pedido_pertenecen(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(reverse("kanview:actividades"))
+        # Cada tarjeta muestra el chip del pedido (código y producto).
+        self.assertContains(resp, "RT-0001")
+        self.assertContains(resp, "RT-0002")
+        self.assertContains(resp, f'href="/pedidos/{self.pedido.pk}/"')
+        # Y cada pedido tiene su color para distinguirlos de un vistazo.
+        colores = {actividad.color_pedido for actividad in resp.context["pendientes"]}
+        self.assertEqual(len(colores), 2, "cada pedido debe tener su color")
+
+        # Se puede filtrar para ver solo las actividades de un pedido.
+        resp = self.client.get(reverse("kanview:actividades"), {"pedido": self.pedido.pk})
+        self.assertContains(resp, "Actividad propia")
+        self.assertNotContains(resp, "Actividad ajena")
 
     # ---- Finalización e histórico ----------------------------------------
 
