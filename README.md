@@ -4,7 +4,7 @@ Sistema de gestión para Cuir Tapicería (taller de tapicería en cuero): API co
 
 ## Requisitos
 
-- Python 3.10 o superior
+- Python 3.12 o superior
 - pip
 
 ## Instalación
@@ -69,6 +69,11 @@ Por defecto queda disponible en `http://127.0.0.1:8000/`. Si ese puerto está oc
 ```bash
 python3 manage.py runserver 8010
 ```
+
+## Despliegue
+
+La guía para publicar el sistema en Render está en
+[DESPLIEGUE_RENDER.md](DESPLIEGUE_RENDER.md).
 
 ## Rutas
 

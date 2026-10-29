@@ -1,0 +1,322 @@
+MANUAL DE USUARIO – KANVIEW
+INSTALACIÓN Y PUESTA EN MARCHA
+
+Esta sección describe cómo instalar Kanview, preparar su entorno, configurar la
+base de datos y levantar el servidor. Está pensada para el administrador técnico
+del sistema.
+
+
+1. REQUISITOS
+
+• Python 3.12 o superior.
+• pip y el módulo venv de Python.
+• Git, solo si vas a clonar el proyecto desde un repositorio.
+• Un navegador moderno: Chrome, Edge, Firefox o Safari.
+• SQLite, incluido con Python. No hay que instalar MySQL ni PostgreSQL.
+• Conexión a un servidor SMTP para recuperación de contraseña, envío de
+  facturas y notificaciones por correo. Sin SMTP el sistema funciona, pero esos
+  correos no se envían.
+• Opcional: Node.js y Cypress si tu copia incluye las pruebas E2E.
+• Opcional para producción con varias instancias: Redis, channels-redis y
+  django-redis.
+
+En Ubuntu o Debian, si falta el entorno virtual:
+
+    sudo apt update
+    sudo apt install python3 python3-venv
+
+
+2. DEPENDENCIAS DEL PROYECTO
+
+Las dependencias de Python están fijadas en requirements.txt:
+
+• Django 6.1 — framework principal.
+• djangorestframework 3.18.0 — API REST.
+• djangorestframework-simplejwt 5.5.1 — tokens JWT para la API.
+• channels 4.3.2 — WebSockets de la mensajería.
+• daphne 4.2.3 — servidor ASGI para HTTP y WebSockets.
+• asgiref 3.12.1 — soporte ASGI usado por Django y Channels.
+• Pillow 13.0.0 — validación y procesamiento de imágenes.
+• reportlab 5.0.1 — generación de facturas PDF.
+• pyotp 2.10.0 — códigos TOTP para 2FA.
+• qrcode 8.2 — código QR para activar 2FA.
+• python-dotenv 1.2.4 — carga del archivo .env.
+• sqlparse 0.6.0 — dependencia de Django para SQL.
+
+Instalación de las dependencias:
+
+    pip install -r requirements.txt
+
+Si pip intenta compilar Pillow en Linux y falla, instala las librerías del
+sistema necesarias para JPEG y PNG. Normalmente las ruedas precompiladas evitan
+este paso.
+
+Dependencias opcionales:
+
+    # Producción con varias instancias y Redis
+    pip install channels-redis django-redis
+
+    # Pruebas E2E, solo si tu copia incluye Cypress
+    npm install
+
+No es necesario instalar Node ni Redis para ejecutar el sistema en desarrollo.
+
+
+3. PREPARAR EL ENTORNO
+
+Clona el repositorio si aún no lo tienes:
+
+    git clone https://github.com/JuanSebastianClavijoTapias/djangoRestKanview.git
+    cd djangoRestKanview
+
+Crea y activa el entorno virtual:
+
+    python3 -m venv venv
+
+    # Linux o macOS
+    source venv/bin/activate
+
+    # Windows PowerShell
+    .\venv\Scripts\Activate.ps1
+
+Actualiza pip e instala las dependencias:
+
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+
+Verifica la instalación:
+
+    python -c "import django; print(django.get_version())"
+    python manage.py check
+
+
+4. CONFIGURAR LAS VARIABLES DE ENTORNO
+
+Crea el archivo .env a partir del ejemplo:
+
+    cp .env.example .env
+
+Edita .env con los datos reales del taller. Como mínimo, para desarrollo:
+
+    SECRET_KEY=una-clave-secreta-larga-y-unica
+    DEBUG=True
+    ALLOWED_HOSTS=localhost,127.0.0.1
+
+Para generar una SECRET_KEY segura:
+
+    python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+
+
+4.1 VARIABLES PRINCIPALES
+
+• SECRET_KEY: firma de sesiones, tokens y enlaces. Obligatoria en producción.
+• DEBUG: True en desarrollo; False en producción.
+• ALLOWED_HOSTS: dominios o IPs desde los que se accede al sistema.
+• EMAIL_HOST: servidor SMTP, por ejemplo smtp.gmail.com.
+• EMAIL_PORT: puerto SMTP, por ejemplo 587.
+• EMAIL_USE_TLS: True para usar TLS.
+• EMAIL_USE_SSL: False normalmente.
+• EMAIL_HOST_USER: cuenta que envía los correos.
+• EMAIL_HOST_PASSWORD: contraseña de aplicación SMTP; nunca la contraseña
+  normal del correo.
+• DEFAULT_FROM_EMAIL: remitente de los correos.
+• CORREO_CONTACTO: correo visible en la interfaz.
+• FACTURA_IVA: porcentaje de IVA de las facturas.
+• EMPRESA_NOMBRE, EMPRESA_NIT, EMPRESA_DIRECCION, EMPRESA_TELEFONO,
+  EMPRESA_CORREO: datos del emisor en la factura.
+• TERMINOS_VERSION: versión vigente de los términos.
+• BACKUP_DIR: carpeta de copias de seguridad.
+• BACKUP_RETENCION: cantidad de copias que se conservan.
+• MAX_VIDEO_BYTES: tamaño máximo por video. Valor de ejemplo: 26214400 (25 MB).
+• MAX_BYTES_MULTIMEDIA: tamaño máximo total por pedido. Valor: 62914560 (60 MB).
+• PASSWORD_RESET_TIMEOUT: vigencia del enlace de recuperación, en segundos.
+
+
+4.2 CORREO EN DESARROLLO
+
+Si no tienes SMTP configurado, puedes imprimir los correos en la terminal:
+
+    EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+
+Así podrás probar recuperación de contraseña, facturas y notificaciones sin
+enviar correos reales.
+
+
+4.3 VARIABLES DE SEGURIDAD PARA PRODUCCIÓN
+
+Cuando publiques el sistema con HTTPS, agrega o ajusta:
+
+    DEBUG=False
+    ALLOWED_HOSTS=kanview.tudominio.com
+    CSRF_TRUSTED_ORIGINS=https://kanview.tudominio.com
+    CSRF_COOKIE_SECURE=True
+    SESSION_COOKIE_SECURE=True
+    SECURE_SSL_REDIRECT=True
+    SECURE_HSTS_SECONDS=31536000
+    CSP_REPORT_ONLY=False
+
+No subas el archivo .env al repositorio: contiene credenciales y debe quedar
+fuera de Git.
+
+
+5. PREPARAR LA BASE DE DATOS
+
+Aplica las migraciones:
+
+    python manage.py migrate
+
+El proyecto usará db.sqlite3 en la raíz. Para una instalación nueva, este
+comando crea las tablas y los roles iniciales.
+
+Crea el primer usuario administrador:
+
+    python manage.py createsuperuser
+
+El superusuario puede entrar al panel de Django en /admin/ y también usar la
+interfaz de Kanview.
+
+
+6. LEVANTAR EL SERVIDOR
+
+    python manage.py runserver
+
+Abre en el navegador:
+
+    http://127.0.0.1:8000/
+
+El servidor de desarrollo usa Daphne y ASGI, por lo que también atiende los
+WebSockets de la mensajería.
+
+Para acceder desde otro equipo de la red local:
+
+    python manage.py runserver 0.0.0.0:8000
+
+En ese caso agrega la IP o el nombre del equipo a ALLOWED_HOSTS:
+
+    ALLOWED_HOSTS=localhost,127.0.0.1,192.168.1.50
+
+Detén el servidor con Ctrl+C.
+
+
+7. PRIMEROS PASOS DESPUÉS DE ENTRAR
+
+1. Inicia sesión con el superusuario.
+2. Acepta los términos y condiciones si el sistema los solicita.
+3. Entra a Usuarios y crea clientes y trabajadores.
+4. Desde la ficha de cada persona, crea su cuenta de acceso y asigna su rol.
+5. Crea los productos y su stock desde Productos.
+6. Revisa el catálogo y crea un pedido de prueba.
+7. Configura el correo SMTP si vas a enviar facturas o notificaciones reales.
+
+
+8. VERIFICACIÓN Y PRUEBAS
+
+Comprobar la configuración:
+
+    python manage.py check
+
+Ejecutar la suite de pruebas:
+
+    python manage.py test kanview
+
+La suite actual contiene 189 tests.
+
+Comprobar que no faltan migraciones:
+
+    python manage.py makemigrations --check --dry-run
+
+
+9. COMANDOS ÚTILES
+
+    # Activar el entorno virtual
+    source venv/bin/activate
+
+    # Instalar dependencias
+    pip install -r requirements.txt
+
+    # Aplicar migraciones
+    python manage.py migrate
+
+    # Crear administrador
+    python manage.py createsuperuser
+
+    # Levantar el servidor
+    python manage.py runserver
+
+    # Verificar configuración
+    python manage.py check
+
+    # Ejecutar pruebas
+    python manage.py test kanview
+
+    # Ver migraciones pendientes
+    python manage.py makemigrations --check --dry-run
+
+
+10. SOLUCIÓN DE PROBLEMAS
+
+10.1 ModuleNotFoundError: No module named 'django'
+
+El entorno virtual no está activo o no se instalaron las dependencias:
+
+    source venv/bin/activate
+    pip install -r requirements.txt
+
+
+10.2 no such table
+
+Faltan las migraciones:
+
+    python manage.py migrate
+
+
+10.3 DisallowedHost
+
+Agrega el dominio o la IP a ALLOWED_HOSTS en .env y reinicia el servidor.
+
+
+10.4 Error CSRF al usar un dominio o HTTPS
+
+Agrega el origen completo a CSRF_TRUSTED_ORIGINS:
+
+    CSRF_TRUSTED_ORIGINS=https://kanview.tudominio.com
+
+
+10.5 Los correos no llegan
+
+Revisa EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER y EMAIL_HOST_PASSWORD. Para
+desarrollo, usa el backend de consola. En Gmail debes usar una contraseña de
+aplicación, no la contraseña normal de la cuenta.
+
+
+10.6 WebSocket desconectado
+
+En desarrollo usa python manage.py runserver, que arranca Daphne. Para
+producción con varios procesos necesitas configurar channels_redis y un servidor
+Redis compartido.
+
+
+10.7 Error 429
+
+El sistema aplicó rate limit por demasiadas solicitudes. Espera el tiempo de la
+ventana correspondiente antes de volver a intentar.
+
+
+10.8 No se pueden crear copias de seguridad
+
+El sistema usa respaldos SQLite y solo Administración puede gestionarlos.
+Verifica que BACKUP_DIR exista o que el proceso tenga permisos para crearlo.
+
+
+11. NOTAS PARA PRODUCCIÓN
+
+• Usa DEBUG=False.
+• Define una SECRET_KEY única y privada.
+• Configura ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS y HTTPS.
+• Activa cookies seguras, redirección SSL y HSTS.
+• Configura un SMTP real.
+• Mantén db.sqlite3, media/ y backups/ en almacenamiento persistente.
+• Para varias instancias, usa Redis para Channels y para el cache del rate limit.
+• Sirve archivos estáticos y de medios con un proxy web. Las evidencias deben
+  seguir pasando por las rutas protegidas de Kanview.
+• Ejecuta python manage.py test kanview antes de desplegar.

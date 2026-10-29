@@ -10,3 +10,4 @@ qrcode==8.2
 channels==4.3.2
 daphne==4.2.3
 djangorestframework-simplejwt==5.5.1
+whitenoise==6.12.0
